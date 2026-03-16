@@ -16,7 +16,7 @@ module.exports = {
       name: 'gallery-web',
       cwd: './apps/web',
       script: 'node_modules/next/dist/bin/next',
-      args: 'start --port 3001',
+      args: 'start --port 3002',
       exec_mode: 'fork',
       env: {
         NODE_ENV: 'production',
