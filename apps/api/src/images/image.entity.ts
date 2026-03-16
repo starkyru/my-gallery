@@ -56,7 +56,7 @@ export class ImageEntity {
   @Column({ name: 'sort_order', default: 0 })
   sortOrder!: number;
 
-  @Column({ name: 'blur_hash', nullable: true })
+  @Column({ name: 'blur_hash', type: 'varchar', nullable: true })
   blurHash!: string | null;
 
   @Column({ name: 'print_enabled', default: false })
