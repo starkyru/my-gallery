@@ -1,0 +1,25 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-gallery-black: #0a0a0a;
+  --color-gallery-white: #fafafa;
+  --color-gallery-gray: #888;
+  --color-gallery-accent: #c9a96e;
+  --color-gallery-accent-light: #e0c99a;
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-serif: 'Playfair Display', Georgia, serif;
+}
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+::selection {
+  background-color: var(--color-gallery-accent);
+  color: var(--color-gallery-black);
+}

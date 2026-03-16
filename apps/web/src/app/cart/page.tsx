@@ -1,0 +1,69 @@
+'use client';
+
+import Image from 'next/image';
+import Link from 'next/link';
+import { useCartStore } from '@/store/cart';
+
+const UPLOAD_URL = process.env.NEXT_PUBLIC_UPLOAD_URL || 'http://localhost:4000/uploads';
+
+export default function CartPage() {
+  const { items, removeItem, total } = useCartStore();
+
+  if (items.length === 0) {
+    return (
+      <div className="mx-auto max-w-4xl px-6 pt-28 pb-24 text-center">
+        <h1 className="font-serif text-4xl mb-4">Your Cart</h1>
+        <p className="text-gallery-gray mb-8">Your cart is empty.</p>
+        <Link
+          href="/"
+          className="inline-block px-6 py-3 border border-gallery-accent text-gallery-accent rounded-lg hover:bg-gallery-accent hover:text-gallery-black transition-colors"
+        >
+          Browse Gallery
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto max-w-4xl px-6 pt-28 pb-24">
+      <h1 className="font-serif text-4xl mb-8">Your Cart</h1>
+      <div className="space-y-4">
+        {items.map((item) => (
+          <div
+            key={item.imageId}
+            className="flex items-center gap-4 p-4 border border-white/10 rounded-lg"
+          >
+            <Image
+              src={`${UPLOAD_URL}/${item.thumbnailPath}`}
+              alt={item.title}
+              width={80}
+              height={80}
+              className="rounded object-cover w-20 h-20"
+            />
+            <div className="flex-1">
+              <h3 className="font-serif text-lg">{item.title}</h3>
+              <p className="text-gallery-gray">${item.price}</p>
+            </div>
+            <button
+              onClick={() => removeItem(item.imageId)}
+              className="text-gallery-gray hover:text-red-400 transition-colors"
+            >
+              Remove
+            </button>
+          </div>
+        ))}
+      </div>
+      <div className="mt-8 flex items-center justify-between border-t border-white/10 pt-8">
+        <p className="text-2xl">
+          Total: <span className="font-serif">${total()}</span>
+        </p>
+        <Link
+          href="/checkout"
+          className="px-8 py-3 bg-gallery-accent text-gallery-black font-medium rounded-lg hover:bg-gallery-accent-light transition-colors"
+        >
+          Checkout
+        </Link>
+      </div>
+    </div>
+  );
+}

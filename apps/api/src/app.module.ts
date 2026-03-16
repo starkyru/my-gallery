@@ -1,0 +1,42 @@
+import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { AuthModule } from './auth/auth.module';
+import { PhotographersModule } from './photographers/photographers.module';
+import { ImagesModule } from './images/images.module';
+import { OrdersModule } from './orders/orders.module';
+import { PaymentsModule } from './payments/payments.module';
+import { AiModule } from './ai/ai.module';
+import { PhotographerEntity } from './photographers/photographer.entity';
+import { ImageEntity } from './images/image.entity';
+import { OrderEntity } from './orders/order.entity';
+import { OrderItemEntity } from './orders/order-item.entity';
+import { AdminUserEntity } from './auth/admin-user.entity';
+
+@Module({
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    TypeOrmModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        type: 'postgres',
+        host: config.get('DATABASE_HOST', 'localhost'),
+        port: config.get<number>('DATABASE_PORT', 5432),
+        database: config.get('DATABASE_NAME', 'gallery'),
+        username: config.get('DATABASE_USER', 'gallery_user'),
+        password: config.get('DATABASE_PASSWORD', ''),
+        entities: [PhotographerEntity, ImageEntity, OrderEntity, OrderItemEntity, AdminUserEntity],
+        synchronize: config.get('NODE_ENV') !== 'production',
+      }),
+    }),
+    ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
+    AuthModule,
+    PhotographersModule,
+    ImagesModule,
+    OrdersModule,
+    PaymentsModule,
+    AiModule,
+  ],
+})
+export class AppModule {}
