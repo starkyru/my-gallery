@@ -25,6 +25,27 @@ export class OrderEntity {
   @OneToMany(() => OrderItemEntity, (item) => item.order, { cascade: true })
   items!: OrderItemEntity[];
 
+  @Column({ name: 'shipping_name', nullable: true })
+  shippingName!: string | null;
+
+  @Column({ name: 'shipping_address1', nullable: true })
+  shippingAddress1!: string | null;
+
+  @Column({ name: 'shipping_address2', nullable: true })
+  shippingAddress2!: string | null;
+
+  @Column({ name: 'shipping_city', nullable: true })
+  shippingCity!: string | null;
+
+  @Column({ name: 'shipping_state', nullable: true })
+  shippingState!: string | null;
+
+  @Column({ name: 'shipping_postal_code', nullable: true })
+  shippingPostalCode!: string | null;
+
+  @Column({ name: 'shipping_country', nullable: true })
+  shippingCountry!: string | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 }

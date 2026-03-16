@@ -4,10 +4,12 @@ import {
   Column,
   CreateDateColumn,
   ManyToOne,
+  OneToMany,
   JoinColumn,
 } from 'typeorm';
 import { ImageCategory } from '@gallery/shared';
 import { PhotographerEntity } from '../photographers/photographer.entity';
+import { ImagePrintOptionEntity } from './image-print-option.entity';
 
 @Entity('images')
 export class ImageEntity {
@@ -56,6 +58,18 @@ export class ImageEntity {
 
   @Column({ name: 'blur_hash', nullable: true })
   blurHash!: string | null;
+
+  @Column({ name: 'print_enabled', default: false })
+  printEnabled!: boolean;
+
+  @Column({ name: 'print_limit', type: 'int', nullable: true })
+  printLimit!: number | null;
+
+  @Column({ name: 'prints_sold', type: 'int', default: 0 })
+  printsSold!: number;
+
+  @OneToMany(() => ImagePrintOptionEntity, (opt) => opt.image, { cascade: true })
+  printOptions!: ImagePrintOptionEntity[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;

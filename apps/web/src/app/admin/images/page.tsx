@@ -8,6 +8,12 @@ import { ImageCategory } from '@gallery/shared';
 
 const UPLOAD_URL = process.env.NEXT_PUBLIC_UPLOAD_URL || 'http://localhost:4000/uploads';
 
+interface PrintOptionRow {
+  sku: string;
+  description: string;
+  price: number;
+}
+
 export default function AdminImagesPage() {
   const { token } = useAuthStore();
   const [images, setImages] = useState<any[]>([]);
@@ -15,7 +21,9 @@ export default function AdminImagesPage() {
   const [showUpload, setShowUpload] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editData, setEditData] = useState<any>({});
+  const [editPrintOptions, setEditPrintOptions] = useState<PrintOptionRow[]>([]);
   const [aiLoading, setAiLoading] = useState<number | null>(null);
+  const [availableSkus, setAvailableSkus] = useState<{ sku: string; description: string }[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [uploadForm, setUploadForm] = useState({
@@ -38,6 +46,10 @@ export default function AdminImagesPage() {
     api.photographers
       .list()
       .then(setPhotographers)
+      .catch(() => {});
+    api.prodigi
+      .skus(token)
+      .then(setAvailableSkus)
       .catch(() => {});
   }
 
@@ -72,9 +84,31 @@ export default function AdminImagesPage() {
     }
   }
 
+  function startEdit(image: any) {
+    setEditingId(image.id);
+    setEditData({
+      printEnabled: image.printEnabled ?? false,
+      printLimit: image.printLimit,
+    });
+    setEditPrintOptions(
+      (image.printOptions || []).map((o: any) => ({
+        sku: o.sku,
+        description: o.description,
+        price: Number(o.price),
+      })),
+    );
+  }
+
   async function handleSaveEdit() {
     if (!token || editingId === null) return;
-    await api.images.update(editingId, editData, token);
+    await api.images.update(
+      editingId,
+      {
+        ...editData,
+        printOptions: editPrintOptions,
+      },
+      token,
+    );
     setEditingId(null);
     loadData();
   }
@@ -84,6 +118,30 @@ export default function AdminImagesPage() {
     await api.images.delete(id, token);
     loadData();
   }
+
+  function addPrintOption() {
+    setEditPrintOptions((opts) => [...opts, { sku: '', description: '', price: 0 }]);
+  }
+
+  function updatePrintOption(index: number, field: string, value: any) {
+    setEditPrintOptions((opts) =>
+      opts.map((o, i) => {
+        if (i !== index) return o;
+        if (field === 'sku') {
+          const catalog = availableSkus.find((s) => s.sku === value);
+          return { ...o, sku: value, description: catalog?.description || o.description };
+        }
+        return { ...o, [field]: value };
+      }),
+    );
+  }
+
+  function removePrintOption(index: number) {
+    setEditPrintOptions((opts) => opts.filter((_, i) => i !== index));
+  }
+
+  const inputClass =
+    'w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded text-sm text-white';
 
   return (
     <div>
@@ -172,21 +230,103 @@ export default function AdminImagesPage() {
                   <input
                     value={editData.title ?? image.title}
                     onChange={(e) => setEditData({ ...editData, title: e.target.value })}
-                    className="w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded text-sm text-white"
+                    className={inputClass}
                   />
                   <textarea
                     value={editData.description ?? image.description ?? ''}
                     onChange={(e) => setEditData({ ...editData, description: e.target.value })}
                     rows={3}
-                    className="w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded text-sm text-white"
+                    className={inputClass}
                   />
                   <input
                     value={editData.price ?? image.price}
                     onChange={(e) => setEditData({ ...editData, price: +e.target.value })}
                     type="number"
                     step="0.01"
-                    className="w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded text-sm text-white"
+                    className={inputClass}
                   />
+
+                  {/* Print settings */}
+                  <div className="border-t border-white/10 pt-2 mt-2">
+                    <label className="flex items-center gap-2 text-sm mb-2">
+                      <input
+                        type="checkbox"
+                        checked={editData.printEnabled ?? false}
+                        onChange={(e) =>
+                          setEditData({ ...editData, printEnabled: e.target.checked })
+                        }
+                      />
+                      Available as Print
+                    </label>
+
+                    {editData.printEnabled && (
+                      <>
+                        <div className="flex items-center gap-2 mb-2">
+                          <label className="text-xs text-gallery-gray whitespace-nowrap">
+                            Print Limit
+                          </label>
+                          <input
+                            value={editData.printLimit ?? ''}
+                            onChange={(e) =>
+                              setEditData({
+                                ...editData,
+                                printLimit: e.target.value ? +e.target.value : null,
+                              })
+                            }
+                            type="number"
+                            placeholder="Unlimited"
+                            className={`${inputClass} flex-1`}
+                          />
+                        </div>
+
+                        {image.printsSold > 0 && (
+                          <p className="text-xs text-gallery-gray mb-2">
+                            Prints sold: {image.printsSold}
+                          </p>
+                        )}
+
+                        <div className="space-y-2">
+                          {editPrintOptions.map((opt, idx) => (
+                            <div key={idx} className="flex gap-1.5 items-center">
+                              <select
+                                value={opt.sku}
+                                onChange={(e) => updatePrintOption(idx, 'sku', e.target.value)}
+                                className={`${inputClass} flex-1`}
+                              >
+                                <option value="">Select SKU</option>
+                                {availableSkus.map((s) => (
+                                  <option key={s.sku} value={s.sku}>
+                                    {s.description}
+                                  </option>
+                                ))}
+                              </select>
+                              <input
+                                value={opt.price || ''}
+                                onChange={(e) => updatePrintOption(idx, 'price', +e.target.value)}
+                                type="number"
+                                step="0.01"
+                                placeholder="Price"
+                                className={`${inputClass} w-20`}
+                              />
+                              <button
+                                onClick={() => removePrintOption(idx)}
+                                className="text-red-400 text-xs hover:text-red-300 px-1"
+                              >
+                                &times;
+                              </button>
+                            </div>
+                          ))}
+                          <button
+                            onClick={addPrintOption}
+                            className="text-xs text-gallery-accent hover:underline"
+                          >
+                            + Add print option
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
                   <div className="flex gap-2">
                     <button
                       onClick={handleSaveEdit}
@@ -211,12 +351,15 @@ export default function AdminImagesPage() {
                   <p className="text-sm mt-1">
                     ${image.price} &middot; {image.photographer?.name}
                   </p>
+                  {image.printEnabled && (
+                    <p className="text-gallery-accent text-xs mt-1">
+                      Prints: {image.printOptions?.length || 0} option(s)
+                      {image.printLimit && ` \u00B7 ${image.printsSold}/${image.printLimit} sold`}
+                    </p>
+                  )}
                   <div className="flex gap-2 mt-3">
                     <button
-                      onClick={() => {
-                        setEditingId(image.id);
-                        setEditData({});
-                      }}
+                      onClick={() => startEdit(image)}
                       className="px-3 py-1 border border-white/10 rounded text-xs hover:border-white/30"
                     >
                       Edit

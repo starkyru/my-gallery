@@ -17,27 +17,55 @@ export default function OrderSuccessPage({ params }: { params: Promise<{ id: str
       .finally(() => setLoading(false));
   }, [id]);
 
+  const digitalItems = downloads.filter((d) => d.type === 'original' || d.downloadUrl);
+  const printItems = downloads.filter((d) => d.type === 'print');
+
   return (
     <div className="mx-auto max-w-lg px-6 pt-28 pb-24 text-center">
       <h1 className="font-serif text-4xl mb-4">Thank You!</h1>
-      <p className="text-gallery-gray mb-8">
-        Your order #{id} has been confirmed. Download links are below.
-      </p>
+      <p className="text-gallery-gray mb-8">Your order #{id} has been confirmed.</p>
 
       {loading ? (
-        <p className="text-gallery-gray">Loading downloads...</p>
+        <p className="text-gallery-gray">Loading order details...</p>
       ) : (
-        <div className="space-y-3">
-          {downloads.map((dl) => (
-            <a
-              key={dl.imageId}
-              href={dl.downloadUrl}
-              className="block px-6 py-3 border border-gallery-accent text-gallery-accent rounded-lg hover:bg-gallery-accent hover:text-gallery-black transition-colors"
-            >
-              Download: {dl.title}
-            </a>
-          ))}
-        </div>
+        <>
+          {digitalItems.length > 0 && (
+            <div className="mb-8">
+              <h2 className="font-serif text-xl mb-3">Digital Downloads</h2>
+              <div className="space-y-3">
+                {digitalItems.map((dl) => (
+                  <a
+                    key={dl.imageId}
+                    href={dl.downloadUrl}
+                    className="block px-6 py-3 border border-gallery-accent text-gallery-accent rounded-lg hover:bg-gallery-accent hover:text-gallery-black transition-colors"
+                  >
+                    Download: {dl.title}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {printItems.length > 0 && (
+            <div className="mb-8">
+              <h2 className="font-serif text-xl mb-3">Print Orders</h2>
+              <div className="space-y-3">
+                {printItems.map((item) => (
+                  <div
+                    key={`${item.imageId}-${item.printSku}`}
+                    className="px-6 py-3 border border-white/10 rounded-lg text-left"
+                  >
+                    <p className="font-medium">{item.title}</p>
+                    <p className="text-gallery-gray text-sm">{item.printSku}</p>
+                    <p className="text-gallery-accent text-sm mt-1">
+                      {item.status || 'Print order submitted — shipping updates via email'}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       <Link

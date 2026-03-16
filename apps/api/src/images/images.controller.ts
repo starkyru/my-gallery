@@ -14,7 +14,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { IsString, IsOptional, IsNumber, IsEnum, IsBoolean } from 'class-validator';
+import { IsString, IsOptional, IsNumber, IsEnum, IsBoolean, IsArray } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { Response } from 'express';
 import * as path from 'path';
@@ -80,6 +80,19 @@ class UpdateImageDto {
   @Type(() => Number)
   @IsNumber()
   sortOrder?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  printEnabled?: boolean;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  printLimit?: number | null;
+
+  @IsOptional()
+  @IsArray()
+  printOptions?: { sku: string; description: string; price: number }[];
 }
 
 @Controller('images')

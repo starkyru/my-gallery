@@ -56,7 +56,19 @@ export default function AdminOrdersPage() {
               <tr key={order.id} className="border-b border-white/5">
                 <td className="px-4 py-3">#{order.id}</td>
                 <td className="px-4 py-3">{order.customerEmail}</td>
-                <td className="px-4 py-3">{order.items?.length ?? 0}</td>
+                <td className="px-4 py-3">
+                  {order.items?.map((item: any, idx: number) => (
+                    <span key={idx} className="block text-xs">
+                      {item.image?.title || `#${item.imageId}`}{' '}
+                      <span className="text-gallery-gray">
+                        ({item.type === 'print' ? `print: ${item.printSku}` : 'digital'})
+                      </span>
+                      {item.prodigiOrderId && (
+                        <span className="text-gallery-accent"> [{item.prodigiOrderId}]</span>
+                      )}
+                    </span>
+                  )) ?? 0}
+                </td>
                 <td className="px-4 py-3">${order.total}</td>
                 <td className="px-4 py-3 text-gallery-gray">{order.paymentMethod || '-'}</td>
                 <td className="px-4 py-3">

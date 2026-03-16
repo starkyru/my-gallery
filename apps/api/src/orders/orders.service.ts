@@ -1,10 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { OrderEntity } from './order.entity';
 import { OrderItemEntity } from './order-item.entity';
 import { ImagesService } from '../images/images.service';
-import { OrderStatus } from '@gallery/shared';
+import { OrderStatus, OrderItemType, ShippingAddress } from '@gallery/shared';
 
 @Injectable()
 export class OrdersService {
@@ -16,15 +16,74 @@ export class OrdersService {
     private readonly imagesService: ImagesService,
   ) {}
 
-  async create(customerEmail: string, imageIds: number[]) {
-    const images = await Promise.all(imageIds.map((id) => this.imagesService.findOne(id)));
-    const total = images.reduce((sum, img) => sum + Number(img.price), 0);
+  async create(
+    customerEmail: string,
+    items: { imageId: number; type: OrderItemType; printSku?: string }[],
+    shippingAddress?: ShippingAddress,
+  ) {
+    const orderItems: Partial<OrderItemEntity>[] = [];
+    let total = 0;
+
+    for (const item of items) {
+      const image = await this.imagesService.findOne(item.imageId);
+
+      if (item.type === OrderItemType.Print) {
+        if (!image.printEnabled) {
+          throw new BadRequestException(`Prints not available for "${image.title}"`);
+        }
+        if (!item.printSku) {
+          throw new BadRequestException('Print SKU is required for print items');
+        }
+        const printOption = image.printOptions?.find((o) => o.sku === item.printSku);
+        if (!printOption) {
+          throw new BadRequestException(
+            `Print option ${item.printSku} not found for "${image.title}"`,
+          );
+        }
+        if (image.printLimit !== null && image.printsSold >= image.printLimit) {
+          throw new BadRequestException(`Print edition sold out for "${image.title}"`);
+        }
+
+        orderItems.push(
+          this.itemRepo.create({
+            imageId: image.id,
+            price: printOption.price,
+            type: OrderItemType.Print,
+            printSku: item.printSku,
+          }),
+        );
+        total += Number(printOption.price);
+      } else {
+        orderItems.push(
+          this.itemRepo.create({
+            imageId: image.id,
+            price: image.price,
+            type: OrderItemType.Original,
+          }),
+        );
+        total += Number(image.price);
+      }
+    }
+
+    const hasPrintItems = items.some((i) => i.type === OrderItemType.Print);
+    if (hasPrintItems && !shippingAddress) {
+      throw new BadRequestException('Shipping address required for print orders');
+    }
 
     const order = this.orderRepo.create({
       customerEmail,
       total,
       status: OrderStatus.Pending,
-      items: images.map((img) => this.itemRepo.create({ imageId: img.id, price: img.price })),
+      items: orderItems as OrderItemEntity[],
+      ...(shippingAddress && {
+        shippingName: shippingAddress.name,
+        shippingAddress1: shippingAddress.address1,
+        shippingAddress2: shippingAddress.address2 || null,
+        shippingCity: shippingAddress.city,
+        shippingState: shippingAddress.state,
+        shippingPostalCode: shippingAddress.postalCode,
+        shippingCountry: shippingAddress.country,
+      }),
     });
 
     return this.orderRepo.save(order);
@@ -56,16 +115,34 @@ export class OrdersService {
     return this.orderRepo.save(order);
   }
 
+  async updateItemProdigiOrderId(itemId: number, prodigiOrderId: string) {
+    await this.itemRepo.update(itemId, { prodigiOrderId });
+  }
+
   async getDownloadLinks(orderId: number) {
     const order = await this.findOne(orderId);
     if (order.status !== OrderStatus.Paid && order.status !== OrderStatus.Completed) {
       throw new NotFoundException('Order not paid');
     }
-    return order.items.map((item) => ({
-      imageId: item.imageId,
-      title: item.image?.title,
-      downloadUrl: this.imagesService.generateDownloadUrl(item.imageId),
-    }));
+
+    return order.items.map((item) => {
+      if (item.type === OrderItemType.Print) {
+        return {
+          imageId: item.imageId,
+          title: item.image?.title,
+          type: OrderItemType.Print,
+          printSku: item.printSku,
+          prodigiOrderId: item.prodigiOrderId,
+          status: item.prodigiOrderId ? 'Print order submitted' : 'Processing',
+        };
+      }
+      return {
+        imageId: item.imageId,
+        title: item.image?.title,
+        type: OrderItemType.Original,
+        downloadUrl: this.imagesService.generateDownloadUrl(item.imageId),
+      };
+    });
   }
 
   async getStats() {

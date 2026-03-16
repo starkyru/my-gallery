@@ -7,6 +7,7 @@ import * as path from 'path';
 import * as fs from 'fs/promises';
 import * as crypto from 'crypto';
 import { ImageEntity } from './image.entity';
+import { ImagePrintOptionEntity } from './image-print-option.entity';
 import { ImageCategory } from '@gallery/shared';
 
 @Injectable()
@@ -16,6 +17,8 @@ export class ImagesService {
   constructor(
     @InjectRepository(ImageEntity)
     private readonly repo: Repository<ImageEntity>,
+    @InjectRepository(ImagePrintOptionEntity)
+    private readonly printOptionRepo: Repository<ImagePrintOptionEntity>,
     private readonly configService: ConfigService,
   ) {
     this.uploadDir = this.configService.get('UPLOAD_DIR', './uploads');
@@ -25,6 +28,7 @@ export class ImagesService {
     const qb = this.repo
       .createQueryBuilder('image')
       .leftJoinAndSelect('image.photographer', 'photographer')
+      .leftJoinAndSelect('image.printOptions', 'printOptions')
       .orderBy('image.sortOrder', 'ASC')
       .addOrderBy('image.createdAt', 'DESC');
 
@@ -41,7 +45,7 @@ export class ImagesService {
   async findOne(id: number) {
     const image = await this.repo.findOne({
       where: { id },
-      relations: ['photographer'],
+      relations: ['photographer', 'printOptions'],
     });
     if (!image) throw new NotFoundException('Image not found');
     return image;
@@ -99,9 +103,22 @@ export class ImagesService {
       .toFile(outputPath);
   }
 
-  async update(id: number, data: Partial<ImageEntity>) {
+  async update(id: number, data: Record<string, any>) {
     await this.findOne(id);
-    await this.repo.update(id, data);
+    const { printOptions, ...imageData } = data;
+    if (Object.keys(imageData).length > 0) {
+      await this.repo.update(id, imageData);
+    }
+    if (printOptions !== undefined) {
+      await this.printOptionRepo.delete({ imageId: id });
+      if (printOptions.length > 0) {
+        const entities = printOptions.map(
+          (opt: { sku: string; description: string; price: number }) =>
+            this.printOptionRepo.create({ ...opt, imageId: id }),
+        );
+        await this.printOptionRepo.save(entities);
+      }
+    }
     return this.findOne(id);
   }
 
@@ -116,6 +133,21 @@ export class ImagesService {
     );
     await Promise.all(paths.map((p) => fs.unlink(p).catch(() => {})));
     await this.repo.delete(id);
+  }
+
+  async incrementPrintsSold(imageId: number, printLimit: number | null): Promise<boolean> {
+    const qb = this.repo
+      .createQueryBuilder()
+      .update()
+      .set({ printsSold: () => 'prints_sold + 1' })
+      .where('id = :id', { id: imageId });
+
+    if (printLimit !== null) {
+      qb.andWhere('prints_sold < :limit', { limit: printLimit });
+    }
+
+    const result = await qb.execute();
+    return (result.affected ?? 0) > 0;
   }
 
   generateDownloadUrl(imageId: number): string {

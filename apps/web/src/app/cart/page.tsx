@@ -30,7 +30,7 @@ export default function CartPage() {
       <div className="space-y-4">
         {items.map((item) => (
           <div
-            key={item.imageId}
+            key={`${item.imageId}-${item.type}-${item.printSku || ''}`}
             className="flex items-center gap-4 p-4 border border-white/10 rounded-lg"
           >
             <Image
@@ -42,10 +42,15 @@ export default function CartPage() {
             />
             <div className="flex-1">
               <h3 className="font-serif text-lg">{item.title}</h3>
+              <p className="text-gallery-gray text-sm">
+                {item.type === 'print'
+                  ? `Print \u2014 ${item.printDescription}`
+                  : 'Digital Download'}
+              </p>
               <p className="text-gallery-gray">${item.price}</p>
             </div>
             <button
-              onClick={() => removeItem(item.imageId)}
+              onClick={() => removeItem(item.imageId, item.type, item.printSku)}
               className="text-gallery-gray hover:text-red-400 transition-colors"
             >
               Remove

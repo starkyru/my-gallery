@@ -3,12 +3,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { MulterModule } from '@nestjs/platform-express';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ImageEntity } from './image.entity';
+import { ImagePrintOptionEntity } from './image-print-option.entity';
 import { ImagesService } from './images.service';
 import { ImagesController } from './images.controller';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([ImageEntity]),
+    TypeOrmModule.forFeature([ImageEntity, ImagePrintOptionEntity]),
     MulterModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

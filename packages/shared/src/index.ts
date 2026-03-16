@@ -16,6 +16,19 @@ export enum OrderStatus {
   Expired = 'expired',
 }
 
+export enum OrderItemType {
+  Original = 'original',
+  Print = 'print',
+}
+
+export interface ImagePrintOption {
+  id: number;
+  imageId: number;
+  sku: string;
+  description: string;
+  price: number;
+}
+
 export enum PaymentMethod {
   BTCPay = 'btcpay',
   PayPal = 'paypal',
@@ -44,6 +57,10 @@ export interface GalleryImage {
   category: ImageCategory;
   isFeatured: boolean;
   sortOrder: number;
+  printEnabled: boolean;
+  printLimit: number | null;
+  printsSold: number;
+  printOptions: ImagePrintOption[];
   createdAt: Date;
 }
 
@@ -55,6 +72,13 @@ export interface Order {
   paymentMethod: PaymentMethod | null;
   paymentId: string | null;
   items?: OrderItem[];
+  shippingName: string | null;
+  shippingAddress1: string | null;
+  shippingAddress2: string | null;
+  shippingCity: string | null;
+  shippingState: string | null;
+  shippingPostalCode: string | null;
+  shippingCountry: string | null;
   createdAt: Date;
 }
 
@@ -64,6 +88,9 @@ export interface OrderItem {
   imageId: number;
   image?: GalleryImage;
   price: number;
+  type: OrderItemType;
+  printSku: string | null;
+  prodigiOrderId: string | null;
 }
 
 export interface AdminUser {
@@ -75,7 +102,18 @@ export interface AdminUser {
 
 export interface CreateOrderDto {
   customerEmail: string;
-  items: { imageId: number }[];
+  items: { imageId: number; type: OrderItemType; printSku?: string }[];
+  shippingAddress?: ShippingAddress;
+}
+
+export interface ShippingAddress {
+  name: string;
+  address1: string;
+  address2?: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
 }
 
 export interface CartItem {
@@ -83,6 +121,9 @@ export interface CartItem {
   title: string;
   price: number;
   thumbnailPath: string;
+  type: OrderItemType;
+  printSku: string | null;
+  printDescription: string | null;
 }
 
 export interface ApiResponse<T> {

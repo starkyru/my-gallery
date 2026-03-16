@@ -65,8 +65,19 @@ export const api = {
       request(`/photographers/${id}`, { method: 'DELETE', headers: authHeaders(token) }),
   },
   orders: {
-    create: (data: { customerEmail: string; imageIds: number[] }) =>
-      request<any>('/orders', { method: 'POST', body: JSON.stringify(data) }),
+    create: (data: {
+      customerEmail: string;
+      items: { imageId: number; type: string; printSku?: string }[];
+      shippingAddress?: {
+        name: string;
+        address1: string;
+        address2?: string;
+        city: string;
+        state: string;
+        postalCode: string;
+        country: string;
+      };
+    }) => request<any>('/orders', { method: 'POST', body: JSON.stringify(data) }),
     list: (token: string, status?: string) =>
       request<any[]>(`/orders${status ? `?status=${status}` : ''}`, {
         headers: authHeaders(token),
@@ -90,6 +101,12 @@ export const api = {
     describe: (imageId: number, token: string) =>
       request<{ description: string }>(`/ai/describe/${imageId}`, {
         method: 'POST',
+        headers: authHeaders(token),
+      }),
+  },
+  prodigi: {
+    skus: (token: string) =>
+      request<{ sku: string; description: string }[]>('/prodigi/skus', {
         headers: authHeaders(token),
       }),
   },
