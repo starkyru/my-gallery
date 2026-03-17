@@ -33,6 +33,23 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
+async function uploadRequest<T>(path: string, formData: FormData, token: string): Promise<T> {
+  const res = await fetch(`${API_URL}/api${path}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ message: res.statusText }));
+    const err = new Error(error.message || 'Upload failed') as Error & { status: number };
+    err.status = res.status;
+    throw err;
+  }
+
+  return res.json();
+}
+
 function authHeaders(token: string) {
   return { Authorization: `Bearer ${token}` };
 }
@@ -87,18 +104,7 @@ export const api = {
     listAdmin: (token: string) =>
       request<GalleryImage[]>('/images/admin', { headers: authHeaders(token) }),
     get: (id: number) => request<GalleryImage>(`/images/${id}`),
-    upload: (formData: FormData, token: string) =>
-      fetch(`${API_URL}/api/images`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      }).then(async (r) => {
-        if (!r.ok) {
-          const error = await r.json().catch(() => ({ message: r.statusText }));
-          throw new Error(error.message || 'Upload failed');
-        }
-        return r.json();
-      }),
+    upload: (formData: FormData, token: string) => uploadRequest('/images', formData, token),
     update: (id: number, data: Record<string, unknown>, token: string) =>
       request(`/images/${id}`, {
         method: 'PUT',
@@ -138,11 +144,7 @@ export const api = {
     delete: (id: number, token: string) =>
       request(`/artists/${id}`, { method: 'DELETE', headers: authHeaders(token) }),
     uploadPortrait: (id: number, formData: FormData, token: string) =>
-      fetch(`${API_URL}/api/artists/${id}/portrait`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      }).then((r) => r.json()),
+      uploadRequest(`/artists/${id}/portrait`, formData, token),
   },
   orders: {
     create: (data: {
