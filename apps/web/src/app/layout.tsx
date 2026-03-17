@@ -22,8 +22,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
-      <body className="bg-gallery-black text-gallery-white font-sans antialiased">
+    <html lang="en" className={`${inter.variable} ${playfair.variable}`} suppressHydrationWarning>
+      <body
+        className="bg-gallery-black text-gallery-white font-sans antialiased"
+        suppressHydrationWarning
+      >
         <LenisProvider>
           <Header />
           <main className="min-h-screen">{children}</main>
