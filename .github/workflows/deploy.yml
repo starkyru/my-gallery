@@ -36,7 +36,8 @@ jobs:
 
             cd /var/www/gallery
 
-            # Pull latest code
+            # Pull latest code (reset any local changes like lockfile diffs)
+            git checkout -- .
             git pull origin main
 
             # Install dependencies (CI=true for non-interactive mode)
