@@ -14,6 +14,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 import { IsString, IsOptional, IsNumber, IsBoolean, IsArray, IsIn } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { Response } from 'express';
@@ -162,7 +163,7 @@ export class ImagesController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(FileInterceptor('file', { storage: undefined }))
+  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))
   upload(@UploadedFile() file: Express.Multer.File, @Body() dto: CreateImageDto) {
     return this.service.upload(file, dto);
   }

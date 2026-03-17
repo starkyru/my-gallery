@@ -14,6 +14,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 import { IsString, IsOptional, IsBoolean } from 'class-validator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AdminGuard } from '../auth/admin.guard';
@@ -90,7 +91,7 @@ export class ArtistsController {
 
   @Post(':id/portrait')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(FileInterceptor('file', { storage: undefined }))
+  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))
   uploadPortrait(
     @Param('id') id: string,
     @UploadedFile() file: Express.Multer.File,
@@ -104,7 +105,7 @@ export class ArtistsController {
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, AdminGuard)
-  remove(@Param('id') id: string) {
-    return this.service.remove(+id);
+  remove(@Param('id') id: string, @Request() req: { user: { artistId?: number } }) {
+    return this.service.remove(+id, req.user.artistId);
   }
 }
