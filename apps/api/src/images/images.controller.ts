@@ -14,12 +14,13 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { IsString, IsOptional, IsNumber, IsBoolean, IsArray } from 'class-validator';
+import { IsString, IsOptional, IsNumber, IsBoolean, IsArray, IsIn } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { Response } from 'express';
 import * as path from 'path';
 import { ConfigService } from '@nestjs/config';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { AdminGuard } from '../auth/admin.guard';
 import { ImagesService } from './images.service';
 
 class CreateImageDto {
@@ -102,7 +103,7 @@ class BulkActionDto {
   @IsArray()
   ids!: number[];
 
-  @IsString()
+  @IsIn(['archive', 'unarchive', 'setCategory'])
   action!: string;
 
   @IsOptional()
@@ -126,13 +127,13 @@ export class ImagesController {
   }
 
   @Get('admin')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   findAllAdmin() {
     return this.service.findAllAdmin();
   }
 
   @Post('bulk-action')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   bulkAction(@Body() dto: BulkActionDto) {
     return this.service.bulkAction(dto.ids, dto.action, dto.value);
   }
