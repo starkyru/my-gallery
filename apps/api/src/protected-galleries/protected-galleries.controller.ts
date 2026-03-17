@@ -130,11 +130,7 @@ export class ProtectedGalleriesController {
   }
 
   @Get(':slug/download')
-  async download(
-    @Param('slug') slug: string,
-    @Query('token') token?: string,
-    @Res() res: Response,
-  ) {
+  async download(@Param('slug') slug: string, @Query('token') token: string, @Res() res: Response) {
     if (!token) throw new UnauthorizedException('Access token required');
     const files = await this.service.getOriginalPaths(slug, token);
 
