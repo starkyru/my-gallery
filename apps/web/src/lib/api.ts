@@ -144,7 +144,7 @@ export const api = {
     delete: (id: number, token: string) =>
       request(`/artists/${id}`, { method: 'DELETE', headers: authHeaders(token) }),
     uploadPortrait: (id: number, formData: FormData, token: string) =>
-      uploadRequest(`/artists/${id}/portrait`, formData, token),
+      uploadRequest<{ portraitPath: string }>(`/artists/${id}/portrait`, formData, token),
   },
   orders: {
     create: (data: {
