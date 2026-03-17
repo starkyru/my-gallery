@@ -3,6 +3,8 @@ import type {
   EnabledPayment,
   FulfillmentSku,
   GalleryImage,
+  GalleryConfig,
+  Category,
   Order,
   Artist,
 } from '@gallery/shared';
@@ -31,8 +33,36 @@ function authHeaders(token: string) {
 }
 
 export const api = {
+  galleryConfig: {
+    get: () => request<GalleryConfig>('/gallery-config'),
+    update: (data: Partial<GalleryConfig>, token: string) =>
+      request<GalleryConfig>('/gallery-config', {
+        method: 'PUT',
+        body: JSON.stringify(data),
+        headers: authHeaders(token),
+      }),
+  },
+  categories: {
+    list: () => request<Category[]>('/categories'),
+    create: (data: { name: string; slug: string }, token: string) =>
+      request<Category>('/categories', {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: authHeaders(token),
+      }),
+    update: (id: number, data: Partial<Category>, token: string) =>
+      request<Category>(`/categories/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+        headers: authHeaders(token),
+      }),
+    delete: (id: number, token: string) =>
+      request(`/categories/${id}`, { method: 'DELETE', headers: authHeaders(token) }),
+  },
   images: {
     list: (params?: string) => request<GalleryImage[]>(`/images${params ? `?${params}` : ''}`),
+    listAdmin: (token: string) =>
+      request<GalleryImage[]>('/images/admin', { headers: authHeaders(token) }),
     get: (id: number) => request<GalleryImage>(`/images/${id}`),
     upload: (formData: FormData, token: string) =>
       fetch(`${API_URL}/api/images`, {
@@ -52,6 +82,12 @@ export const api = {
       request('/images/sort/order', {
         method: 'PUT',
         body: JSON.stringify(updates),
+        headers: authHeaders(token),
+      }),
+    bulkAction: (data: { ids: number[]; action: string; value?: string }, token: string) =>
+      request('/images/bulk-action', {
+        method: 'POST',
+        body: JSON.stringify(data),
         headers: authHeaders(token),
       }),
   },

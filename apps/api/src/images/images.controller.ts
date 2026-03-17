@@ -14,14 +14,13 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { IsString, IsOptional, IsNumber, IsEnum, IsBoolean, IsArray } from 'class-validator';
+import { IsString, IsOptional, IsNumber, IsBoolean, IsArray } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { Response } from 'express';
 import * as path from 'path';
 import { ConfigService } from '@nestjs/config';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ImagesService } from './images.service';
-import { ImageCategory } from '@gallery/shared';
 
 class CreateImageDto {
   @IsString()
@@ -40,8 +39,8 @@ class CreateImageDto {
   artistId!: number;
 
   @IsOptional()
-  @IsEnum(ImageCategory)
-  category?: ImageCategory;
+  @IsString()
+  category?: string;
 
   @IsOptional()
   @Transform(({ value }) => value === 'true' || value === true)
@@ -69,8 +68,8 @@ class UpdateImageDto {
   artistId?: number;
 
   @IsOptional()
-  @IsEnum(ImageCategory)
-  category?: ImageCategory;
+  @IsString()
+  category?: string;
 
   @IsOptional()
   @IsBoolean()
@@ -91,8 +90,24 @@ class UpdateImageDto {
   printLimit?: number | null;
 
   @IsOptional()
+  @IsBoolean()
+  isArchived?: boolean;
+
+  @IsOptional()
   @IsArray()
   printOptions?: { sku: string; description: string; price: number }[];
+}
+
+class BulkActionDto {
+  @IsArray()
+  ids!: number[];
+
+  @IsString()
+  action!: string;
+
+  @IsOptional()
+  @IsString()
+  value?: string;
 }
 
 @Controller('images')
@@ -103,11 +118,23 @@ export class ImagesController {
   ) {}
 
   @Get()
-  findAll(@Query('category') category?: ImageCategory, @Query('featured') featured?: string) {
+  findAll(@Query('category') category?: string, @Query('featured') featured?: string) {
     return this.service.findAll({
       category,
       featured: featured === undefined ? undefined : featured === 'true',
     });
+  }
+
+  @Get('admin')
+  @UseGuards(JwtAuthGuard)
+  findAllAdmin() {
+    return this.service.findAllAdmin();
+  }
+
+  @Post('bulk-action')
+  @UseGuards(JwtAuthGuard)
+  bulkAction(@Body() dto: BulkActionDto) {
+    return this.service.bulkAction(dto.ids, dto.action, dto.value);
   }
 
   @Get(':id')

@@ -5,19 +5,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { ImageCategory } from '@gallery/shared';
+import { api } from '@/lib/api';
 
 gsap.registerPlugin(ScrollTrigger);
 
 const UPLOAD_URL = process.env.NEXT_PUBLIC_UPLOAD_URL || 'http://localhost:4000/uploads';
-
-const CATEGORIES = [
-  { label: 'All', value: '' },
-  ...Object.values(ImageCategory).map((c) => ({
-    label: c.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
-    value: c,
-  })),
-];
 
 interface GalleryImage {
   id: number;
@@ -102,6 +94,21 @@ export function GalleryGrid({ images }: { images: GalleryImage[] }) {
   const [visible, setVisible] = useState(true);
   const gridRef = useRef<HTMLDivElement>(null);
   const prevFilter = useRef('');
+  const [categories, setCategories] = useState<{ label: string; value: string }[]>([
+    { label: 'All', value: '' },
+  ]);
+
+  useEffect(() => {
+    api.categories
+      .list()
+      .then((cats) => {
+        setCategories([
+          { label: 'All', value: '' },
+          ...cats.map((c) => ({ label: c.name, value: c.slug })),
+        ]);
+      })
+      .catch(() => {});
+  }, []);
 
   const filtered = filter ? images.filter((img) => img.category === filter) : images;
 
@@ -161,7 +168,7 @@ export function GalleryGrid({ images }: { images: GalleryImage[] }) {
     <section id="works" className="mx-auto max-w-7xl px-6 py-24">
       {/* Category filter */}
       <div className="flex flex-wrap gap-3 mb-12 justify-center">
-        {CATEGORIES.map((cat) => (
+        {categories.map((cat) => (
           <button
             key={cat.value}
             onClick={() => handleFilter(cat.value)}

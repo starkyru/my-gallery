@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useMemo } from 'react';
 import Image from 'next/image';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
-import { ImageCategory } from '@gallery/shared';
+import type { Category } from '@gallery/shared';
 
 const UPLOAD_URL = process.env.NEXT_PUBLIC_UPLOAD_URL || 'http://localhost:4000/uploads';
 
@@ -18,13 +18,14 @@ interface DroppedFile {
   file: File;
   title: string;
   price: string;
-  category: ImageCategory;
+  category: string;
 }
 
 export default function AdminImagesPage() {
   const { token } = useAuthStore();
   const [images, setImages] = useState<any[]>([]);
   const [artists, setArtists] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editData, setEditData] = useState<any>({});
   const [editPrintOptions, setEditPrintOptions] = useState<PrintOptionRow[]>([]);
@@ -41,23 +42,27 @@ export default function AdminImagesPage() {
     null,
   );
 
-  // Shared upload controls (persist between uploads)
+  // Shared upload controls
   const [sharedArtistId, setSharedArtistId] = useState('');
-  const [sharedCategory, setSharedCategory] = useState<ImageCategory>(ImageCategory.Other);
+  const [sharedCategory, setSharedCategory] = useState('other');
 
   // Filters & sorting
   const [filterArtist, setFilterArtist] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
+  const [filterArchive, setFilterArchive] = useState<'all' | 'active' | 'archived'>('all');
   const [sortBy, setSortBy] = useState<'createdAt' | 'price' | 'printsSold' | 'artistName'>(
     'createdAt',
   );
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
+  // Bulk selection
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [bulkCategory, setBulkCategory] = useState('');
+
   useEffect(() => {
     loadData();
   }, [token]);
 
-  // Default sharedArtistId to first artist when artists load
   useEffect(() => {
     if (artists.length > 0 && !sharedArtistId) {
       setSharedArtistId(String(artists[0].id));
@@ -67,12 +72,16 @@ export default function AdminImagesPage() {
   function loadData() {
     if (!token) return;
     api.images
-      .list()
+      .listAdmin(token)
       .then(setImages)
       .catch(() => {});
     api.artists
       .list()
       .then(setArtists)
+      .catch(() => {});
+    api.categories
+      .list()
+      .then(setCategories)
       .catch(() => {});
     api.services
       .fulfillmentSkus()
@@ -80,7 +89,6 @@ export default function AdminImagesPage() {
       .catch(() => {});
   }
 
-  // Filtered & sorted images
   const filteredImages = useMemo(() => {
     let result = [...images];
 
@@ -89,6 +97,11 @@ export default function AdminImagesPage() {
     }
     if (filterCategory) {
       result = result.filter((img) => img.category === filterCategory);
+    }
+    if (filterArchive === 'active') {
+      result = result.filter((img) => !img.isArchived);
+    } else if (filterArchive === 'archived') {
+      result = result.filter((img) => img.isArchived);
     }
 
     result.sort((a, b) => {
@@ -111,7 +124,7 @@ export default function AdminImagesPage() {
     });
 
     return result;
-  }, [images, filterArtist, filterCategory, sortBy, sortDir]);
+  }, [images, filterArtist, filterCategory, filterArchive, sortBy, sortDir]);
 
   // Drop zone handlers
   function handleDragOver(e: React.DragEvent) {
@@ -155,8 +168,7 @@ export default function AdminImagesPage() {
     setDroppedFiles((prev) => prev.filter((_, i) => i !== index));
   }
 
-  // Apply shared category to all files
-  function handleSharedCategoryChange(cat: ImageCategory) {
+  function handleSharedCategoryChange(cat: string) {
     setSharedCategory(cat);
     setDroppedFiles((prev) => prev.map((f) => ({ ...f, category: cat })));
   }
@@ -197,6 +209,12 @@ export default function AdminImagesPage() {
     } finally {
       setAiLoading(null);
     }
+  }
+
+  async function handleToggleArchive(image: any) {
+    if (!token) return;
+    await api.images.update(image.id, { isArchived: !image.isArchived }, token);
+    loadData();
   }
 
   function startEdit(image: any) {
@@ -261,13 +279,38 @@ export default function AdminImagesPage() {
     setSortDir(dir as 'asc' | 'desc');
   }
 
+  // Bulk selection
+  function toggleSelection(id: number) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function selectAll() {
+    setSelectedIds(new Set(filteredImages.map((img) => img.id)));
+  }
+
+  function deselectAll() {
+    setSelectedIds(new Set());
+  }
+
+  async function handleBulkAction(action: string, value?: string) {
+    if (!token || selectedIds.size === 0) return;
+    await api.images.bulkAction({ ids: Array.from(selectedIds), action, value }, token);
+    setSelectedIds(new Set());
+    loadData();
+  }
+
   const inputClass =
     'w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded text-sm text-white';
   const selectClass =
     'px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-gallery-accent';
 
   return (
-    <div>
+    <div className="pb-20">
       <h1 className="font-serif text-3xl mb-8">Images</h1>
 
       {/* Drop Zone */}
@@ -293,10 +336,9 @@ export default function AdminImagesPage() {
         />
       </div>
 
-      {/* Metadata form (shown when files selected) */}
+      {/* Metadata form */}
       {droppedFiles.length > 0 && (
         <div className="mb-8 p-6 border border-white/10 rounded-lg space-y-4">
-          {/* Shared controls */}
           <div className="flex gap-4 items-end">
             <div className="flex-1">
               <label className="block text-xs text-gallery-gray mb-1">Artist (all images)</label>
@@ -316,19 +358,18 @@ export default function AdminImagesPage() {
               <label className="block text-xs text-gallery-gray mb-1">Category (all images)</label>
               <select
                 value={sharedCategory}
-                onChange={(e) => handleSharedCategoryChange(e.target.value as ImageCategory)}
+                onChange={(e) => handleSharedCategoryChange(e.target.value)}
                 className={`${selectClass} w-full`}
               >
-                {Object.values(ImageCategory).map((c) => (
-                  <option key={c} value={c}>
-                    {c.replace(/_/g, ' ')}
+                {categories.map((c) => (
+                  <option key={c.slug} value={c.slug}>
+                    {c.name}
                   </option>
                 ))}
               </select>
             </div>
           </div>
 
-          {/* Per-image rows */}
           <div className="space-y-3">
             {droppedFiles.map((df, idx) => (
               <div key={idx} className="flex gap-3 items-center">
@@ -358,14 +399,12 @@ export default function AdminImagesPage() {
                 />
                 <select
                   value={df.category}
-                  onChange={(e) =>
-                    updateDroppedFile(idx, 'category', e.target.value as ImageCategory)
-                  }
-                  className={`${selectClass}`}
+                  onChange={(e) => updateDroppedFile(idx, 'category', e.target.value)}
+                  className={selectClass}
                 >
-                  {Object.values(ImageCategory).map((c) => (
-                    <option key={c} value={c}>
-                      {c.replace(/_/g, ' ')}
+                  {categories.map((c) => (
+                    <option key={c.slug} value={c.slug}>
+                      {c.name}
                     </option>
                   ))}
                 </select>
@@ -411,11 +450,20 @@ export default function AdminImagesPage() {
           className={selectClass}
         >
           <option value="">All Categories</option>
-          {Object.values(ImageCategory).map((c) => (
-            <option key={c} value={c}>
-              {c.replace(/_/g, ' ')}
+          {categories.map((c) => (
+            <option key={c.slug} value={c.slug}>
+              {c.name}
             </option>
           ))}
+        </select>
+        <select
+          value={filterArchive}
+          onChange={(e) => setFilterArchive(e.target.value as any)}
+          className={selectClass}
+        >
+          <option value="all">All Status</option>
+          <option value="active">Active</option>
+          <option value="archived">Archived</option>
         </select>
         <select
           value={`${sortBy}:${sortDir}`}
@@ -424,10 +472,10 @@ export default function AdminImagesPage() {
         >
           <option value="createdAt:desc">Date (newest)</option>
           <option value="createdAt:asc">Date (oldest)</option>
-          <option value="price:desc">Price (high→low)</option>
-          <option value="price:asc">Price (low→high)</option>
-          <option value="artistName:asc">Artist (A→Z)</option>
-          <option value="artistName:desc">Artist (Z→A)</option>
+          <option value="price:desc">Price (high-low)</option>
+          <option value="price:asc">Price (low-high)</option>
+          <option value="artistName:asc">Artist (A-Z)</option>
+          <option value="artistName:desc">Artist (Z-A)</option>
           <option value="printsSold:desc">Sales (most)</option>
           <option value="printsSold:asc">Sales (least)</option>
         </select>
@@ -439,13 +487,37 @@ export default function AdminImagesPage() {
       {/* Image grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredImages.map((image) => (
-          <div key={image.id} className="border border-white/10 rounded-lg overflow-hidden">
+          <div
+            key={image.id}
+            className={`relative border rounded-lg overflow-hidden ${
+              selectedIds.has(image.id)
+                ? 'ring-2 ring-gallery-accent border-gallery-accent/50'
+                : 'border-white/10'
+            }`}
+          >
+            {/* Selection checkbox */}
+            <label className="absolute top-2 left-2 z-10" onClick={(e) => e.stopPropagation()}>
+              <input
+                type="checkbox"
+                checked={selectedIds.has(image.id)}
+                onChange={() => toggleSelection(image.id)}
+                className="accent-gallery-accent w-4 h-4 cursor-pointer"
+              />
+            </label>
+
+            {/* Archived badge */}
+            {image.isArchived && (
+              <span className="absolute top-2 right-2 z-10 px-2 py-0.5 bg-gray-600/80 text-white text-xs rounded-full">
+                Archived
+              </span>
+            )}
+
             <Image
               src={`${UPLOAD_URL}/${image.thumbnailPath}`}
               alt={image.title}
               width={400}
               height={300}
-              className="w-full h-48 object-cover"
+              className={`w-full h-48 object-cover ${image.isArchived ? 'opacity-50' : ''}`}
             />
             <div className="p-4">
               {editingId === image.id ? (
@@ -580,12 +652,18 @@ export default function AdminImagesPage() {
                       {image.printLimit && ` \u00B7 ${image.printsSold}/${image.printLimit} sold`}
                     </p>
                   )}
-                  <div className="flex gap-2 mt-3">
+                  <div className="flex flex-wrap gap-2 mt-3">
                     <button
                       onClick={() => startEdit(image)}
                       className="px-3 py-1 border border-white/10 rounded text-xs hover:border-white/30"
                     >
                       Edit
+                    </button>
+                    <button
+                      onClick={() => handleToggleArchive(image)}
+                      className="px-3 py-1 border border-white/10 rounded text-xs hover:border-white/30"
+                    >
+                      {image.isArchived ? 'Unarchive' : 'Archive'}
                     </button>
                     <button
                       onClick={() => handleAiDescribe(image.id)}
@@ -612,6 +690,58 @@ export default function AdminImagesPage() {
         <p className="text-center text-gallery-gray py-12">
           {images.length === 0 ? 'No images uploaded yet.' : 'No images match the current filters.'}
         </p>
+      )}
+
+      {/* Bulk action bar */}
+      {selectedIds.size > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 bg-gallery-black/95 backdrop-blur-md border-t border-white/10 px-6 py-3 z-50">
+          <div className="mx-auto max-w-7xl flex items-center gap-4 flex-wrap">
+            <span className="text-sm font-medium">{selectedIds.size} selected</span>
+            <button onClick={selectAll} className="text-xs text-gallery-accent hover:underline">
+              Select All
+            </button>
+            <button onClick={deselectAll} className="text-xs text-gallery-gray hover:text-white">
+              Deselect All
+            </button>
+            <div className="border-l border-white/10 h-6" />
+            <button
+              onClick={() => handleBulkAction('archive')}
+              className="px-3 py-1.5 border border-white/10 rounded text-xs hover:border-white/30"
+            >
+              Archive
+            </button>
+            <button
+              onClick={() => handleBulkAction('unarchive')}
+              className="px-3 py-1.5 border border-white/10 rounded text-xs hover:border-white/30"
+            >
+              Unarchive
+            </button>
+            <div className="border-l border-white/10 h-6" />
+            <select
+              value={bulkCategory}
+              onChange={(e) => setBulkCategory(e.target.value)}
+              className={`${selectClass} text-xs`}
+            >
+              <option value="">Set category...</option>
+              {categories.map((c) => (
+                <option key={c.slug} value={c.slug}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+            {bulkCategory && (
+              <button
+                onClick={() => {
+                  handleBulkAction('setCategory', bulkCategory);
+                  setBulkCategory('');
+                }}
+                className="px-3 py-1.5 bg-gallery-accent text-gallery-black rounded text-xs font-medium"
+              >
+                Apply
+              </button>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

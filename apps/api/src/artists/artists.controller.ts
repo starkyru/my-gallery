@@ -6,11 +6,12 @@ import {
   Delete,
   Param,
   Body,
+  Query,
   UseGuards,
   Request,
   ForbiddenException,
 } from '@nestjs/common';
-import { IsString, IsOptional } from 'class-validator';
+import { IsString, IsOptional, IsBoolean } from 'class-validator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AdminGuard } from '../auth/admin.guard';
 import { ArtistsService } from './artists.service';
@@ -40,6 +41,10 @@ class UpdateArtistDto {
   @IsOptional()
   @IsString()
   avatarUrl?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 }
 
 @Controller('artists')
@@ -47,7 +52,8 @@ export class ArtistsController {
   constructor(private readonly service: ArtistsService) {}
 
   @Get()
-  findAll() {
+  findAll(@Query('active') active?: string) {
+    if (active === 'true') return this.service.findAllActive();
     return this.service.findAll();
   }
 

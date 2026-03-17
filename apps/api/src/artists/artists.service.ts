@@ -13,14 +13,22 @@ export class ArtistsService {
   async findAll() {
     return this.repo.find({
       order: { name: 'ASC' },
-      select: ['id', 'name', 'bio', 'avatarUrl', 'loginEnabled', 'createdAt'],
+      select: ['id', 'name', 'bio', 'avatarUrl', 'loginEnabled', 'isActive', 'createdAt'],
+    });
+  }
+
+  async findAllActive() {
+    return this.repo.find({
+      where: { isActive: true },
+      order: { name: 'ASC' },
+      select: ['id', 'name', 'bio', 'avatarUrl', 'loginEnabled', 'isActive', 'createdAt'],
     });
   }
 
   async findOne(id: number) {
     const artist = await this.repo.findOne({
       where: { id },
-      select: ['id', 'name', 'bio', 'avatarUrl', 'loginEnabled', 'createdAt'],
+      select: ['id', 'name', 'bio', 'avatarUrl', 'loginEnabled', 'isActive', 'createdAt'],
     });
     if (!artist) throw new NotFoundException('Artist not found');
     return artist;

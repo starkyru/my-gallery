@@ -21,6 +21,9 @@ export class ArtistEntity {
   @Column({ name: 'login_enabled', type: 'boolean', default: false })
   loginEnabled!: boolean;
 
+  @Column({ name: 'is_active', default: true })
+  isActive!: boolean;
+
   @OneToMany(() => ImageEntity, (image) => image.artist)
   images!: ImageEntity[];
 

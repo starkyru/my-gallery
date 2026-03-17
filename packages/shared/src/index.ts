@@ -77,12 +77,25 @@ export interface FulfillmentSku {
 
 export type UserRole = 'admin' | 'artist';
 
+export interface GalleryConfig {
+  galleryName: string;
+}
+
+export interface Category {
+  id: number;
+  name: string;
+  slug: string;
+  sortOrder: number;
+  imageCount?: number;
+}
+
 export interface Artist {
   id: number;
   name: string;
   bio: string | null;
   avatarUrl: string | null;
   loginEnabled?: boolean;
+  isActive?: boolean;
   createdAt: Date;
 }
 
@@ -98,12 +111,13 @@ export interface GalleryImage {
   watermarkPath: string;
   width: number;
   height: number;
-  category: ImageCategory;
+  category: string;
   isFeatured: boolean;
   sortOrder: number;
   printEnabled: boolean;
   printLimit: number | null;
   printsSold: number;
+  isArchived: boolean;
   printOptions: ImagePrintOption[];
   createdAt: Date;
 }

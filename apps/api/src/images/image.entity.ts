@@ -7,7 +7,6 @@ import {
   OneToMany,
   JoinColumn,
 } from 'typeorm';
-import { ImageCategory } from '@gallery/shared';
 import { ArtistEntity } from '../artists/artist.entity';
 import { ImagePrintOptionEntity } from './image-print-option.entity';
 
@@ -47,8 +46,8 @@ export class ImageEntity {
   @Column({ type: 'int' })
   height!: number;
 
-  @Column({ type: 'enum', enum: ImageCategory, default: ImageCategory.Other })
-  category!: ImageCategory;
+  @Column({ type: 'varchar', default: 'other' })
+  category!: string;
 
   @Column({ name: 'is_featured', default: false })
   isFeatured!: boolean;
@@ -70,6 +69,9 @@ export class ImageEntity {
 
   @OneToMany(() => ImagePrintOptionEntity, (opt) => opt.image, { cascade: true })
   printOptions!: ImagePrintOptionEntity[];
+
+  @Column({ name: 'is_archived', default: false })
+  isArchived!: boolean;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;

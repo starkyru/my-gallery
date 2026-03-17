@@ -44,6 +44,12 @@ export default function AdminArtistsPage() {
     loadData();
   }
 
+  async function handleToggleActive(id: number, isActive: boolean) {
+    if (!token) return;
+    await api.artists.update(id, { isActive }, token);
+    loadData();
+  }
+
   async function handleToggleLogin(id: number, enabled: boolean) {
     if (!token) return;
     await api.auth.toggleArtistLogin(token, id, enabled);
@@ -140,6 +146,15 @@ export default function AdminArtistsPage() {
             </div>
 
             <div className="flex items-center gap-4 pt-2 border-t border-white/5">
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={a.isActive !== false}
+                  onChange={(e) => handleToggleActive(a.id, e.target.checked)}
+                  className="accent-gallery-accent"
+                />
+                Active
+              </label>
               <label className="flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"

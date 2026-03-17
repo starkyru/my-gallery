@@ -8,7 +8,6 @@ import * as fs from 'fs/promises';
 import * as crypto from 'crypto';
 import { ImageEntity } from './image.entity';
 import { ImagePrintOptionEntity } from './image-print-option.entity';
-import { ImageCategory } from '@gallery/shared';
 
 const ALLOWED_FORMATS = ['jpeg', 'png', 'webp', 'tiff'];
 
@@ -34,11 +33,13 @@ export class ImagesService {
     );
   }
 
-  findAll(query?: { category?: ImageCategory; featured?: boolean }) {
+  findAll(query?: { category?: string; featured?: boolean }) {
     const qb = this.repo
       .createQueryBuilder('image')
       .leftJoinAndSelect('image.artist', 'artist')
       .leftJoinAndSelect('image.printOptions', 'printOptions')
+      .andWhere('image.isArchived = false')
+      .andWhere('artist.isActive = true')
       .orderBy('image.sortOrder', 'ASC')
       .addOrderBy('image.createdAt', 'DESC');
 
@@ -50,6 +51,48 @@ export class ImagesService {
     }
 
     return qb.getMany();
+  }
+
+  findAllAdmin() {
+    return this.repo
+      .createQueryBuilder('image')
+      .leftJoinAndSelect('image.artist', 'artist')
+      .leftJoinAndSelect('image.printOptions', 'printOptions')
+      .orderBy('image.sortOrder', 'ASC')
+      .addOrderBy('image.createdAt', 'DESC')
+      .getMany();
+  }
+
+  async bulkAction(ids: number[], action: string, value?: string) {
+    if (ids.length === 0) return;
+    switch (action) {
+      case 'archive':
+        await this.repo
+          .createQueryBuilder()
+          .update()
+          .set({ isArchived: true })
+          .whereInIds(ids)
+          .execute();
+        break;
+      case 'unarchive':
+        await this.repo
+          .createQueryBuilder()
+          .update()
+          .set({ isArchived: false })
+          .whereInIds(ids)
+          .execute();
+        break;
+      case 'setCategory':
+        if (value) {
+          await this.repo
+            .createQueryBuilder()
+            .update()
+            .set({ category: value })
+            .whereInIds(ids)
+            .execute();
+        }
+        break;
+    }
   }
 
   async findOne(id: number) {

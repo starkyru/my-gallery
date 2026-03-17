@@ -3,10 +3,8 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
+import { ServiceCard, inputClass } from '@/components/service-card';
 import type { ServiceConfig } from '@gallery/shared';
-
-const inputClass =
-  'w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded text-sm text-white placeholder:text-gallery-gray focus:outline-none focus:border-gallery-accent';
 
 export default function SettingsPage() {
   const { token } = useAuthStore();
@@ -18,9 +16,28 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState<string | null>(null);
   const [newSku, setNewSku] = useState<Record<string, { sku: string; description: string }>>({});
 
+  const [galleryName, setGalleryName] = useState('');
+  const [savingGallery, setSavingGallery] = useState(false);
+
   useEffect(() => {
-    if (token) loadConfigs();
+    if (token) {
+      loadConfigs();
+      api.galleryConfig
+        .get()
+        .then((c) => setGalleryName(c.galleryName || 'Gallery'))
+        .catch(() => {});
+    }
   }, [token]);
+
+  async function handleSaveGalleryName() {
+    if (!token) return;
+    setSavingGallery(true);
+    try {
+      await api.galleryConfig.update({ galleryName }, token);
+    } finally {
+      setSavingGallery(false);
+    }
+  }
 
   async function loadConfigs() {
     if (!token) return;
@@ -89,6 +106,27 @@ export default function SettingsPage() {
   return (
     <div>
       <h1 className="font-serif text-3xl mb-8">Settings</h1>
+
+      <section className="mb-10">
+        <h2 className="font-serif text-xl mb-4">Gallery Settings</h2>
+        <div className="p-4 border border-white/10 rounded-lg flex gap-3 items-end">
+          <div className="flex-1">
+            <label className="block text-xs text-gallery-gray mb-1">Gallery Name</label>
+            <input
+              value={galleryName}
+              onChange={(e) => setGalleryName(e.target.value)}
+              className="w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded text-sm text-white focus:outline-none focus:border-gallery-accent"
+            />
+          </div>
+          <button
+            onClick={handleSaveGalleryName}
+            disabled={savingGallery}
+            className="px-4 py-1.5 bg-gallery-accent text-gallery-black rounded text-sm font-medium hover:bg-gallery-accent-light transition-colors disabled:opacity-50"
+          >
+            {savingGallery ? 'Saving...' : 'Save'}
+          </button>
+        </div>
+      </section>
 
       <section className="mb-10">
         <h2 className="font-serif text-xl mb-4">Payment Providers</h2>
@@ -209,105 +247,6 @@ export default function SettingsPage() {
           ))}
         </div>
       </section>
-    </div>
-  );
-}
-
-function ServiceCard({
-  config,
-  expanded,
-  onToggle,
-  onEnableChange,
-  credentials,
-  onCredentialChange,
-  settings,
-  onSettingChange,
-  onSave,
-  saving,
-}: {
-  config: ServiceConfig;
-  expanded: boolean;
-  onToggle: () => void;
-  onEnableChange: (enabled: boolean) => void;
-  credentials: Record<string, string>;
-  onCredentialChange: (key: string, value: string) => void;
-  settings: Record<string, any>;
-  onSettingChange: (key: string, value: any) => void;
-  onSave: () => void;
-  saving: boolean;
-}) {
-  return (
-    <div className="border border-white/10 rounded-lg overflow-hidden">
-      <div className="flex items-center justify-between p-4">
-        <button onClick={onToggle} className="flex-1 text-left">
-          <div className="flex items-center gap-3">
-            <span className="font-medium">{config.displayName}</span>
-            {config.configured ? (
-              <span className="text-xs text-green-400">configured</span>
-            ) : (
-              <span className="text-xs text-gallery-gray">not configured</span>
-            )}
-          </div>
-        </button>
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={config.enabled}
-            onChange={(e) => onEnableChange(e.target.checked)}
-            className="accent-gallery-accent"
-          />
-          <span className="text-sm text-gallery-gray">Enabled</span>
-        </label>
-      </div>
-      {expanded && (
-        <div className="px-4 pb-4 space-y-3 border-t border-white/10 pt-3">
-          {config.credentialFields.map((field) => (
-            <div key={field.key}>
-              <label className="block text-xs text-gallery-gray mb-1">{field.label}</label>
-              <input
-                type={field.type === 'password' ? 'password' : 'text'}
-                value={credentials[field.key] || ''}
-                onChange={(e) => onCredentialChange(field.key, e.target.value)}
-                placeholder={
-                  config.maskedCredentials[field.key] ? '(set - leave blank to keep)' : ''
-                }
-                className={inputClass}
-              />
-            </div>
-          ))}
-          {(config.settingsSchema || []).map((field) => (
-            <div key={field.key}>
-              {field.type === 'boolean' ? (
-                <label className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={settings[field.key] ?? field.default ?? false}
-                    onChange={(e) => onSettingChange(field.key, e.target.checked)}
-                    className="accent-gallery-accent"
-                  />
-                  {field.label}
-                </label>
-              ) : (
-                <>
-                  <label className="block text-xs text-gallery-gray mb-1">{field.label}</label>
-                  <input
-                    value={settings[field.key] ?? ''}
-                    onChange={(e) => onSettingChange(field.key, e.target.value)}
-                    className={inputClass}
-                  />
-                </>
-              )}
-            </div>
-          ))}
-          <button
-            onClick={onSave}
-            disabled={saving}
-            className="px-4 py-1.5 bg-gallery-accent text-gallery-black rounded text-sm font-medium hover:bg-gallery-accent-light transition-colors disabled:opacity-50"
-          >
-            {saving ? 'Saving...' : 'Save'}
-          </button>
-        </div>
-      )}
     </div>
   );
 }

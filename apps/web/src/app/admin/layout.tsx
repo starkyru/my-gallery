@@ -10,6 +10,7 @@ const ADMIN_NAV = [
   { href: '/admin/images', label: 'Images' },
   { href: '/admin/orders', label: 'Orders' },
   { href: '/admin/artists', label: 'Artists' },
+  { href: '/admin/categories', label: 'Categories' },
   { href: '/admin/settings', label: 'Settings' },
   { href: '/admin/users', label: 'Users' },
 ];
@@ -23,6 +24,7 @@ const ADMIN_ONLY_ROUTES = [
   '/admin/images',
   '/admin/orders',
   '/admin/artists',
+  '/admin/categories',
   '/admin/settings',
   '/admin/users',
 ];

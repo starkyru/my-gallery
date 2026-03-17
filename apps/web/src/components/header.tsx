@@ -1,19 +1,31 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCartStore } from '@/store/cart';
+import { api } from '@/lib/api';
 
 export function Header() {
   const itemCount = useCartStore((s) => s.items.length);
   const pathname = usePathname();
   const isAdmin = pathname.startsWith('/admin');
+  const [galleryName, setGalleryName] = useState('Gallery');
+
+  useEffect(() => {
+    api.galleryConfig
+      .get()
+      .then((c) => {
+        if (c.galleryName) setGalleryName(c.galleryName);
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-gallery-black/80 backdrop-blur-md border-b border-white/5">
       <nav className="mx-auto max-w-7xl flex items-center justify-between px-6 py-4">
         <Link href="/" className="font-serif text-xl tracking-wider text-gallery-accent">
-          Gallery
+          {galleryName}
         </Link>
         {!isAdmin && (
           <div className="flex items-center gap-6 text-sm">
