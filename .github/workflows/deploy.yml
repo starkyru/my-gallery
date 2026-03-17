@@ -48,11 +48,9 @@ jobs:
             # Sync database schema (create new tables/columns)
             cd apps/api && pnpm db:sync && cd ../..
 
-            # Stop services and clean up any orphaned gallery processes
+            # Restart services
             pm2 stop ecosystem.config.cjs || true
             pm2 delete gallery-api gallery-web 2>/dev/null || true
-            pkill -f 'dist/main.js' -u "$(whoami)" 2>/dev/null || true
-            pkill -f 'next start.*3002' -u "$(whoami)" 2>/dev/null || true
             sleep 1
             pm2 start ecosystem.config.cjs
 
