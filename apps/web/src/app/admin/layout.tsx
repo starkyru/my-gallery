@@ -32,13 +32,13 @@ const ADMIN_ONLY_ROUTES = [
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { token, role, setAuth } = useAuthStore();
+  const { token, role, hydrated, setAuth } = useAuthStore();
 
   useEffect(() => {
-    if (!token && pathname !== '/admin/login' && pathname !== '/admin/reset-password') {
+    if (hydrated && !token && pathname !== '/admin/login' && pathname !== '/admin/reset-password') {
       router.push('/admin/login');
     }
-  }, [token, pathname, router]);
+  }, [hydrated, token, pathname, router]);
 
   useEffect(() => {
     if (token && role === 'artist' && ADMIN_ONLY_ROUTES.some((r) => pathname.startsWith(r))) {
@@ -47,7 +47,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [token, role, pathname, router]);
 
   if (pathname === '/admin/login' || pathname === '/admin/reset-password') return <>{children}</>;
-  if (!token) return null;
+  if (!hydrated || !token) return null;
 
   const navItems = role === 'admin' ? ADMIN_NAV : ARTIST_NAV;
 
