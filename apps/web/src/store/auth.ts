@@ -31,9 +31,6 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'gallery-auth',
-      onRehydrateStorage: () => () => {
-        useAuthStore.setState({ hydrated: true });
-      },
       partialize: (state) => ({
         token: state.token,
         role: state.role,
@@ -42,3 +39,14 @@ export const useAuthStore = create<AuthState>()(
     },
   ),
 );
+
+// Reliable hydration detection — works regardless of onRehydrateStorage timing
+if (typeof window !== 'undefined') {
+  useAuthStore.persist.onFinishHydration(() => {
+    useAuthStore.setState({ hydrated: true });
+  });
+  // If already hydrated (e.g., sync storage), set immediately
+  if (useAuthStore.persist.hasHydrated()) {
+    useAuthStore.setState({ hydrated: true });
+  }
+}

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, redirect } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
 import { useEffect } from 'react';
 
@@ -35,19 +35,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { token, role, hydrated, setAuth } = useAuthStore();
 
   useEffect(() => {
-    if (hydrated && !token && pathname !== '/admin/login' && pathname !== '/admin/reset-password') {
-      router.push('/admin/login');
-    }
-  }, [hydrated, token, pathname, router]);
-
-  useEffect(() => {
     if (token && role === 'artist' && ADMIN_ONLY_ROUTES.some((r) => pathname.startsWith(r))) {
       router.push('/admin');
     }
   }, [token, role, pathname, router]);
 
   if (pathname === '/admin/login' || pathname === '/admin/reset-password') return <>{children}</>;
-  if (!hydrated || !token) return null;
+
+  if (!hydrated) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-gallery-gray text-sm">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!token) {
+    redirect('/admin/login');
+  }
 
   const navItems = role === 'admin' ? ADMIN_NAV : ARTIST_NAV;
 
