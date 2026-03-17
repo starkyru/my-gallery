@@ -75,11 +75,14 @@ export interface FulfillmentSku {
   description: string;
 }
 
+export type UserRole = 'admin' | 'photographer';
+
 export interface Photographer {
   id: number;
   name: string;
   bio: string | null;
   avatarUrl: string | null;
+  loginEnabled?: boolean;
   createdAt: Date;
 }
 
@@ -138,6 +141,7 @@ export interface OrderItem {
 export interface AdminUser {
   id: number;
   username: string;
+  email: string;
   passwordHash: string;
   createdAt: Date;
 }

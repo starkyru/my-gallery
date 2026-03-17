@@ -1,6 +1,18 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Param,
+  Body,
+  UseGuards,
+  Request,
+  ForbiddenException,
+} from '@nestjs/common';
 import { IsString, IsOptional } from 'class-validator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { AdminGuard } from '../auth/admin.guard';
 import { PhotographersService } from './photographers.service';
 
 class CreatePhotographerDto {
@@ -45,19 +57,27 @@ export class PhotographersController {
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   create(@Body() dto: CreatePhotographerDto) {
     return this.service.create(dto);
   }
 
   @Put(':id')
   @UseGuards(JwtAuthGuard)
-  update(@Param('id') id: string, @Body() dto: UpdatePhotographerDto) {
+  update(@Param('id') id: string, @Body() dto: UpdatePhotographerDto, @Request() req: any) {
+    if (req.user.role !== 'admin') {
+      if (req.user.photographerId !== +id) {
+        throw new ForbiddenException('You can only edit your own profile');
+      }
+      // Photographers can only update bio and avatarUrl
+      const { bio, avatarUrl } = dto;
+      return this.service.update(+id, { bio, avatarUrl });
+    }
     return this.service.update(+id, dto);
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   remove(@Param('id') id: string) {
     return this.service.remove(+id);
   }

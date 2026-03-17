@@ -19,6 +19,15 @@ export default function AdminImagesPage() {
   const [images, setImages] = useState<any[]>([]);
   const [photographers, setPhotographers] = useState<any[]>([]);
   const [showUpload, setShowUpload] = useState(false);
+  const [showBulkUpload, setShowBulkUpload] = useState(false);
+  const [bulkFiles, setBulkFiles] = useState<File[]>([]);
+  const [bulkForm, setBulkForm] = useState({
+    price: '',
+    photographerId: '',
+    category: ImageCategory.Other,
+  });
+  const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
+  const bulkFileRef = useRef<HTMLInputElement>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editData, setEditData] = useState<any>({});
   const [editPrintOptions, setEditPrintOptions] = useState<PrintOptionRow[]>([]);
@@ -69,6 +78,36 @@ export default function AdminImagesPage() {
     await api.images.upload(formData, token);
     setShowUpload(false);
     setUploadForm({ title: '', price: '', photographerId: '', category: ImageCategory.Other });
+    if (fileRef.current) fileRef.current.value = '';
+    loadData();
+  }
+
+  async function handleBulkUpload(e: React.FormEvent) {
+    e.preventDefault();
+    if (!token || bulkFiles.length === 0) return;
+
+    setBulkProgress({ done: 0, total: bulkFiles.length });
+    for (let i = 0; i < bulkFiles.length; i++) {
+      const file = bulkFiles[i];
+      const title = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('title', title);
+      formData.append('price', bulkForm.price);
+      formData.append('photographerId', bulkForm.photographerId);
+      formData.append('category', bulkForm.category);
+      try {
+        await api.images.upload(formData, token);
+      } catch {
+        // continue with remaining files
+      }
+      setBulkProgress({ done: i + 1, total: bulkFiles.length });
+    }
+    setBulkProgress(null);
+    setBulkFiles([]);
+    setBulkForm({ price: '', photographerId: '', category: ImageCategory.Other });
+    setShowBulkUpload(false);
+    if (bulkFileRef.current) bulkFileRef.current.value = '';
     loadData();
   }
 
@@ -149,12 +188,26 @@ export default function AdminImagesPage() {
     <div>
       <div className="flex items-center justify-between mb-8">
         <h1 className="font-serif text-3xl">Images</h1>
-        <button
-          onClick={() => setShowUpload(!showUpload)}
-          className="px-4 py-2 bg-gallery-accent text-gallery-black rounded-lg text-sm font-medium hover:bg-gallery-accent-light transition-colors"
-        >
-          {showUpload ? 'Cancel' : 'Upload Image'}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              setShowBulkUpload(!showBulkUpload);
+              setShowUpload(false);
+            }}
+            className="px-4 py-2 border border-white/10 text-white rounded-lg text-sm font-medium hover:border-white/30 transition-colors"
+          >
+            {showBulkUpload ? 'Cancel' : 'Bulk Upload'}
+          </button>
+          <button
+            onClick={() => {
+              setShowUpload(!showUpload);
+              setShowBulkUpload(false);
+            }}
+            className="px-4 py-2 bg-gallery-accent text-gallery-black rounded-lg text-sm font-medium hover:bg-gallery-accent-light transition-colors"
+          >
+            {showUpload ? 'Cancel' : 'Upload Image'}
+          </button>
+        </div>
       </div>
 
       {showUpload && (
@@ -162,7 +215,16 @@ export default function AdminImagesPage() {
           onSubmit={handleUpload}
           className="mb-8 p-6 border border-white/10 rounded-lg space-y-4"
         >
-          <input ref={fileRef} type="file" accept="image/*" required className="text-sm" />
+          <div>
+            <label className="block text-sm text-gallery-gray mb-2">Image file</label>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              required
+              className="block w-full text-sm text-gallery-gray file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-white/10 file:text-white hover:file:bg-white/20 file:cursor-pointer"
+            />
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <input
               value={uploadForm.title}
@@ -212,6 +274,77 @@ export default function AdminImagesPage() {
             className="px-6 py-2 bg-gallery-accent text-gallery-black rounded-lg text-sm font-medium hover:bg-gallery-accent-light transition-colors"
           >
             Upload
+          </button>
+        </form>
+      )}
+
+      {showBulkUpload && (
+        <form
+          onSubmit={handleBulkUpload}
+          className="mb-8 p-6 border border-white/10 rounded-lg space-y-4"
+        >
+          <div>
+            <label className="block text-sm text-gallery-gray mb-2">
+              Select multiple images (titles derived from filenames)
+            </label>
+            <input
+              ref={bulkFileRef}
+              type="file"
+              accept="image/*"
+              multiple
+              required
+              onChange={(e) => setBulkFiles(Array.from(e.target.files || []))}
+              className="block w-full text-sm text-gallery-gray file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-white/10 file:text-white hover:file:bg-white/20 file:cursor-pointer"
+            />
+            {bulkFiles.length > 0 && (
+              <p className="text-xs text-gallery-gray mt-1">{bulkFiles.length} file(s) selected</p>
+            )}
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <input
+              value={bulkForm.price}
+              onChange={(e) => setBulkForm((f) => ({ ...f, price: e.target.value }))}
+              placeholder="Price (all images)"
+              type="number"
+              step="0.01"
+              required
+              className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-gallery-gray focus:outline-none focus:border-gallery-accent"
+            />
+            <select
+              value={bulkForm.photographerId}
+              onChange={(e) => setBulkForm((f) => ({ ...f, photographerId: e.target.value }))}
+              required
+              className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-gallery-accent"
+            >
+              <option value="">Select photographer</option>
+              {photographers.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+            <select
+              value={bulkForm.category}
+              onChange={(e) =>
+                setBulkForm((f) => ({ ...f, category: e.target.value as ImageCategory }))
+              }
+              className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-gallery-accent"
+            >
+              {Object.values(ImageCategory).map((c) => (
+                <option key={c} value={c}>
+                  {c.replace(/_/g, ' ')}
+                </option>
+              ))}
+            </select>
+          </div>
+          <button
+            type="submit"
+            disabled={bulkProgress !== null}
+            className="px-6 py-2 bg-gallery-accent text-gallery-black rounded-lg text-sm font-medium hover:bg-gallery-accent-light transition-colors disabled:opacity-50"
+          >
+            {bulkProgress
+              ? `Uploading ${bulkProgress.done}/${bulkProgress.total}...`
+              : `Upload ${bulkFiles.length || ''} Image${bulkFiles.length !== 1 ? 's' : ''}`}
           </button>
         </form>
       )}

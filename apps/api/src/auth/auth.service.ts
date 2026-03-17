@@ -1,16 +1,29 @@
-import { Injectable, OnModuleInit, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  OnModuleInit,
+  UnauthorizedException,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
+import * as nodemailer from 'nodemailer';
 import { AdminUserEntity } from './admin-user.entity';
+import { PhotographerEntity } from '../photographers/photographer.entity';
 
 @Injectable()
 export class AuthService implements OnModuleInit {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     @InjectRepository(AdminUserEntity)
     private readonly adminRepo: Repository<AdminUserEntity>,
+    @InjectRepository(PhotographerEntity)
+    private readonly photographerRepo: Repository<PhotographerEntity>,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
   ) {}
@@ -19,24 +32,205 @@ export class AuthService implements OnModuleInit {
     const count = await this.adminRepo.count();
     if (count === 0) {
       const password = this.configService.get('ADMIN_INITIAL_PASSWORD', 'admin');
+      const email = this.configService.get('ADMIN_EMAIL', '');
       const hash = await bcrypt.hash(password, 12);
       await this.adminRepo.save({
         username: 'admin',
+        email,
         passwordHash: hash,
       });
     }
   }
 
   async login(username: string, password: string) {
-    const user = await this.adminRepo.findOne({ where: { username } });
-    if (!user) throw new UnauthorizedException('Invalid credentials');
+    // Try admin first
+    const admin = await this.adminRepo.findOne({ where: { username } });
+    if (admin) {
+      const valid = await bcrypt.compare(password, admin.passwordHash);
+      if (!valid) throw new UnauthorizedException('Invalid credentials');
 
-    const valid = await bcrypt.compare(password, user.passwordHash);
-    if (!valid) throw new UnauthorizedException('Invalid credentials');
+      const payload = { sub: admin.id, username: admin.username, role: 'admin' as const };
+      return { accessToken: this.jwtService.sign(payload), role: 'admin' as const };
+    }
 
-    const payload = { sub: user.id, username: user.username };
-    return {
-      accessToken: this.jwtService.sign(payload),
-    };
+    // Try photographer
+    const photographer = await this.photographerRepo.findOne({ where: { name: username } });
+    if (photographer && photographer.loginEnabled && photographer.passwordHash) {
+      const valid = await bcrypt.compare(password, photographer.passwordHash);
+      if (!valid) throw new UnauthorizedException('Invalid credentials');
+
+      const payload = {
+        sub: photographer.id,
+        username: photographer.name,
+        role: 'photographer' as const,
+        photographerId: photographer.id,
+      };
+      return {
+        accessToken: this.jwtService.sign(payload),
+        role: 'photographer' as const,
+        photographerId: photographer.id,
+      };
+    }
+
+    throw new UnauthorizedException('Invalid credentials');
+  }
+
+  async changePassword(
+    userId: number,
+    currentPassword: string,
+    newPassword: string,
+    role: string = 'admin',
+  ) {
+    if (role === 'photographer') {
+      const photographer = await this.photographerRepo.findOne({ where: { id: userId } });
+      if (!photographer || !photographer.passwordHash)
+        throw new UnauthorizedException('User not found');
+
+      const valid = await bcrypt.compare(currentPassword, photographer.passwordHash);
+      if (!valid) throw new BadRequestException('Current password is incorrect');
+
+      photographer.passwordHash = await bcrypt.hash(newPassword, 12);
+      await this.photographerRepo.save(photographer);
+      return;
+    }
+
+    const user = await this.adminRepo.findOne({ where: { id: userId } });
+    if (!user) throw new UnauthorizedException('User not found');
+
+    const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!valid) throw new BadRequestException('Current password is incorrect');
+
+    user.passwordHash = await bcrypt.hash(newPassword, 12);
+    await this.adminRepo.save(user);
+  }
+
+  async setPhotographerPassword(photographerId: number, newPassword: string) {
+    const photographer = await this.photographerRepo.findOne({ where: { id: photographerId } });
+    if (!photographer) throw new BadRequestException('Photographer not found');
+
+    photographer.passwordHash = await bcrypt.hash(newPassword, 12);
+    await this.photographerRepo.save(photographer);
+  }
+
+  async togglePhotographerLogin(photographerId: number, enabled: boolean) {
+    const photographer = await this.photographerRepo.findOne({ where: { id: photographerId } });
+    if (!photographer) throw new BadRequestException('Photographer not found');
+
+    photographer.loginEnabled = enabled;
+    await this.photographerRepo.save(photographer);
+  }
+
+  async findAll() {
+    const users = await this.adminRepo.find({ order: { createdAt: 'ASC' } });
+    return users.map((u) => ({
+      id: u.id,
+      username: u.username,
+      email: u.email,
+      createdAt: u.createdAt,
+    }));
+  }
+
+  async createUser(username: string, email: string, password: string) {
+    const hash = await bcrypt.hash(password, 12);
+    const user = await this.adminRepo.save({
+      username,
+      email,
+      passwordHash: hash,
+    });
+    return { id: user.id, username: user.username, email: user.email, createdAt: user.createdAt };
+  }
+
+  async removeUser(userId: number, _requesterId: number) {
+    const count = await this.adminRepo.count();
+    if (count <= 1) {
+      throw new BadRequestException('Cannot delete the last admin user');
+    }
+    const user = await this.adminRepo.findOne({ where: { id: userId } });
+    if (!user) throw new BadRequestException('User not found');
+    await this.adminRepo.remove(user);
+  }
+
+  async requestPasswordReset(email: string) {
+    const user = await this.adminRepo.findOne({ where: { email } });
+    if (!user) {
+      // Don't reveal whether the email exists
+      return;
+    }
+
+    const secret = this.configService.get('JWT_SECRET', 'dev-secret-change-me');
+    const timestamp = Date.now();
+    const data = `${user.id}:${timestamp}`;
+    const hmac = crypto.createHmac('sha256', secret).update(data).digest('hex');
+    const token = Buffer.from(`${data}:${hmac}`).toString('base64url');
+
+    const publicUrl = this.configService.get('PUBLIC_URL', 'http://localhost:3000');
+    const resetLink = `${publicUrl}/admin/reset-password?token=${token}`;
+
+    await this.sendEmail(
+      email,
+      'Password Reset - Gallery Admin',
+      `<p>You requested a password reset.</p>
+       <p><a href="${resetLink}">Click here to reset your password</a></p>
+       <p>This link expires in 1 hour.</p>
+       <p>If you didn't request this, ignore this email.</p>`,
+    );
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    const secret = this.configService.get('JWT_SECRET', 'dev-secret-change-me');
+
+    let decoded: string;
+    try {
+      decoded = Buffer.from(token, 'base64url').toString();
+    } catch {
+      throw new BadRequestException('Invalid reset token');
+    }
+
+    const parts = decoded.split(':');
+    if (parts.length !== 3) throw new BadRequestException('Invalid reset token');
+
+    const [userIdStr, timestampStr, hmac] = parts;
+    const data = `${userIdStr}:${timestampStr}`;
+    const expectedHmac = crypto.createHmac('sha256', secret).update(data).digest('hex');
+
+    if (hmac !== expectedHmac) throw new BadRequestException('Invalid reset token');
+
+    const timestamp = parseInt(timestampStr, 10);
+    const oneHour = 60 * 60 * 1000;
+    if (Date.now() - timestamp > oneHour) {
+      throw new BadRequestException('Reset token has expired');
+    }
+
+    const userId = parseInt(userIdStr, 10);
+    const user = await this.adminRepo.findOne({ where: { id: userId } });
+    if (!user) throw new BadRequestException('Invalid reset token');
+
+    user.passwordHash = await bcrypt.hash(newPassword, 12);
+    await this.adminRepo.save(user);
+  }
+
+  private async sendEmail(to: string, subject: string, html: string) {
+    const host = this.configService.get('SMTP_HOST');
+    if (!host) {
+      this.logger.warn('SMTP not configured, skipping email send');
+      return;
+    }
+
+    const transporter = nodemailer.createTransport({
+      host,
+      port: parseInt(this.configService.get('SMTP_PORT', '587'), 10),
+      secure: false,
+      auth: {
+        user: this.configService.get('SMTP_USER'),
+        pass: this.configService.get('SMTP_PASS'),
+      },
+    });
+
+    await transporter.sendMail({
+      from: this.configService.get('SMTP_FROM', 'gallery@ilia.to'),
+      to,
+      subject,
+      html,
+    });
   }
 }

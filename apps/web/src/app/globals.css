@@ -23,3 +23,9 @@ html.lenis body {
   background-color: var(--color-gallery-accent);
   color: var(--color-gallery-black);
 }
+
+@media (prefers-reduced-motion: no-preference) {
+  .gallery-card {
+    will-change: transform;
+  }
+}

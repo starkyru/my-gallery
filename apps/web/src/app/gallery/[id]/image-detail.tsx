@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useCartStore } from '@/store/cart';
+import gsap from 'gsap';
 import type { ImagePrintOption } from '@gallery/shared';
 
 const UPLOAD_URL = process.env.NEXT_PUBLIC_UPLOAD_URL || 'http://localhost:4000/uploads';
@@ -29,6 +30,10 @@ interface ImageDetailProps {
 export function ImageDetail({ image }: ImageDetailProps) {
   const { addItem, items } = useCartStore();
   const [selectedSku, setSelectedSku] = useState<string>('');
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLDivElement>(null);
+  const detailsRef = useRef<HTMLDivElement>(null);
 
   const originalInCart = items.some((i) => i.imageId === image.id && i.type === 'original');
 
@@ -40,20 +45,50 @@ export function ImageDetail({ image }: ImageDetailProps) {
   const remaining = image.printLimit !== null ? image.printLimit - image.printsSold : null;
   const soldOut = remaining !== null && remaining <= 0;
 
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const ctx = gsap.context(() => {
+      gsap.from(imageRef.current, {
+        x: -40,
+        opacity: 0,
+        duration: 1,
+        ease: 'power3.out',
+      });
+
+      gsap.from(detailsRef.current, {
+        x: 40,
+        opacity: 0,
+        duration: 1,
+        delay: 0.15,
+        ease: 'power3.out',
+      });
+    }, containerRef);
+
+    return () => ctx.revert();
+  }, []);
+
   return (
-    <div className="mx-auto max-w-6xl px-6 pt-28 pb-24">
+    <div ref={containerRef} className="mx-auto max-w-6xl px-6 pt-28 pb-24">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        <div className="relative overflow-hidden rounded-lg bg-white/5">
-          <Image
-            src={`${UPLOAD_URL}/${image.watermarkPath}`}
-            alt={image.title}
-            width={image.width}
-            height={image.height}
-            className="w-full h-auto"
-            priority
-          />
+        <div ref={imageRef} className="relative overflow-hidden rounded-lg bg-white/5">
+          <div
+            className={`transition-all duration-1000 ease-out ${
+              imageLoaded ? 'blur-0 scale-100' : 'blur-md scale-[1.03]'
+            }`}
+          >
+            <Image
+              src={`${UPLOAD_URL}/${image.watermarkPath}`}
+              alt={image.title}
+              width={image.width}
+              height={image.height}
+              className="w-full h-auto"
+              priority
+              onLoad={() => setImageLoaded(true)}
+            />
+          </div>
         </div>
-        <div className="flex flex-col justify-center">
+        <div ref={detailsRef} className="flex flex-col justify-center">
           <p className="text-gallery-accent text-sm uppercase tracking-widest mb-2">
             {image.category.replace(/_/g, ' ')}
           </p>
@@ -66,7 +101,7 @@ export function ImageDetail({ image }: ImageDetailProps) {
           )}
 
           {/* Digital Original */}
-          <div className="mb-6 p-4 border border-white/10 rounded-lg">
+          <div className="mb-6 p-4 border border-white/10 rounded-lg hover:border-white/20 transition-colors duration-300">
             <div className="flex items-center justify-between mb-3">
               <div>
                 <p className="font-medium">Digital Original</p>
@@ -95,7 +130,7 @@ export function ImageDetail({ image }: ImageDetailProps) {
 
           {/* Print Options */}
           {image.printEnabled && image.printOptions?.length > 0 && (
-            <div className="p-4 border border-white/10 rounded-lg">
+            <div className="p-4 border border-white/10 rounded-lg hover:border-white/20 transition-colors duration-300">
               <div className="flex items-center justify-between mb-3">
                 <div>
                   <p className="font-medium">Buy Print</p>

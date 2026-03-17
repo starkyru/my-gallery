@@ -10,7 +10,10 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { setToken } = useAuthStore();
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotSent, setForgotSent] = useState(false);
+  const { setAuth } = useAuthStore();
   const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent) {
@@ -18,8 +21,8 @@ export default function AdminLoginPage() {
     setLoading(true);
     setError('');
     try {
-      const { accessToken } = await api.auth.login(username, password);
-      setToken(accessToken);
+      const { accessToken, role, photographerId } = await api.auth.login(username, password);
+      setAuth(accessToken, role as 'admin' | 'photographer', photographerId ?? null);
       router.push('/admin');
     } catch {
       setError('Invalid credentials');
@@ -28,33 +31,100 @@ export default function AdminLoginPage() {
     }
   }
 
+  async function handleForgot(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    try {
+      await api.auth.forgotPassword(forgotEmail);
+      setForgotSent(true);
+    } catch {
+      setError('Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const inputClass =
+    'w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-gallery-gray focus:outline-none focus:border-gallery-accent';
+
   return (
     <div className="flex items-center justify-center min-h-screen px-6">
-      <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
-        <h1 className="font-serif text-3xl text-center mb-8">Admin Login</h1>
-        {error && <p className="text-red-400 text-sm text-center">{error}</p>}
-        <input
-          type="text"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          placeholder="Username"
-          className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-gallery-gray focus:outline-none focus:border-gallery-accent"
-        />
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
-          className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-gallery-gray focus:outline-none focus:border-gallery-accent"
-        />
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full px-6 py-3 bg-gallery-accent text-gallery-black font-medium rounded-lg hover:bg-gallery-accent-light transition-colors disabled:opacity-50"
-        >
-          {loading ? 'Signing in...' : 'Sign In'}
-        </button>
-      </form>
+      {showForgot ? (
+        <div className="w-full max-w-sm space-y-4">
+          <h1 className="font-serif text-3xl text-center mb-8">Reset Password</h1>
+          {error && <p className="text-red-400 text-sm text-center">{error}</p>}
+          {forgotSent ? (
+            <p className="text-green-400 text-sm text-center">
+              If that email is registered, you will receive a reset link shortly.
+            </p>
+          ) : (
+            <form onSubmit={handleForgot} className="space-y-4">
+              <input
+                type="email"
+                value={forgotEmail}
+                onChange={(e) => setForgotEmail(e.target.value)}
+                placeholder="Your email address"
+                required
+                className={inputClass}
+              />
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full px-6 py-3 bg-gallery-accent text-gallery-black font-medium rounded-lg hover:bg-gallery-accent-light transition-colors disabled:opacity-50"
+              >
+                {loading ? 'Sending...' : 'Send Reset Link'}
+              </button>
+            </form>
+          )}
+          <button
+            onClick={() => {
+              setShowForgot(false);
+              setForgotSent(false);
+              setError('');
+            }}
+            className="w-full text-sm text-gallery-gray hover:text-white transition-colors text-center"
+          >
+            Back to login
+          </button>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
+          <h1 className="font-serif text-3xl text-center mb-8">Login</h1>
+          {error && <p className="text-red-400 text-sm text-center">{error}</p>}
+          <input
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="Username"
+            className={inputClass}
+          />
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Password"
+            className={inputClass}
+          />
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full px-6 py-3 bg-gallery-accent text-gallery-black font-medium rounded-lg hover:bg-gallery-accent-light transition-colors disabled:opacity-50"
+          >
+            {loading ? 'Signing in...' : 'Sign In'}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setShowForgot(true);
+              setError('');
+            }}
+            className="w-full text-sm text-gallery-gray hover:text-white transition-colors text-center"
+          >
+            Forgot password?
+          </button>
+        </form>
+      )}
     </div>
   );
 }

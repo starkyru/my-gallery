@@ -10,12 +10,18 @@ export class PhotographersService {
     private readonly repo: Repository<PhotographerEntity>,
   ) {}
 
-  findAll() {
-    return this.repo.find({ order: { name: 'ASC' } });
+  async findAll() {
+    return this.repo.find({
+      order: { name: 'ASC' },
+      select: ['id', 'name', 'bio', 'avatarUrl', 'loginEnabled', 'createdAt'],
+    });
   }
 
   async findOne(id: number) {
-    const photographer = await this.repo.findOne({ where: { id } });
+    const photographer = await this.repo.findOne({
+      where: { id },
+      select: ['id', 'name', 'bio', 'avatarUrl', 'loginEnabled', 'createdAt'],
+    });
     if (!photographer) throw new NotFoundException('Photographer not found');
     return photographer;
   }

@@ -8,6 +8,9 @@ export class AdminUserEntity {
   @Column({ unique: true })
   username!: string;
 
+  @Column({ unique: true, default: '' })
+  email!: string;
+
   @Column({ name: 'password_hash' })
   passwordHash!: string;
 

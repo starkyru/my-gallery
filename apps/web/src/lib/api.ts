@@ -126,9 +126,52 @@ export const api = {
   },
   auth: {
     login: (username: string, password: string) =>
-      request<{ accessToken: string }>('/auth/login', {
+      request<{ accessToken: string; role: string; photographerId?: number }>('/auth/login', {
         method: 'POST',
         body: JSON.stringify({ username, password }),
+      }),
+    setPhotographerPassword: (token: string, photographerId: number, password: string) =>
+      request(`/auth/photographers/${photographerId}/password`, {
+        method: 'PUT',
+        body: JSON.stringify({ password }),
+        headers: authHeaders(token),
+      }),
+    togglePhotographerLogin: (token: string, photographerId: number, loginEnabled: boolean) =>
+      request(`/auth/photographers/${photographerId}/login`, {
+        method: 'PUT',
+        body: JSON.stringify({ loginEnabled }),
+        headers: authHeaders(token),
+      }),
+    changePassword: (token: string, currentPassword: string, newPassword: string) =>
+      request('/auth/password', {
+        method: 'PUT',
+        body: JSON.stringify({ currentPassword, newPassword }),
+        headers: authHeaders(token),
+      }),
+    listUsers: (token: string) =>
+      request<{ id: number; username: string; email: string; createdAt: string }[]>('/auth/users', {
+        headers: authHeaders(token),
+      }),
+    createUser: (token: string, username: string, email: string, password: string) =>
+      request('/auth/users', {
+        method: 'POST',
+        body: JSON.stringify({ username, email, password }),
+        headers: authHeaders(token),
+      }),
+    deleteUser: (token: string, userId: number) =>
+      request(`/auth/users/${userId}`, {
+        method: 'DELETE',
+        headers: authHeaders(token),
+      }),
+    forgotPassword: (email: string) =>
+      request<{ message: string }>('/auth/forgot-password', {
+        method: 'POST',
+        body: JSON.stringify({ email }),
+      }),
+    resetPassword: (token: string, newPassword: string) =>
+      request<{ message: string }>('/auth/reset-password', {
+        method: 'POST',
+        body: JSON.stringify({ token, newPassword }),
       }),
   },
 };

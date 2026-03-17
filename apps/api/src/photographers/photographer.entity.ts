@@ -15,6 +15,12 @@ export class PhotographerEntity {
   @Column({ name: 'avatar_url', type: 'varchar', nullable: true })
   avatarUrl!: string | null;
 
+  @Column({ name: 'password_hash', type: 'varchar', nullable: true })
+  passwordHash!: string | null;
+
+  @Column({ name: 'login_enabled', type: 'boolean', default: false })
+  loginEnabled!: boolean;
+
   @OneToMany(() => ImageEntity, (image) => image.photographer)
   images!: ImageEntity[];
 
