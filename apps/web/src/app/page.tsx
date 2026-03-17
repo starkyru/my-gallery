@@ -1,27 +1,15 @@
-import { GalleryHero } from '@/components/gallery-hero';
-import { GalleryGrid } from '@/components/gallery-grid';
+'use client';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+import { GalleryHero, GalleryGrid } from '@/components/gallery';
+import { useImages } from '@/hooks/useImages';
 
-async function getImages() {
-  try {
-    const res = await fetch(`${API_URL}/api/images`, {
-      next: { revalidate: 300 },
-    });
-    if (!res.ok) return [];
-    return res.json();
-  } catch {
-    return [];
-  }
-}
-
-export default async function HomePage() {
-  const images = await getImages();
+export default function HomePage() {
+  const { images, loading } = useImages();
 
   return (
     <>
       <GalleryHero />
-      <GalleryGrid images={images} />
+      <GalleryGrid images={images} loading={loading} />
     </>
   );
 }

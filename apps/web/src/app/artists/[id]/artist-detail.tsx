@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import gsap from 'gsap';
 import { FilterToolbar } from '@/components/filter-toolbar';
-import { GalleryCard } from '@/components/gallery-grid';
-import type { GalleryImage } from '@/components/gallery-grid';
+import { GalleryCard } from '@/components/gallery';
+import type { GalleryImage } from '@/components/gallery';
 
 const UPLOAD_URL = process.env.NEXT_PUBLIC_UPLOAD_URL || 'http://localhost:4000/uploads';
 
