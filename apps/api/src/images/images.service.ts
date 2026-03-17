@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
@@ -13,6 +13,7 @@ const ALLOWED_FORMATS = ['jpeg', 'png', 'webp', 'tiff'];
 
 @Injectable()
 export class ImagesService {
+  private readonly logger = new Logger(ImagesService.name);
   private readonly uploadDir: string;
 
   constructor(
@@ -118,6 +119,12 @@ export class ImagesService {
   }
 
   async upload(file: Express.Multer.File, data: Partial<ImageEntity>) {
+    this.logger.log(
+      `Upload started: ${file?.originalname}, size=${file?.size}, hasBuffer=${!!file?.buffer}`,
+    );
+    if (!file?.buffer) {
+      throw new BadRequestException('File buffer is missing — check Multer storage config');
+    }
     // Validate actual image content using sharp
     const metadata = await sharp(file.buffer).metadata();
     if (!metadata.format || !ALLOWED_FORMATS.includes(metadata.format)) {
@@ -154,7 +161,12 @@ export class ImagesService {
       height: metadata.height || 0,
     });
 
-    return this.repo.save(image);
+    try {
+      return await this.repo.save(image);
+    } catch (err) {
+      this.logger.error(`Failed to save image: ${err}`);
+      throw err;
+    }
   }
 
   private async createWatermarked(buffer: Buffer, outputPath: string, width: number) {
