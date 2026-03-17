@@ -115,8 +115,12 @@ export class OrdersService {
     return this.orderRepo.save(order);
   }
 
-  async updateItemProdigiOrderId(itemId: number, prodigiOrderId: string) {
-    await this.itemRepo.update(itemId, { prodigiOrderId });
+  async updateItemFulfillment(
+    itemId: number,
+    fulfillmentOrderId: string,
+    fulfillmentProvider: string,
+  ) {
+    await this.itemRepo.update(itemId, { fulfillmentOrderId, fulfillmentProvider });
   }
 
   async getDownloadLinks(orderId: number) {
@@ -132,8 +136,9 @@ export class OrdersService {
           title: item.image?.title,
           type: OrderItemType.Print,
           printSku: item.printSku,
-          prodigiOrderId: item.prodigiOrderId,
-          status: item.prodigiOrderId ? 'Print order submitted' : 'Processing',
+          fulfillmentOrderId: item.fulfillmentOrderId,
+          fulfillmentProvider: item.fulfillmentProvider,
+          status: item.fulfillmentOrderId ? 'Print order submitted' : 'Processing',
         };
       }
       return {

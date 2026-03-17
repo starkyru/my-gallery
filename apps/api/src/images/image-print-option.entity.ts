@@ -21,4 +21,7 @@ export class ImagePrintOptionEntity {
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   price!: number;
+
+  @Column({ name: 'fulfillment_provider', type: 'varchar', nullable: true })
+  fulfillmentProvider!: string | null;
 }

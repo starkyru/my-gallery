@@ -5,23 +5,18 @@ import { PaymentsService } from './payments.service';
 export class PaymentsController {
   constructor(private readonly service: PaymentsService) {}
 
-  @Post('orders/:id/btcpay')
-  createBtcPayInvoice(@Param('id') id: string) {
-    return this.service.createBtcPayInvoice(+id);
+  @Post('orders/:id/:provider')
+  createPayment(@Param('id') id: string, @Param('provider') provider: string) {
+    return this.service.createPayment(+id, provider);
   }
 
-  @Post('orders/:id/paypal')
-  createPayPalOrder(@Param('id') id: string) {
-    return this.service.createPayPalOrder(+id);
+  @Post('orders/:id/:provider/capture')
+  capturePayment(@Param('id') id: string, @Param('provider') provider: string, @Body() body: any) {
+    return this.service.capturePayment(+id, provider, body);
   }
 
-  @Post('orders/:id/paypal/capture')
-  capturePayPalOrder(@Param('id') id: string, @Body('paypalOrderId') paypalOrderId: string) {
-    return this.service.capturePayPalOrder(+id, paypalOrderId);
-  }
-
-  @Post('btcpay/webhook')
-  handleBtcPayWebhook(@Body() payload: any) {
-    return this.service.handleBtcPayWebhook(payload);
+  @Post(':provider/webhook')
+  handleWebhook(@Param('provider') provider: string, @Body() payload: any) {
+    return this.service.handleWebhook(provider, payload);
   }
 }

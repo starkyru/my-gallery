@@ -23,7 +23,9 @@ export default function AdminImagesPage() {
   const [editData, setEditData] = useState<any>({});
   const [editPrintOptions, setEditPrintOptions] = useState<PrintOptionRow[]>([]);
   const [aiLoading, setAiLoading] = useState<number | null>(null);
-  const [availableSkus, setAvailableSkus] = useState<{ sku: string; description: string }[]>([]);
+  const [availableSkus, setAvailableSkus] = useState<
+    { provider: string; sku: string; description: string }[]
+  >([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [uploadForm, setUploadForm] = useState({
@@ -47,8 +49,8 @@ export default function AdminImagesPage() {
       .list()
       .then(setPhotographers)
       .catch(() => {});
-    api.prodigi
-      .skus(token)
+    api.services
+      .fulfillmentSkus()
       .then(setAvailableSkus)
       .catch(() => {});
   }
@@ -295,8 +297,8 @@ export default function AdminImagesPage() {
                               >
                                 <option value="">Select SKU</option>
                                 {availableSkus.map((s) => (
-                                  <option key={s.sku} value={s.sku}>
-                                    {s.description}
+                                  <option key={`${s.provider}-${s.sku}`} value={s.sku}>
+                                    {s.description} ({s.provider})
                                   </option>
                                 ))}
                               </select>

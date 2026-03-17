@@ -1,36 +1,30 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-
-export interface ProdigiSku {
-  sku: string;
-  description: string;
-}
-
-const AVAILABLE_SKUS: ProdigiSku[] = [
-  { sku: 'GLOBAL-PHO-8x10-FP', description: '8x10 Fine Art Print' },
-  { sku: 'GLOBAL-PHO-11x14-FP', description: '11x14 Fine Art Print' },
-  { sku: 'GLOBAL-PHO-16x20-FP', description: '16x20 Fine Art Print' },
-  { sku: 'GLOBAL-PHO-24x36-FP', description: '24x36 Fine Art Print' },
-  { sku: 'GLOBAL-CAN-16x20', description: '16x20 Canvas' },
-];
+import {
+  FulfillmentProvider,
+  FulfillmentResult,
+  FulfillmentWebhookResult,
+} from './fulfillment-provider.interface';
+import { CredentialField, SettingsField } from './payment-provider.interface';
 
 @Injectable()
-export class ProdigiService {
-  private readonly logger = new Logger(ProdigiService.name);
-  private readonly apiKey: string;
-  private readonly baseUrl: string;
+export class ProdigiProvider implements FulfillmentProvider {
+  private readonly logger = new Logger(ProdigiProvider.name);
 
-  constructor(private readonly configService: ConfigService) {
-    this.apiKey = this.configService.get('PRODIGI_API_KEY', '');
-    const sandbox = this.configService.get('PRODIGI_SANDBOX', 'true') === 'true';
-    this.baseUrl = sandbox ? 'https://api.sandbox.prodigi.com' : 'https://api.prodigi.com';
+  readonly name = 'prodigi';
+
+  readonly credentialSchema: CredentialField[] = [
+    { key: 'apiKey', label: 'API Key', type: 'password' },
+  ];
+
+  readonly settingsSchema: SettingsField[] = [
+    { key: 'sandbox', label: 'Sandbox Mode', type: 'boolean', default: true },
+  ];
+
+  private getBaseUrl(settings: Record<string, any>): string {
+    return settings.sandbox ? 'https://api.sandbox.prodigi.com' : 'https://api.prodigi.com';
   }
 
-  getAvailableSkus(): ProdigiSku[] {
-    return AVAILABLE_SKUS;
-  }
-
-  async createOrder(
+  async createFulfillmentOrder(
     imageUrl: string,
     sku: string,
     shippingAddress: {
@@ -43,12 +37,16 @@ export class ProdigiService {
       country: string;
     },
     reference: string,
-  ): Promise<{ id: string; status: string }> {
-    const response = await fetch(`${this.baseUrl}/v4.0/orders`, {
+    credentials: Record<string, string>,
+    settings: Record<string, any>,
+  ): Promise<FulfillmentResult> {
+    const baseUrl = this.getBaseUrl(settings);
+
+    const response = await fetch(`${baseUrl}/v4.0/orders`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-API-Key': this.apiKey,
+        'X-API-Key': credentials.apiKey,
       },
       body: JSON.stringify({
         merchantReference: reference,
@@ -86,7 +84,11 @@ export class ProdigiService {
     return { id: result.order.id, status: result.order.status.stage };
   }
 
-  async handleWebhook(payload: any): Promise<{ orderId?: string; status?: string }> {
+  async handleWebhook(
+    payload: any,
+    _credentials: Record<string, string>,
+    _settings: Record<string, any>,
+  ): Promise<FulfillmentWebhookResult> {
     this.logger.log(`Prodigi webhook: ${payload.event}`);
     if (payload.event === 'order.status.update') {
       return {

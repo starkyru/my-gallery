@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from 'typeorm';
-import { OrderStatus, PaymentMethod } from '@gallery/shared';
+import { OrderStatus } from '@gallery/shared';
 import { OrderItemEntity } from './order-item.entity';
 
 @Entity('orders')
@@ -16,8 +16,8 @@ export class OrderEntity {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   total!: number;
 
-  @Column({ name: 'payment_method', type: 'enum', enum: PaymentMethod, nullable: true })
-  paymentMethod!: PaymentMethod | null;
+  @Column({ name: 'payment_method', type: 'varchar', nullable: true })
+  paymentMethod!: string | null;
 
   @Column({ name: 'payment_id', type: 'varchar', nullable: true })
   paymentId!: string | null;

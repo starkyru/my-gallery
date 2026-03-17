@@ -4,9 +4,15 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/store/cart';
 import { api } from '@/lib/api';
+import type { EnabledPayment } from '@gallery/shared';
 
 const inputClass =
   'w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-gallery-gray focus:outline-none focus:border-gallery-accent';
+
+const PROVIDER_STYLES: Record<string, { bg: string; hover: string; label: string }> = {
+  paypal: { bg: 'bg-[#0070ba]', hover: 'hover:bg-[#005ea6]', label: 'Pay with PayPal / Card' },
+  btcpay: { bg: 'bg-[#f7931a]', hover: 'hover:bg-[#e8850f]', label: 'Pay with Bitcoin' },
+};
 
 export default function CheckoutPage() {
   const { items, total, clear, hasPrintItems } = useCartStore();
@@ -14,6 +20,7 @@ export default function CheckoutPage() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [enabledPayments, setEnabledPayments] = useState<EnabledPayment[]>([]);
   const needsShipping = hasPrintItems();
 
   const [shipping, setShipping] = useState({
@@ -28,6 +35,10 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     if (items.length === 0) router.push('/cart');
+    api.services
+      .enabledPayments()
+      .then(setEnabledPayments)
+      .catch(() => {});
   }, [items.length, router]);
 
   if (items.length === 0) return null;
@@ -63,31 +74,29 @@ export default function CheckoutPage() {
     };
   }
 
-  async function handlePayPal() {
+  async function handlePayment(provider: string) {
     setLoading(true);
     setError('');
     try {
       const order = await api.orders.create(buildOrderData());
-      const { paypalOrderId } = await api.payments.paypal(order.id);
-      const result = await api.payments.capturePaypal(order.id, paypalOrderId);
-      if (result.status === 'COMPLETED') {
+      const result = await api.payments.create(order.id, provider);
+
+      if (provider === 'paypal') {
+        // PayPal requires capture
+        const captureResult = await api.payments.capture(order.id, provider, {
+          paypalOrderId: result.paymentId,
+        });
+        if (captureResult.status === 'COMPLETED') {
+          clear();
+          router.push(`/orders/${order.id}/success`);
+        }
+      } else if (result.checkoutLink) {
+        // BTCPay and similar: redirect to external checkout
+        window.location.href = result.checkoutLink;
+      } else {
         clear();
         router.push(`/orders/${order.id}/success`);
       }
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleBtcPay() {
-    setLoading(true);
-    setError('');
-    try {
-      const order = await api.orders.create(buildOrderData());
-      const { checkoutLink } = await api.payments.btcpay(order.id);
-      window.location.href = checkoutLink;
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -170,20 +179,28 @@ export default function CheckoutPage() {
       {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
 
       <div className="space-y-3">
-        <button
-          onClick={handlePayPal}
-          disabled={!email || !shippingValid || loading}
-          className="w-full px-6 py-3 bg-[#0070ba] text-white font-medium rounded-lg hover:bg-[#005ea6] transition-colors disabled:opacity-50"
-        >
-          {loading ? 'Processing...' : 'Pay with PayPal / Card'}
-        </button>
-        <button
-          onClick={handleBtcPay}
-          disabled={!email || !shippingValid || loading}
-          className="w-full px-6 py-3 bg-[#f7931a] text-white font-medium rounded-lg hover:bg-[#e8850f] transition-colors disabled:opacity-50"
-        >
-          {loading ? 'Processing...' : 'Pay with Bitcoin'}
-        </button>
+        {enabledPayments.map((payment) => {
+          const style = PROVIDER_STYLES[payment.provider] || {
+            bg: 'bg-white/10',
+            hover: 'hover:bg-white/20',
+            label: `Pay with ${payment.displayName}`,
+          };
+          return (
+            <button
+              key={payment.provider}
+              onClick={() => handlePayment(payment.provider)}
+              disabled={!email || !shippingValid || loading}
+              className={`w-full px-6 py-3 ${style.bg} text-white font-medium rounded-lg ${style.hover} transition-colors disabled:opacity-50`}
+            >
+              {loading ? 'Processing...' : style.label}
+            </button>
+          );
+        })}
+        {enabledPayments.length === 0 && (
+          <p className="text-gallery-gray text-sm text-center py-4">
+            No payment methods are currently available.
+          </p>
+        )}
       </div>
     </div>
   );

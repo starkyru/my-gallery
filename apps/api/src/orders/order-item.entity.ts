@@ -31,6 +31,9 @@ export class OrderItemEntity {
   @Column({ name: 'print_sku', type: 'varchar', nullable: true })
   printSku!: string | null;
 
-  @Column({ name: 'prodigi_order_id', type: 'varchar', nullable: true })
-  prodigiOrderId!: string | null;
+  @Column({ name: 'fulfillment_order_id', type: 'varchar', nullable: true })
+  fulfillmentOrderId!: string | null;
+
+  @Column({ name: 'fulfillment_provider', type: 'varchar', nullable: true })
+  fulfillmentProvider!: string | null;
 }

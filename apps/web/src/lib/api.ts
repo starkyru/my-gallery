@@ -1,3 +1,5 @@
+import type { ServiceConfig, EnabledPayment, FulfillmentSku } from '@gallery/shared';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
@@ -87,26 +89,38 @@ export const api = {
     downloads: (id: number) => request<any[]>(`/orders/${id}/downloads`),
   },
   payments: {
-    btcpay: (orderId: number) =>
-      request<any>(`/payments/orders/${orderId}/btcpay`, { method: 'POST' }),
-    paypal: (orderId: number) =>
-      request<any>(`/payments/orders/${orderId}/paypal`, { method: 'POST' }),
-    capturePaypal: (orderId: number, paypalOrderId: string) =>
-      request<any>(`/payments/orders/${orderId}/paypal/capture`, {
+    create: (orderId: number, provider: string) =>
+      request<any>(`/payments/orders/${orderId}/${provider}`, { method: 'POST' }),
+    capture: (orderId: number, provider: string, data: any) =>
+      request<any>(`/payments/orders/${orderId}/${provider}/capture`, {
         method: 'POST',
-        body: JSON.stringify({ paypalOrderId }),
+        body: JSON.stringify(data),
       }),
+  },
+  services: {
+    list: (token: string) => request<ServiceConfig[]>('/services', { headers: authHeaders(token) }),
+    update: (
+      provider: string,
+      data: {
+        enabled?: boolean;
+        credentials?: Record<string, string>;
+        settings?: Record<string, any>;
+        skus?: { sku: string; description: string }[];
+      },
+      token: string,
+    ) =>
+      request<ServiceConfig>(`/services/${provider}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+        headers: authHeaders(token),
+      }),
+    enabledPayments: () => request<EnabledPayment[]>('/services/payment/enabled'),
+    fulfillmentSkus: () => request<FulfillmentSku[]>('/services/fulfillment/skus'),
   },
   ai: {
     describe: (imageId: number, token: string) =>
       request<{ description: string }>(`/ai/describe/${imageId}`, {
         method: 'POST',
-        headers: authHeaders(token),
-      }),
-  },
-  prodigi: {
-    skus: (token: string) =>
-      request<{ sku: string; description: string }[]>('/prodigi/skus', {
         headers: authHeaders(token),
       }),
   },

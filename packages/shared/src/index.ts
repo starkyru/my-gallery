@@ -27,11 +27,52 @@ export interface ImagePrintOption {
   sku: string;
   description: string;
   price: number;
+  fulfillmentProvider: string | null;
 }
 
+// Keep for backward compat — no longer used as column enum
 export enum PaymentMethod {
   BTCPay = 'btcpay',
   PayPal = 'paypal',
+}
+
+export type ServiceType = 'payment' | 'fulfillment';
+
+export interface CredentialField {
+  key: string;
+  label: string;
+  type: 'text' | 'password';
+}
+
+export interface SettingsField {
+  key: string;
+  label: string;
+  type: 'boolean' | 'text';
+  default?: any;
+}
+
+export interface ServiceConfig {
+  provider: string;
+  type: ServiceType;
+  displayName: string;
+  enabled: boolean;
+  configured: boolean;
+  credentialFields: CredentialField[];
+  settingsSchema: SettingsField[];
+  maskedCredentials: Record<string, boolean>;
+  settings: Record<string, any>;
+  skus: FulfillmentSku[];
+}
+
+export interface EnabledPayment {
+  provider: string;
+  displayName: string;
+}
+
+export interface FulfillmentSku {
+  provider: string;
+  sku: string;
+  description: string;
 }
 
 export interface Photographer {
@@ -69,7 +110,7 @@ export interface Order {
   customerEmail: string;
   status: OrderStatus;
   total: number;
-  paymentMethod: PaymentMethod | null;
+  paymentMethod: string | null;
   paymentId: string | null;
   items?: OrderItem[];
   shippingName: string | null;
@@ -90,7 +131,8 @@ export interface OrderItem {
   price: number;
   type: OrderItemType;
   printSku: string | null;
-  prodigiOrderId: string | null;
+  fulfillmentOrderId: string | null;
+  fulfillmentProvider: string | null;
 }
 
 export interface AdminUser {

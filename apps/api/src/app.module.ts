@@ -8,13 +8,14 @@ import { ImagesModule } from './images/images.module';
 import { OrdersModule } from './orders/orders.module';
 import { PaymentsModule } from './payments/payments.module';
 import { AiModule } from './ai/ai.module';
-import { ProdigiModule } from './prodigi/prodigi.module';
+import { ServicesModule } from './services/services.module';
 import { PhotographerEntity } from './photographers/photographer.entity';
 import { ImageEntity } from './images/image.entity';
 import { OrderEntity } from './orders/order.entity';
 import { OrderItemEntity } from './orders/order-item.entity';
 import { AdminUserEntity } from './auth/admin-user.entity';
 import { ImagePrintOptionEntity } from './images/image-print-option.entity';
+import { ServiceConfigEntity } from './services/service-config.entity';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { ImagePrintOptionEntity } from './images/image-print-option.entity';
           OrderEntity,
           OrderItemEntity,
           AdminUserEntity,
+          ServiceConfigEntity,
         ],
         synchronize: config.get('NODE_ENV') !== 'production',
       }),
@@ -45,7 +47,7 @@ import { ImagePrintOptionEntity } from './images/image-print-option.entity';
     ImagesModule,
     OrdersModule,
     PaymentsModule,
-    ProdigiModule,
+    ServicesModule,
     AiModule,
   ],
 })
