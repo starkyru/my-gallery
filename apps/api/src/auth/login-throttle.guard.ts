@@ -10,6 +10,7 @@ import {
 export class LoginThrottleGuard implements CanActivate {
   private readonly attempts = new Map<string, number>();
   private readonly THROTTLE_MS = 1000;
+  private readonly MAX_ENTRIES = 10_000;
 
   constructor() {
     setInterval(() => {
@@ -24,7 +25,10 @@ export class LoginThrottleGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
-    const username = request.body?.username;
+    const raw = request.body?.username;
+    if (!raw || typeof raw !== 'string') return true;
+
+    const username = raw.trim().toLowerCase().slice(0, 255);
     if (!username) return true;
 
     const now = Date.now();
@@ -37,6 +41,9 @@ export class LoginThrottleGuard implements CanActivate {
       );
     }
 
+    if (this.attempts.size >= this.MAX_ENTRIES) {
+      this.attempts.delete(this.attempts.keys().next().value!);
+    }
     this.attempts.set(username, now);
     return true;
   }

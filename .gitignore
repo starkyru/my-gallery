@@ -10,3 +10,5 @@ apps/api/src/services/providers/**/.env
 uploads/
 coverage/
 .DS_Store
+.claude/
+.claude/agent-memory/security-vuln-checker/MEMORY.md
