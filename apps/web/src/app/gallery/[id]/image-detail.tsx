@@ -19,7 +19,7 @@ interface ImageDetailProps {
     width: number;
     height: number;
     category: string;
-    photographer?: { name: string; bio: string | null };
+    artist?: { name: string; bio: string | null };
     printEnabled: boolean;
     printLimit: number | null;
     printsSold: number;
@@ -93,9 +93,7 @@ export function ImageDetail({ image }: ImageDetailProps) {
             {image.category.replace(/_/g, ' ')}
           </p>
           <h1 className="font-serif text-4xl md:text-5xl mb-4">{image.title}</h1>
-          {image.photographer && (
-            <p className="text-gallery-gray mb-6">by {image.photographer.name}</p>
-          )}
+          {image.artist && <p className="text-gallery-gray mb-6">by {image.artist.name}</p>}
           {image.description && (
             <p className="text-gallery-gray leading-relaxed mb-8">{image.description}</p>
           )}

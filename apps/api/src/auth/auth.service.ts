@@ -13,7 +13,7 @@ import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import * as nodemailer from 'nodemailer';
 import { AdminUserEntity } from './admin-user.entity';
-import { PhotographerEntity } from '../photographers/photographer.entity';
+import { ArtistEntity } from '../artists/artist.entity';
 
 @Injectable()
 export class AuthService implements OnModuleInit {
@@ -22,8 +22,8 @@ export class AuthService implements OnModuleInit {
   constructor(
     @InjectRepository(AdminUserEntity)
     private readonly adminRepo: Repository<AdminUserEntity>,
-    @InjectRepository(PhotographerEntity)
-    private readonly photographerRepo: Repository<PhotographerEntity>,
+    @InjectRepository(ArtistEntity)
+    private readonly artistRepo: Repository<ArtistEntity>,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
   ) {}
@@ -58,22 +58,22 @@ export class AuthService implements OnModuleInit {
       };
     }
 
-    // Try photographer
-    const photographer = await this.photographerRepo.findOne({ where: { name: username } });
-    if (photographer && photographer.loginEnabled && photographer.passwordHash) {
-      const valid = await bcrypt.compare(password, photographer.passwordHash);
+    // Try artist
+    const artist = await this.artistRepo.findOne({ where: { name: username } });
+    if (artist && artist.loginEnabled && artist.passwordHash) {
+      const valid = await bcrypt.compare(password, artist.passwordHash);
       if (!valid) throw new UnauthorizedException('Invalid credentials');
 
       const payload = {
-        sub: photographer.id,
-        username: photographer.name,
-        role: 'photographer' as const,
-        photographerId: photographer.id,
+        sub: artist.id,
+        username: artist.name,
+        role: 'artist' as const,
+        artistId: artist.id,
       };
       return {
         accessToken: this.jwtService.sign(payload),
-        role: 'photographer' as const,
-        photographerId: photographer.id,
+        role: 'artist' as const,
+        artistId: artist.id,
       };
     }
 
@@ -86,16 +86,15 @@ export class AuthService implements OnModuleInit {
     newPassword: string,
     role: string = 'admin',
   ) {
-    if (role === 'photographer') {
-      const photographer = await this.photographerRepo.findOne({ where: { id: userId } });
-      if (!photographer || !photographer.passwordHash)
-        throw new UnauthorizedException('User not found');
+    if (role === 'artist') {
+      const artist = await this.artistRepo.findOne({ where: { id: userId } });
+      if (!artist || !artist.passwordHash) throw new UnauthorizedException('User not found');
 
-      const valid = await bcrypt.compare(currentPassword, photographer.passwordHash);
+      const valid = await bcrypt.compare(currentPassword, artist.passwordHash);
       if (!valid) throw new BadRequestException('Current password is incorrect');
 
-      photographer.passwordHash = await bcrypt.hash(newPassword, 12);
-      await this.photographerRepo.save(photographer);
+      artist.passwordHash = await bcrypt.hash(newPassword, 12);
+      await this.artistRepo.save(artist);
       return;
     }
 
@@ -110,20 +109,20 @@ export class AuthService implements OnModuleInit {
     await this.adminRepo.save(user);
   }
 
-  async setPhotographerPassword(photographerId: number, newPassword: string) {
-    const photographer = await this.photographerRepo.findOne({ where: { id: photographerId } });
-    if (!photographer) throw new BadRequestException('Photographer not found');
+  async setArtistPassword(artistId: number, newPassword: string) {
+    const artist = await this.artistRepo.findOne({ where: { id: artistId } });
+    if (!artist) throw new BadRequestException('Artist not found');
 
-    photographer.passwordHash = await bcrypt.hash(newPassword, 12);
-    await this.photographerRepo.save(photographer);
+    artist.passwordHash = await bcrypt.hash(newPassword, 12);
+    await this.artistRepo.save(artist);
   }
 
-  async togglePhotographerLogin(photographerId: number, enabled: boolean) {
-    const photographer = await this.photographerRepo.findOne({ where: { id: photographerId } });
-    if (!photographer) throw new BadRequestException('Photographer not found');
+  async toggleArtistLogin(artistId: number, enabled: boolean) {
+    const artist = await this.artistRepo.findOne({ where: { id: artistId } });
+    if (!artist) throw new BadRequestException('Artist not found');
 
-    photographer.loginEnabled = enabled;
-    await this.photographerRepo.save(photographer);
+    artist.loginEnabled = enabled;
+    await this.artistRepo.save(artist);
   }
 
   async findAll() {
@@ -143,6 +142,21 @@ export class AuthService implements OnModuleInit {
       email,
       passwordHash: hash,
     });
+    return { id: user.id, username: user.username, email: user.email, createdAt: user.createdAt };
+  }
+
+  async updateUser(userId: number, data: { username?: string; email?: string; password?: string }) {
+    const user = await this.adminRepo.findOne({ where: { id: userId } });
+    if (!user) throw new BadRequestException('User not found');
+
+    if (data.username !== undefined) user.username = data.username;
+    if (data.email !== undefined) user.email = data.email;
+    if (data.password) {
+      user.passwordHash = await bcrypt.hash(data.password, 12);
+      user.mustChangePassword = true;
+    }
+
+    await this.adminRepo.save(user);
     return { id: user.id, username: user.username, email: user.email, createdAt: user.createdAt };
   }
 

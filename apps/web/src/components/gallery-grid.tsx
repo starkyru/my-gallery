@@ -29,7 +29,7 @@ interface GalleryImage {
   height: number;
   category: string;
   blurHash?: string | null;
-  photographer?: { name: string };
+  artist?: { name: string };
 }
 
 function GalleryCard({ image, index }: { image: GalleryImage; index: number }) {
@@ -86,7 +86,7 @@ function GalleryCard({ image, index }: { image: GalleryImage; index: number }) {
         <div className="absolute bottom-0 left-0 right-0 p-5 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 ease-out">
           <h3 className="font-serif text-lg leading-tight">{image.title}</h3>
           <p className="text-gallery-gray text-sm mt-1">
-            {image.photographer?.name} &middot; ${image.price}
+            {image.artist?.name} &middot; ${image.price}
           </p>
         </div>
 

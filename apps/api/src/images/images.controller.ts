@@ -37,7 +37,7 @@ class CreateImageDto {
 
   @Type(() => Number)
   @IsNumber()
-  photographerId!: number;
+  artistId!: number;
 
   @IsOptional()
   @IsEnum(ImageCategory)
@@ -66,7 +66,7 @@ class UpdateImageDto {
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
-  photographerId?: number;
+  artistId?: number;
 
   @IsOptional()
   @IsEnum(ImageCategory)

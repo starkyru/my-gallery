@@ -13,9 +13,9 @@ import {
 import { IsString, IsOptional } from 'class-validator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AdminGuard } from '../auth/admin.guard';
-import { PhotographersService } from './photographers.service';
+import { ArtistsService } from './artists.service';
 
-class CreatePhotographerDto {
+class CreateArtistDto {
   @IsString()
   name!: string;
 
@@ -28,7 +28,7 @@ class CreatePhotographerDto {
   avatarUrl?: string;
 }
 
-class UpdatePhotographerDto {
+class UpdateArtistDto {
   @IsOptional()
   @IsString()
   name?: string;
@@ -42,9 +42,9 @@ class UpdatePhotographerDto {
   avatarUrl?: string;
 }
 
-@Controller('photographers')
-export class PhotographersController {
-  constructor(private readonly service: PhotographersService) {}
+@Controller('artists')
+export class ArtistsController {
+  constructor(private readonly service: ArtistsService) {}
 
   @Get()
   findAll() {
@@ -58,7 +58,7 @@ export class PhotographersController {
 
   @Post()
   @UseGuards(JwtAuthGuard, AdminGuard)
-  create(@Body() dto: CreatePhotographerDto) {
+  create(@Body() dto: CreateArtistDto) {
     return this.service.create(dto);
   }
 
@@ -66,14 +66,13 @@ export class PhotographersController {
   @UseGuards(JwtAuthGuard)
   update(
     @Param('id') id: string,
-    @Body() dto: UpdatePhotographerDto,
-    @Request() req: { user: { role: string; photographerId?: number } },
+    @Body() dto: UpdateArtistDto,
+    @Request() req: { user: { role: string; artistId?: number } },
   ) {
     if (req.user.role !== 'admin') {
-      if (req.user.photographerId !== +id) {
+      if (req.user.artistId !== +id) {
         throw new ForbiddenException('You can only edit your own profile');
       }
-      // Photographers can only update bio and avatarUrl
       const { bio, avatarUrl } = dto;
       return this.service.update(+id, { bio, avatarUrl });
     }

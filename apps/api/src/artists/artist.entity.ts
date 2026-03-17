@@ -1,8 +1,8 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from 'typeorm';
 import { ImageEntity } from '../images/image.entity';
 
-@Entity('photographers')
-export class PhotographerEntity {
+@Entity('artists')
+export class ArtistEntity {
   @PrimaryGeneratedColumn()
   id!: number;
 
@@ -21,7 +21,7 @@ export class PhotographerEntity {
   @Column({ name: 'login_enabled', type: 'boolean', default: false })
   loginEnabled!: boolean;
 
-  @OneToMany(() => ImageEntity, (image) => image.photographer)
+  @OneToMany(() => ImageEntity, (image) => image.artist)
   images!: ImageEntity[];
 
   @CreateDateColumn({ name: 'created_at' })

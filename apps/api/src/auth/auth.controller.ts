@@ -10,7 +10,7 @@ import {
   Request,
   ParseIntPipe,
 } from '@nestjs/common';
-import { IsString, IsEmail, IsBoolean, MinLength } from 'class-validator';
+import { IsString, IsEmail, IsBoolean, IsOptional, MinLength } from 'class-validator';
 import { Throttle } from '@nestjs/throttler';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
@@ -45,6 +45,21 @@ class CreateUserDto {
   @IsString()
   @MinLength(8)
   password!: string;
+}
+
+class UpdateUserDto {
+  @IsOptional()
+  @IsString()
+  username?: string;
+
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(8)
+  password?: string;
 }
 
 class ForgotPasswordDto {
@@ -110,21 +125,27 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard, AdminGuard)
+  @Put('users/:id')
+  updateUser(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateUserDto) {
+    return this.authService.updateUser(id, dto);
+  }
+
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @Delete('users/:id')
   removeUser(@Param('id', ParseIntPipe) id: number, @Request() req: { user: { id: number } }) {
     return this.authService.removeUser(id, req.user.id);
   }
 
   @UseGuards(JwtAuthGuard, AdminGuard)
-  @Put('photographers/:id/password')
-  setPhotographerPassword(@Param('id', ParseIntPipe) id: number, @Body() dto: SetPasswordDto) {
-    return this.authService.setPhotographerPassword(id, dto.password);
+  @Put('artists/:id/password')
+  setArtistPassword(@Param('id', ParseIntPipe) id: number, @Body() dto: SetPasswordDto) {
+    return this.authService.setArtistPassword(id, dto.password);
   }
 
   @UseGuards(JwtAuthGuard, AdminGuard)
-  @Put('photographers/:id/login')
-  togglePhotographerLogin(@Param('id', ParseIntPipe) id: number, @Body() dto: ToggleLoginDto) {
-    return this.authService.togglePhotographerLogin(id, dto.loginEnabled);
+  @Put('artists/:id/login')
+  toggleArtistLogin(@Param('id', ParseIntPipe) id: number, @Body() dto: ToggleLoginDto) {
+    return this.authService.toggleArtistLogin(id, dto.loginEnabled);
   }
 
   @Post('forgot-password')

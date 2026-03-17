@@ -8,7 +8,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { ImageCategory } from '@gallery/shared';
-import { PhotographerEntity } from '../photographers/photographer.entity';
+import { ArtistEntity } from '../artists/artist.entity';
 import { ImagePrintOptionEntity } from './image-print-option.entity';
 
 @Entity('images')
@@ -25,12 +25,12 @@ export class ImageEntity {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   price!: number;
 
-  @Column({ name: 'photographer_id' })
-  photographerId!: number;
+  @Column({ name: 'artist_id' })
+  artistId!: number;
 
-  @ManyToOne(() => PhotographerEntity, (p) => p.images)
-  @JoinColumn({ name: 'photographer_id' })
-  photographer!: PhotographerEntity;
+  @ManyToOne(() => ArtistEntity, (a) => a.images)
+  @JoinColumn({ name: 'artist_id' })
+  artist!: ArtistEntity;
 
   @Column({ name: 'file_path' })
   filePath!: string;

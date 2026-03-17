@@ -1,13 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { PhotographerEntity } from './photographer.entity';
+import { ArtistEntity } from './artist.entity';
 
 @Injectable()
-export class PhotographersService {
+export class ArtistsService {
   constructor(
-    @InjectRepository(PhotographerEntity)
-    private readonly repo: Repository<PhotographerEntity>,
+    @InjectRepository(ArtistEntity)
+    private readonly repo: Repository<ArtistEntity>,
   ) {}
 
   async findAll() {
@@ -18,19 +18,19 @@ export class PhotographersService {
   }
 
   async findOne(id: number) {
-    const photographer = await this.repo.findOne({
+    const artist = await this.repo.findOne({
       where: { id },
       select: ['id', 'name', 'bio', 'avatarUrl', 'loginEnabled', 'createdAt'],
     });
-    if (!photographer) throw new NotFoundException('Photographer not found');
-    return photographer;
+    if (!artist) throw new NotFoundException('Artist not found');
+    return artist;
   }
 
-  create(data: Partial<PhotographerEntity>) {
+  create(data: Partial<ArtistEntity>) {
     return this.repo.save(this.repo.create(data));
   }
 
-  async update(id: number, data: Partial<PhotographerEntity>) {
+  async update(id: number, data: Partial<ArtistEntity>) {
     await this.findOne(id);
     await this.repo.update(id, data);
     return this.findOne(id);

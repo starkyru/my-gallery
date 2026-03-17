@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 
-export default function PhotographerProfilePage() {
-  const { token, role, photographerId } = useAuthStore();
+export default function ArtistProfilePage() {
+  const { token, role, artistId } = useAuthStore();
   const router = useRouter();
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
@@ -20,25 +20,25 @@ export default function PhotographerProfilePage() {
   const [pwSaving, setPwSaving] = useState(false);
 
   useEffect(() => {
-    if (role !== 'photographer') {
+    if (role !== 'artist') {
       router.push('/admin');
       return;
     }
-    if (photographerId && token) {
-      api.photographers.get(photographerId).then((p: any) => {
+    if (artistId && token) {
+      api.artists.get(artistId).then((p: any) => {
         setName(p.name);
         setBio(p.bio || '');
       });
     }
-  }, [role, photographerId, token, router]);
+  }, [role, artistId, token, router]);
 
   async function handleSaveBio(e: React.FormEvent) {
     e.preventDefault();
-    if (!token || !photographerId) return;
+    if (!token || !artistId) return;
     setSaving(true);
     setMessage('');
     try {
-      await api.photographers.update(photographerId, { bio }, token);
+      await api.artists.update(artistId, { bio }, token);
       setMessage('Profile updated');
       setTimeout(() => setMessage(''), 3000);
     } catch {
@@ -71,7 +71,7 @@ export default function PhotographerProfilePage() {
     }
   }
 
-  if (role !== 'photographer') return null;
+  if (role !== 'artist') return null;
 
   const inputClass =
     'w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-gallery-gray focus:outline-none focus:border-gallery-accent';

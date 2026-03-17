@@ -75,9 +75,9 @@ export interface FulfillmentSku {
   description: string;
 }
 
-export type UserRole = 'admin' | 'photographer';
+export type UserRole = 'admin' | 'artist';
 
-export interface Photographer {
+export interface Artist {
   id: number;
   name: string;
   bio: string | null;
@@ -91,8 +91,8 @@ export interface GalleryImage {
   title: string;
   description: string | null;
   price: number;
-  photographerId: number;
-  photographer?: Photographer;
+  artistId: number;
+  artist?: Artist;
   filePath: string;
   thumbnailPath: string;
   watermarkPath: string;
@@ -110,8 +110,8 @@ export interface GalleryImage {
 
 export interface LoginResponse {
   accessToken: string;
-  role: 'admin' | 'photographer';
-  photographerId?: number;
+  role: 'admin' | 'artist';
+  artistId?: number;
   mustChangePassword?: boolean;
 }
 

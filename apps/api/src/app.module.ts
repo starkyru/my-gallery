@@ -3,13 +3,13 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from './auth/auth.module';
-import { PhotographersModule } from './photographers/photographers.module';
+import { ArtistsModule } from './artists/artists.module';
 import { ImagesModule } from './images/images.module';
 import { OrdersModule } from './orders/orders.module';
 import { PaymentsModule } from './payments/payments.module';
 import { AiModule } from './ai/ai.module';
 import { ServicesModule } from './services/services.module';
-import { PhotographerEntity } from './photographers/photographer.entity';
+import { ArtistEntity } from './artists/artist.entity';
 import { ImageEntity } from './images/image.entity';
 import { OrderEntity } from './orders/order.entity';
 import { OrderItemEntity } from './orders/order-item.entity';
@@ -30,7 +30,7 @@ import { ServiceConfigEntity } from './services/service-config.entity';
         username: config.get('DATABASE_USER', 'gallery_user'),
         password: config.get('DATABASE_PASSWORD', ''),
         entities: [
-          PhotographerEntity,
+          ArtistEntity,
           ImageEntity,
           ImagePrintOptionEntity,
           OrderEntity,
@@ -43,7 +43,7 @@ import { ServiceConfigEntity } from './services/service-config.entity';
     }),
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
     AuthModule,
-    PhotographersModule,
+    ArtistsModule,
     ImagesModule,
     OrdersModule,
     PaymentsModule,

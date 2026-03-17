@@ -9,12 +9,12 @@ const ADMIN_NAV = [
   { href: '/admin', label: 'Dashboard' },
   { href: '/admin/images', label: 'Images' },
   { href: '/admin/orders', label: 'Orders' },
-  { href: '/admin/photographers', label: 'Photographers' },
+  { href: '/admin/artists', label: 'Artists' },
   { href: '/admin/settings', label: 'Settings' },
   { href: '/admin/users', label: 'Users' },
 ];
 
-const PHOTOGRAPHER_NAV = [
+const ARTIST_NAV = [
   { href: '/admin', label: 'Dashboard' },
   { href: '/admin/profile', label: 'My Profile' },
 ];
@@ -22,7 +22,7 @@ const PHOTOGRAPHER_NAV = [
 const ADMIN_ONLY_ROUTES = [
   '/admin/images',
   '/admin/orders',
-  '/admin/photographers',
+  '/admin/artists',
   '/admin/settings',
   '/admin/users',
 ];
@@ -39,7 +39,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [token, pathname, router]);
 
   useEffect(() => {
-    if (token && role === 'photographer' && ADMIN_ONLY_ROUTES.some((r) => pathname.startsWith(r))) {
+    if (token && role === 'artist' && ADMIN_ONLY_ROUTES.some((r) => pathname.startsWith(r))) {
       router.push('/admin');
     }
   }, [token, role, pathname, router]);
@@ -47,7 +47,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (pathname === '/admin/login' || pathname === '/admin/reset-password') return <>{children}</>;
   if (!token) return null;
 
-  const navItems = role === 'admin' ? ADMIN_NAV : PHOTOGRAPHER_NAV;
+  const navItems = role === 'admin' ? ADMIN_NAV : ARTIST_NAV;
 
   return (
     <div className="pt-20 min-h-screen">

@@ -37,7 +37,7 @@ export class ImagesService {
   findAll(query?: { category?: ImageCategory; featured?: boolean }) {
     const qb = this.repo
       .createQueryBuilder('image')
-      .leftJoinAndSelect('image.photographer', 'photographer')
+      .leftJoinAndSelect('image.artist', 'artist')
       .leftJoinAndSelect('image.printOptions', 'printOptions')
       .orderBy('image.sortOrder', 'ASC')
       .addOrderBy('image.createdAt', 'DESC');
@@ -55,7 +55,7 @@ export class ImagesService {
   async findOne(id: number) {
     const image = await this.repo.findOne({
       where: { id },
-      relations: ['photographer', 'printOptions'],
+      relations: ['artist', 'printOptions'],
     });
     if (!image) throw new NotFoundException('Image not found');
     return image;

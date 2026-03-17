@@ -4,7 +4,7 @@ import type {
   FulfillmentSku,
   GalleryImage,
   Order,
-  Photographer,
+  Artist,
 } from '@gallery/shared';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
@@ -55,23 +55,23 @@ export const api = {
         headers: authHeaders(token),
       }),
   },
-  photographers: {
-    list: () => request<Photographer[]>('/photographers'),
-    get: (id: number) => request<Photographer>(`/photographers/${id}`),
+  artists: {
+    list: () => request<Artist[]>('/artists'),
+    get: (id: number) => request<Artist>(`/artists/${id}`),
     create: (data: Record<string, unknown>, token: string) =>
-      request('/photographers', {
+      request('/artists', {
         method: 'POST',
         body: JSON.stringify(data),
         headers: authHeaders(token),
       }),
     update: (id: number, data: Record<string, unknown>, token: string) =>
-      request(`/photographers/${id}`, {
+      request(`/artists/${id}`, {
         method: 'PUT',
         body: JSON.stringify(data),
         headers: authHeaders(token),
       }),
     delete: (id: number, token: string) =>
-      request(`/photographers/${id}`, { method: 'DELETE', headers: authHeaders(token) }),
+      request(`/artists/${id}`, { method: 'DELETE', headers: authHeaders(token) }),
   },
   orders: {
     create: (data: {
@@ -154,20 +154,20 @@ export const api = {
       request<{
         accessToken: string;
         role: string;
-        photographerId?: number;
+        artistId?: number;
         mustChangePassword?: boolean;
       }>('/auth/login', {
         method: 'POST',
         body: JSON.stringify({ username, password }),
       }),
-    setPhotographerPassword: (token: string, photographerId: number, password: string) =>
-      request(`/auth/photographers/${photographerId}/password`, {
+    setArtistPassword: (token: string, artistId: number, password: string) =>
+      request(`/auth/artists/${artistId}/password`, {
         method: 'PUT',
         body: JSON.stringify({ password }),
         headers: authHeaders(token),
       }),
-    togglePhotographerLogin: (token: string, photographerId: number, loginEnabled: boolean) =>
-      request(`/auth/photographers/${photographerId}/login`, {
+    toggleArtistLogin: (token: string, artistId: number, loginEnabled: boolean) =>
+      request(`/auth/artists/${artistId}/login`, {
         method: 'PUT',
         body: JSON.stringify({ loginEnabled }),
         headers: authHeaders(token),
@@ -186,6 +186,16 @@ export const api = {
       request('/auth/users', {
         method: 'POST',
         body: JSON.stringify({ username, email, password }),
+        headers: authHeaders(token),
+      }),
+    updateUser: (
+      token: string,
+      userId: number,
+      data: { username?: string; email?: string; password?: string },
+    ) =>
+      request(`/auth/users/${userId}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
         headers: authHeaders(token),
       }),
     deleteUser: (token: string, userId: number) =>
