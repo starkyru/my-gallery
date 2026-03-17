@@ -15,6 +15,9 @@ export class ArtistEntity {
   @Column({ name: 'avatar_url', type: 'varchar', nullable: true })
   avatarUrl!: string | null;
 
+  @Column({ name: 'portrait_path', type: 'varchar', nullable: true })
+  portraitPath!: string | null;
+
   @Column({ name: 'password_hash', type: 'varchar', nullable: true })
   passwordHash!: string | null;
 

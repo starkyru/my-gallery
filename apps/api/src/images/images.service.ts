@@ -33,7 +33,7 @@ export class ImagesService {
     );
   }
 
-  findAll(query?: { category?: string; featured?: boolean }) {
+  findAll(query?: { category?: string; featured?: boolean; artistId?: number }) {
     const qb = this.repo
       .createQueryBuilder('image')
       .leftJoinAndSelect('image.artist', 'artist')
@@ -48,6 +48,9 @@ export class ImagesService {
     }
     if (query?.featured !== undefined) {
       qb.andWhere('image.isFeatured = :featured', { featured: query.featured });
+    }
+    if (query?.artistId !== undefined) {
+      qb.andWhere('image.artistId = :artistId', { artistId: query.artistId });
     }
 
     return qb.getMany();

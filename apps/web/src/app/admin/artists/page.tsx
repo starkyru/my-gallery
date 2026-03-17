@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 
+const UPLOAD_URL = process.env.NEXT_PUBLIC_UPLOAD_URL || 'http://localhost:4000/uploads';
+
 export default function AdminArtistsPage() {
   const { token } = useAuthStore();
   const [artists, setArtists] = useState<any[]>([]);
@@ -70,6 +72,14 @@ export default function AdminArtistsPage() {
     }
   }
 
+  async function handlePortraitUpload(id: number, file: File) {
+    if (!token) return;
+    const formData = new FormData();
+    formData.append('file', file);
+    await api.artists.uploadPortrait(id, formData, token);
+    loadData();
+  }
+
   const inputClass =
     'px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder:text-gallery-gray focus:outline-none focus:border-gallery-accent';
 
@@ -121,9 +131,38 @@ export default function AdminArtistsPage() {
         {artists.map((a) => (
           <div key={a.id} className="p-4 border border-white/10 rounded-lg space-y-3">
             <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-serif text-lg">{a.name}</h3>
-                <p className="text-gallery-gray text-sm">{a.bio || 'No bio'}</p>
+              <div className="flex items-center gap-4">
+                {/* Portrait thumbnail */}
+                <div className="relative w-16 h-16 rounded-full overflow-hidden bg-white/5 flex-shrink-0">
+                  {a.portraitPath ? (
+                    <img
+                      src={`${UPLOAD_URL}/${a.portraitPath.replace('portraits/originals/', 'portraits/thumbnails/')}`}
+                      alt={a.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gallery-gray text-xl">
+                      {a.name?.charAt(0)?.toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <h3 className="font-serif text-lg">{a.name}</h3>
+                  <p className="text-gallery-gray text-sm">{a.bio || 'No bio'}</p>
+                  <label className="inline-block mt-1 px-2 py-0.5 border border-white/10 rounded text-xs text-gallery-gray hover:border-white/30 cursor-pointer transition-colors">
+                    {a.portraitPath ? 'Replace portrait' : 'Upload portrait'}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handlePortraitUpload(a.id, file);
+                        e.target.value = '';
+                      }}
+                    />
+                  </label>
+                </div>
               </div>
               <div className="flex gap-2">
                 <button

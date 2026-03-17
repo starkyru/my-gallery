@@ -5,13 +5,13 @@ import Image from 'next/image';
 import Link from 'next/link';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { api } from '@/lib/api';
+import { FilterToolbar } from './filter-toolbar';
 
 gsap.registerPlugin(ScrollTrigger);
 
 const UPLOAD_URL = process.env.NEXT_PUBLIC_UPLOAD_URL || 'http://localhost:4000/uploads';
 
-interface GalleryImage {
+export interface GalleryImage {
   id: number;
   title: string;
   price: number;
@@ -21,10 +21,11 @@ interface GalleryImage {
   height: number;
   category: string;
   blurHash?: string | null;
-  artist?: { name: string };
+  artistId?: number;
+  artist?: { id?: number; name: string };
 }
 
-function GalleryCard({ image, index }: { image: GalleryImage; index: number }) {
+export function GalleryCard({ image, index }: { image: GalleryImage; index: number }) {
   const [loaded, setLoaded] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -78,7 +79,18 @@ function GalleryCard({ image, index }: { image: GalleryImage; index: number }) {
         <div className="absolute bottom-0 left-0 right-0 p-5 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 ease-out">
           <h3 className="font-serif text-lg leading-tight">{image.title}</h3>
           <p className="text-gallery-gray text-sm mt-1">
-            {image.artist?.name} &middot; ${image.price}
+            {image.artist?.name && (image.artist.id || image.artistId) ? (
+              <a
+                href={`/artists/${image.artist.id || image.artistId}`}
+                onClick={(e) => e.stopPropagation()}
+                className="hover:text-gallery-accent transition-colors"
+              >
+                {image.artist.name}
+              </a>
+            ) : (
+              image.artist?.name
+            )}{' '}
+            &middot; ${image.price}
           </p>
         </div>
 
@@ -94,21 +106,6 @@ export function GalleryGrid({ images }: { images: GalleryImage[] }) {
   const [visible, setVisible] = useState(true);
   const gridRef = useRef<HTMLDivElement>(null);
   const prevFilter = useRef('');
-  const [categories, setCategories] = useState<{ label: string; value: string }[]>([
-    { label: 'All', value: '' },
-  ]);
-
-  useEffect(() => {
-    api.categories
-      .list()
-      .then((cats) => {
-        setCategories([
-          { label: 'All', value: '' },
-          ...cats.map((c) => ({ label: c.name, value: c.slug })),
-        ]);
-      })
-      .catch(() => {});
-  }, []);
 
   const filtered = filter ? images.filter((img) => img.category === filter) : images;
 
@@ -167,21 +164,7 @@ export function GalleryGrid({ images }: { images: GalleryImage[] }) {
   return (
     <section id="works" className="mx-auto max-w-7xl px-6 py-24">
       {/* Category filter */}
-      <div className="flex flex-wrap gap-3 mb-12 justify-center">
-        {categories.map((cat) => (
-          <button
-            key={cat.value}
-            onClick={() => handleFilter(cat.value)}
-            className={`px-4 py-2 text-sm rounded-full border transition-all duration-300 ${
-              filter === cat.value
-                ? 'border-gallery-accent text-gallery-accent bg-gallery-accent/10'
-                : 'border-white/10 text-gallery-gray hover:border-white/30 hover:text-white'
-            }`}
-          >
-            {cat.label}
-          </button>
-        ))}
-      </div>
+      <FilterToolbar value={filter} onChange={handleFilter} className="mb-12 justify-center" />
 
       {/* Image count */}
       <p className="text-center text-gallery-gray text-sm mb-8 transition-opacity duration-300">

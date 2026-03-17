@@ -8,9 +8,12 @@ import {
   Body,
   Query,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
   Request,
   ForbiddenException,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { IsString, IsOptional, IsBoolean } from 'class-validator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AdminGuard } from '../auth/admin.guard';
@@ -83,6 +86,13 @@ export class ArtistsController {
       return this.service.update(+id, { bio, avatarUrl });
     }
     return this.service.update(+id, dto);
+  }
+
+  @Post(':id/portrait')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @UseInterceptors(FileInterceptor('file', { storage: undefined }))
+  uploadPortrait(@Param('id') id: string, @UploadedFile() file: Express.Multer.File) {
+    return this.service.uploadPortrait(+id, file);
   }
 
   @Delete(':id')

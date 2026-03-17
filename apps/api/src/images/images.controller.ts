@@ -119,10 +119,15 @@ export class ImagesController {
   ) {}
 
   @Get()
-  findAll(@Query('category') category?: string, @Query('featured') featured?: string) {
+  findAll(
+    @Query('category') category?: string,
+    @Query('featured') featured?: string,
+    @Query('artistId') artistId?: string,
+  ) {
     return this.service.findAll({
       category,
       featured: featured === undefined ? undefined : featured === 'true',
+      artistId: artistId ? +artistId : undefined,
     });
   }
 

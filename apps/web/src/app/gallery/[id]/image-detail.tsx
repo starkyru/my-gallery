@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useCartStore } from '@/store/cart';
 import gsap from 'gsap';
 import type { ImagePrintOption } from '@gallery/shared';
@@ -19,7 +20,8 @@ interface ImageDetailProps {
     width: number;
     height: number;
     category: string;
-    artist?: { name: string; bio: string | null };
+    artistId?: number;
+    artist?: { id?: number; name: string; bio: string | null };
     printEnabled: boolean;
     printLimit: number | null;
     printsSold: number;
@@ -93,7 +95,21 @@ export function ImageDetail({ image }: ImageDetailProps) {
             {image.category.replace(/_/g, ' ')}
           </p>
           <h1 className="font-serif text-4xl md:text-5xl mb-4">{image.title}</h1>
-          {image.artist && <p className="text-gallery-gray mb-6">by {image.artist.name}</p>}
+          {image.artist && (
+            <p className="text-gallery-gray mb-6">
+              by{' '}
+              {image.artist.id || image.artistId ? (
+                <Link
+                  href={`/artists/${image.artist.id || image.artistId}`}
+                  className="hover:text-gallery-accent transition-colors"
+                >
+                  {image.artist.name}
+                </Link>
+              ) : (
+                image.artist.name
+              )}
+            </p>
+          )}
           {image.description && (
             <p className="text-gallery-gray leading-relaxed mb-8">{image.description}</p>
           )}
