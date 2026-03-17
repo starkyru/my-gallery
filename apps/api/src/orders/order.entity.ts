@@ -19,31 +19,31 @@ export class OrderEntity {
   @Column({ name: 'payment_method', type: 'enum', enum: PaymentMethod, nullable: true })
   paymentMethod!: PaymentMethod | null;
 
-  @Column({ name: 'payment_id', nullable: true })
+  @Column({ name: 'payment_id', type: 'varchar', nullable: true })
   paymentId!: string | null;
 
   @OneToMany(() => OrderItemEntity, (item) => item.order, { cascade: true })
   items!: OrderItemEntity[];
 
-  @Column({ name: 'shipping_name', nullable: true })
+  @Column({ name: 'shipping_name', type: 'varchar', nullable: true })
   shippingName!: string | null;
 
-  @Column({ name: 'shipping_address1', nullable: true })
+  @Column({ name: 'shipping_address1', type: 'varchar', nullable: true })
   shippingAddress1!: string | null;
 
-  @Column({ name: 'shipping_address2', nullable: true })
+  @Column({ name: 'shipping_address2', type: 'varchar', nullable: true })
   shippingAddress2!: string | null;
 
-  @Column({ name: 'shipping_city', nullable: true })
+  @Column({ name: 'shipping_city', type: 'varchar', nullable: true })
   shippingCity!: string | null;
 
-  @Column({ name: 'shipping_state', nullable: true })
+  @Column({ name: 'shipping_state', type: 'varchar', nullable: true })
   shippingState!: string | null;
 
-  @Column({ name: 'shipping_postal_code', nullable: true })
+  @Column({ name: 'shipping_postal_code', type: 'varchar', nullable: true })
   shippingPostalCode!: string | null;
 
-  @Column({ name: 'shipping_country', nullable: true })
+  @Column({ name: 'shipping_country', type: 'varchar', nullable: true })
   shippingCountry!: string | null;
 
   @CreateDateColumn({ name: 'created_at' })

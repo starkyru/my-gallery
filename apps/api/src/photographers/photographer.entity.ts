@@ -12,7 +12,7 @@ export class PhotographerEntity {
   @Column({ type: 'text', nullable: true })
   bio!: string | null;
 
-  @Column({ name: 'avatar_url', nullable: true })
+  @Column({ name: 'avatar_url', type: 'varchar', nullable: true })
   avatarUrl!: string | null;
 
   @OneToMany(() => ImageEntity, (image) => image.photographer)
