@@ -20,13 +20,18 @@ interface ArtistDetailProps {
 
 export function ArtistDetail({ artist, images }: ArtistDetailProps) {
   const [filter, setFilter] = useState('');
+  const [projectFilter, setProjectFilter] = useState('');
   const [visible, setVisible] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const portraitRef = useRef<HTMLDivElement>(null);
   const infoRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
 
-  const filtered = filter ? images.filter((img) => img.category === filter) : images;
+  const filtered = images.filter((img) => {
+    if (filter && img.category !== filter) return false;
+    if (projectFilter && img.projectId !== Number(projectFilter)) return false;
+    return true;
+  });
 
   const handleFilter = useCallback(
     (value: string) => {
@@ -42,6 +47,22 @@ export function ArtistDetail({ artist, images }: ArtistDetailProps) {
       }, 300);
     },
     [filter],
+  );
+
+  const handleProjectFilter = useCallback(
+    (value: string) => {
+      if (value === projectFilter) return;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        setProjectFilter(value);
+        return;
+      }
+      setVisible(false);
+      setTimeout(() => {
+        setProjectFilter(value);
+        requestAnimationFrame(() => setVisible(true));
+      }, 300);
+    },
+    [projectFilter],
   );
 
   // Entrance animations
@@ -134,7 +155,14 @@ export function ArtistDetail({ artist, images }: ArtistDetailProps) {
       {images.length > 0 && (
         <section>
           <h2 className="font-serif text-2xl mb-8">Works by {artist.name}</h2>
-          <FilterToolbar value={filter} onChange={handleFilter} className="mb-8" />
+          <FilterToolbar
+            value={filter}
+            onChange={handleFilter}
+            projectValue={projectFilter}
+            onProjectChange={handleProjectFilter}
+            artistId={artist.id}
+            className="mb-8"
+          />
 
           <p className="text-gallery-gray text-sm mb-8 transition-opacity duration-300">
             {filtered.length} {filtered.length === 1 ? 'work' : 'works'}

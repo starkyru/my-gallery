@@ -9,6 +9,7 @@ import { AdminUserEntity } from './auth/admin-user.entity';
 import { ServiceConfigEntity } from './services/service-config.entity';
 import { GalleryConfigEntity } from './gallery-config/gallery-config.entity';
 import { CategoryEntity } from './categories/category.entity';
+import { ProjectEntity } from './projects/project.entity';
 
 const required = ['DATABASE_HOST', 'DATABASE_USER', 'DATABASE_PASSWORD', 'DATABASE_NAME'] as const;
 for (const key of required) {
@@ -35,6 +36,7 @@ const ds = new DataSource({
     ServiceConfigEntity,
     GalleryConfigEntity,
     CategoryEntity,
+    ProjectEntity,
   ],
   synchronize: true,
 });

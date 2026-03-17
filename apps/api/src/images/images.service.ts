@@ -33,11 +33,17 @@ export class ImagesService {
     );
   }
 
-  findAll(query?: { category?: string; featured?: boolean; artistId?: number }) {
+  findAll(query?: {
+    category?: string;
+    featured?: boolean;
+    artistId?: number;
+    projectId?: number;
+  }) {
     const qb = this.repo
       .createQueryBuilder('image')
       .leftJoinAndSelect('image.artist', 'artist')
       .leftJoinAndSelect('image.printOptions', 'printOptions')
+      .leftJoinAndSelect('image.project', 'project')
       .andWhere('image.isArchived = false')
       .andWhere('artist.isActive = true')
       .orderBy('image.sortOrder', 'ASC')
@@ -52,6 +58,9 @@ export class ImagesService {
     if (query?.artistId !== undefined) {
       qb.andWhere('image.artistId = :artistId', { artistId: query.artistId });
     }
+    if (query?.projectId !== undefined) {
+      qb.andWhere('image.projectId = :projectId', { projectId: query.projectId });
+    }
 
     return qb.getMany();
   }
@@ -61,6 +70,7 @@ export class ImagesService {
       .createQueryBuilder('image')
       .leftJoinAndSelect('image.artist', 'artist')
       .leftJoinAndSelect('image.printOptions', 'printOptions')
+      .leftJoinAndSelect('image.project', 'project')
       .orderBy('image.sortOrder', 'ASC')
       .addOrderBy('image.createdAt', 'DESC')
       .getMany();
@@ -164,8 +174,12 @@ export class ImagesService {
   }
 
   async update(id: number, data: Record<string, unknown>) {
-    await this.findOne(id);
+    const existing = await this.findOne(id);
     const { printOptions, ...imageData } = data;
+    // If artist changes, clear projectId (project belongs to old artist)
+    if (imageData.artistId !== undefined && imageData.artistId !== existing.artistId) {
+      imageData.projectId = null;
+    }
     if (Object.keys(imageData).length > 0) {
       await this.repo.update(id, imageData);
     }

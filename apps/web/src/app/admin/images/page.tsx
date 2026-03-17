@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useMemo } from 'react';
 import Image from 'next/image';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
-import type { Category } from '@gallery/shared';
+import type { Category, Project } from '@gallery/shared';
 
 const UPLOAD_URL = process.env.NEXT_PUBLIC_UPLOAD_URL || 'http://localhost:4000/uploads';
 
@@ -26,6 +26,7 @@ export default function AdminImagesPage() {
   const [images, setImages] = useState<any[]>([]);
   const [artists, setArtists] = useState<any[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editData, setEditData] = useState<any>({});
   const [editPrintOptions, setEditPrintOptions] = useState<PrintOptionRow[]>([]);
@@ -86,6 +87,10 @@ export default function AdminImagesPage() {
     api.services
       .fulfillmentSkus()
       .then(setAvailableSkus)
+      .catch(() => {});
+    api.projects
+      .list()
+      .then(setProjects)
       .catch(() => {});
   }
 
@@ -352,7 +357,7 @@ export default function AdminImagesPage() {
           <div className="space-y-3">
             {droppedFiles.map((df, idx) => (
               <div key={idx} className="flex gap-3 items-center">
-                <div className="w-12 h-12 flex-shrink-0 rounded overflow-hidden bg-white/5">
+                <div className="w-12 h-12 shrink-0 rounded overflow-hidden bg-white/5">
                   <Image
                     src={URL.createObjectURL(df.file)}
                     alt={df.title}
@@ -366,7 +371,7 @@ export default function AdminImagesPage() {
                   value={df.title}
                   onChange={(e) => updateDroppedFile(idx, 'title', e.target.value)}
                   placeholder="Title"
-                  className={`${inputClass} flex-1 min-w-0`}
+                  className="flex-1 min-w-0 px-3 py-1.5 bg-white/5 border border-white/10 rounded text-sm text-white"
                 />
                 <input
                   value={df.price}
@@ -374,8 +379,19 @@ export default function AdminImagesPage() {
                   placeholder="Price"
                   type="number"
                   step="0.01"
-                  className={`${inputClass} w-24 flex-shrink-0`}
+                  className="w-24 shrink-0 px-3 py-1.5 bg-white/5 border border-white/10 rounded text-sm text-white"
                 />
+                <select
+                  value={df.category}
+                  onChange={(e) => updateDroppedFile(idx, 'category', e.target.value)}
+                  className={`${selectClass} shrink-0`}
+                >
+                  {categories.map((c) => (
+                    <option key={c.slug} value={c.slug}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
                 <button
                   onClick={() => removeDroppedFile(idx)}
                   className="text-red-400 hover:text-red-300 text-lg px-1"
@@ -508,6 +524,27 @@ export default function AdminImagesPage() {
                     step="0.01"
                     className={inputClass}
                   />
+
+                  {/* Project */}
+                  <select
+                    value={editData.projectId ?? image.projectId ?? ''}
+                    onChange={(e) =>
+                      setEditData({
+                        ...editData,
+                        projectId: e.target.value ? Number(e.target.value) : null,
+                      })
+                    }
+                    className={inputClass}
+                  >
+                    <option value="">No project</option>
+                    {projects
+                      .filter((p) => p.artistId === (editData.artistId ?? image.artistId))
+                      .map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                  </select>
 
                   {/* Print settings */}
                   <div className="border-t border-white/10 pt-2 mt-2">

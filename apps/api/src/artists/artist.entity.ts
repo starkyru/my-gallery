@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from 'typeorm';
 import { ImageEntity } from '../images/image.entity';
+import { ProjectEntity } from '../projects/project.entity';
 
 @Entity('artists')
 export class ArtistEntity {
@@ -29,6 +30,9 @@ export class ArtistEntity {
 
   @OneToMany(() => ImageEntity, (image) => image.artist)
   images!: ImageEntity[];
+
+  @OneToMany(() => ProjectEntity, (p) => p.artist)
+  projects!: ProjectEntity[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;

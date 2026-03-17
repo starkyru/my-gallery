@@ -72,6 +72,16 @@ export interface Category {
   imageCount?: number;
 }
 
+export interface Project {
+  id: number;
+  name: string;
+  slug: string;
+  artistId: number;
+  sortOrder: number;
+  imageCount?: number;
+  createdAt: Date;
+}
+
 export interface Artist {
   id: number;
   name: string;
@@ -96,6 +106,8 @@ export interface GalleryImage {
   width: number;
   height: number;
   category: string;
+  projectId: number | null;
+  project?: Project;
   isFeatured: boolean;
   sortOrder: number;
   printEnabled: boolean;

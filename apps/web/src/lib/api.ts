@@ -5,6 +5,7 @@ import type {
   GalleryImage,
   GalleryConfig,
   Category,
+  Project,
   Order,
   Artist,
 } from '@gallery/shared';
@@ -60,6 +61,24 @@ export const api = {
       }),
     delete: (id: number, token: string) =>
       request(`/categories/${id}`, { method: 'DELETE', headers: authHeaders(token) }),
+  },
+  projects: {
+    list: (artistId?: number) =>
+      request<Project[]>(`/projects${artistId !== undefined ? `?artistId=${artistId}` : ''}`),
+    create: (data: { artistId: number; name: string; slug: string }, token: string) =>
+      request<Project>('/projects', {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: authHeaders(token),
+      }),
+    update: (id: number, data: Partial<Project>, token: string) =>
+      request<Project>(`/projects/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+        headers: authHeaders(token),
+      }),
+    delete: (id: number, token: string) =>
+      request(`/projects/${id}`, { method: 'DELETE', headers: authHeaders(token) }),
   },
   images: {
     list: (params?: string) => request<GalleryImage[]>(`/images${params ? `?${params}` : ''}`),

@@ -8,6 +8,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { ArtistEntity } from '../artists/artist.entity';
+import { ProjectEntity } from '../projects/project.entity';
 import { ImagePrintOptionEntity } from './image-print-option.entity';
 
 @Entity('images')
@@ -69,6 +70,13 @@ export class ImageEntity {
 
   @OneToMany(() => ImagePrintOptionEntity, (opt) => opt.image, { cascade: true })
   printOptions!: ImagePrintOptionEntity[];
+
+  @Column({ name: 'project_id', type: 'int', nullable: true })
+  projectId!: number | null;
+
+  @ManyToOne(() => ProjectEntity, { nullable: true })
+  @JoinColumn({ name: 'project_id' })
+  project!: ProjectEntity | null;
 
   @Column({ name: 'is_archived', default: false })
   isArchived!: boolean;

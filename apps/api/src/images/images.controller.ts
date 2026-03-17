@@ -47,6 +47,11 @@ class CreateImageDto {
   @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   isFeatured?: boolean;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  projectId?: number | null;
 }
 
 class UpdateImageDto {
@@ -95,6 +100,11 @@ class UpdateImageDto {
   isArchived?: boolean;
 
   @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  projectId?: number | null;
+
+  @IsOptional()
   @IsArray()
   printOptions?: { sku: string; description: string; price: number }[];
 }
@@ -123,11 +133,13 @@ export class ImagesController {
     @Query('category') category?: string,
     @Query('featured') featured?: string,
     @Query('artistId') artistId?: string,
+    @Query('projectId') projectId?: string,
   ) {
     return this.service.findAll({
       category,
       featured: featured === undefined ? undefined : featured === 'true',
       artistId: artistId ? +artistId : undefined,
+      projectId: projectId ? +projectId : undefined,
     });
   }
 
