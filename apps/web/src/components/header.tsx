@@ -17,7 +17,7 @@ export function Header() {
         </Link>
         {!isAdmin && (
           <div className="flex items-center gap-6 text-sm">
-            <Link href="/" className="hover:text-gallery-accent transition-colors">
+            <Link href="/#works" className="hover:text-gallery-accent transition-colors">
               Works
             </Link>
             <Link href="/cart" className="relative hover:text-gallery-accent transition-colors">

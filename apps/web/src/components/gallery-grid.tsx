@@ -158,7 +158,7 @@ export function GalleryGrid({ images }: { images: GalleryImage[] }) {
   }, [filtered]);
 
   return (
-    <section className="mx-auto max-w-7xl px-6 py-24">
+    <section id="works" className="mx-auto max-w-7xl px-6 py-24">
       {/* Category filter */}
       <div className="flex flex-wrap gap-3 mb-12 justify-center">
         {CATEGORIES.map((cat) => (
