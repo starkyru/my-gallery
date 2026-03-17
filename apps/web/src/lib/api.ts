@@ -108,6 +108,12 @@ export const api = {
       }),
     delete: (id: number, token: string) =>
       request(`/artists/${id}`, { method: 'DELETE', headers: authHeaders(token) }),
+    uploadPortrait: (id: number, formData: FormData, token: string) =>
+      fetch(`${API_URL}/api/artists/${id}/portrait`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      }).then((r) => r.json()),
   },
   orders: {
     create: (data: {
@@ -164,8 +170,6 @@ export const api = {
       provider: string,
       data: {
         enabled?: boolean;
-        credentials?: Record<string, string>;
-        settings?: Record<string, unknown>;
         skus?: { sku: string; description: string }[];
       },
       token: string,

@@ -8,23 +8,11 @@ export function ServiceCard({
   expanded,
   onToggle,
   onEnableChange,
-  credentials,
-  onCredentialChange,
-  settings,
-  onSettingChange,
-  onSave,
-  saving,
 }: {
   config: ServiceConfig;
   expanded: boolean;
   onToggle: () => void;
   onEnableChange: (enabled: boolean) => void;
-  credentials: Record<string, string>;
-  onCredentialChange: (key: string, value: string) => void;
-  settings: Record<string, any>;
-  onSettingChange: (key: string, value: any) => void;
-  onSave: () => void;
-  saving: boolean;
 }) {
   return (
     <div className="border border-white/10 rounded-lg overflow-hidden">
@@ -61,52 +49,11 @@ export function ServiceCard({
         </label>
       </div>
       {expanded && (
-        <div className="px-4 pb-4 space-y-3 border-t border-white/10 pt-3">
-          {config.credentialFields.map((field) => (
-            <div key={field.key}>
-              <label className="block text-xs text-gallery-gray mb-1">{field.label}</label>
-              <input
-                type={field.type === 'password' ? 'password' : 'text'}
-                value={credentials[field.key] || ''}
-                onChange={(e) => onCredentialChange(field.key, e.target.value)}
-                placeholder={
-                  config.maskedCredentials[field.key] ? '(set - leave blank to keep)' : ''
-                }
-                className={inputClass}
-              />
-            </div>
-          ))}
-          {(config.settingsSchema || []).map((field) => (
-            <div key={field.key}>
-              {field.type === 'boolean' ? (
-                <label className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={settings[field.key] ?? field.default ?? false}
-                    onChange={(e) => onSettingChange(field.key, e.target.checked)}
-                    className="accent-gallery-accent"
-                  />
-                  {field.label}
-                </label>
-              ) : (
-                <>
-                  <label className="block text-xs text-gallery-gray mb-1">{field.label}</label>
-                  <input
-                    value={settings[field.key] ?? ''}
-                    onChange={(e) => onSettingChange(field.key, e.target.value)}
-                    className={inputClass}
-                  />
-                </>
-              )}
-            </div>
-          ))}
-          <button
-            onClick={onSave}
-            disabled={saving}
-            className="px-4 py-1.5 bg-gallery-accent text-gallery-black rounded text-sm font-medium hover:bg-gallery-accent-light transition-colors disabled:opacity-50"
-          >
-            {saving ? 'Saving...' : 'Save'}
-          </button>
+        <div className="px-4 pb-4 border-t border-white/10 pt-3">
+          <p className="text-sm text-gallery-gray">
+            Configure credentials via the <code className="text-white/70">.env</code> file in the
+            provider folder.
+          </p>
         </div>
       )}
     </div>

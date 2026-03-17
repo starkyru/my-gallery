@@ -10,8 +10,6 @@ export default function SettingsPage() {
   const { token } = useAuthStore();
   const [configs, setConfigs] = useState<ServiceConfig[]>([]);
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [credentials, setCredentials] = useState<Record<string, Record<string, string>>>({});
-  const [settings, setSettings] = useState<Record<string, Record<string, any>>>({});
   const [skus, setSkus] = useState<Record<string, { sku: string; description: string }[]>>({});
   const [saving, setSaving] = useState<string | null>(null);
   const [newSku, setNewSku] = useState<Record<string, { sku: string; description: string }>>({});
@@ -43,16 +41,10 @@ export default function SettingsPage() {
     if (!token) return;
     const data = await api.services.list(token);
     setConfigs(data);
-    const creds: Record<string, Record<string, string>> = {};
-    const sets: Record<string, Record<string, any>> = {};
     const sk: Record<string, { sku: string; description: string }[]> = {};
     for (const c of data) {
-      creds[c.provider] = {};
-      sets[c.provider] = { ...c.settings };
       sk[c.provider] = [...(c.skus || [])];
     }
-    setCredentials(creds);
-    setSettings(sets);
     setSkus(sk);
   }
 
@@ -62,21 +54,11 @@ export default function SettingsPage() {
     loadConfigs();
   }
 
-  async function handleSave(provider: string) {
+  async function handleSaveSkus(provider: string) {
     if (!token) return;
     setSaving(provider);
     try {
-      const creds = credentials[provider] || {};
-      const hasCredentials = Object.values(creds).some((v) => v !== '');
-      await api.services.update(
-        provider,
-        {
-          ...(hasCredentials && { credentials: creds }),
-          settings: settings[provider] || {},
-          skus: skus[provider],
-        },
-        token,
-      );
+      await api.services.update(provider, { skus: skus[provider] }, token);
       loadConfigs();
     } finally {
       setSaving(null);
@@ -138,22 +120,6 @@ export default function SettingsPage() {
               expanded={expanded === config.provider}
               onToggle={() => setExpanded(expanded === config.provider ? null : config.provider)}
               onEnableChange={(enabled) => handleToggle(config.provider, enabled)}
-              credentials={credentials[config.provider] || {}}
-              onCredentialChange={(key, value) =>
-                setCredentials((prev) => ({
-                  ...prev,
-                  [config.provider]: { ...prev[config.provider], [key]: value },
-                }))
-              }
-              settings={settings[config.provider] || {}}
-              onSettingChange={(key, value) =>
-                setSettings((prev) => ({
-                  ...prev,
-                  [config.provider]: { ...prev[config.provider], [key]: value },
-                }))
-              }
-              onSave={() => handleSave(config.provider)}
-              saving={saving === config.provider}
             />
           ))}
         </div>
@@ -169,22 +135,6 @@ export default function SettingsPage() {
                 expanded={expanded === config.provider}
                 onToggle={() => setExpanded(expanded === config.provider ? null : config.provider)}
                 onEnableChange={(enabled) => handleToggle(config.provider, enabled)}
-                credentials={credentials[config.provider] || {}}
-                onCredentialChange={(key, value) =>
-                  setCredentials((prev) => ({
-                    ...prev,
-                    [config.provider]: { ...prev[config.provider], [key]: value },
-                  }))
-                }
-                settings={settings[config.provider] || {}}
-                onSettingChange={(key, value) =>
-                  setSettings((prev) => ({
-                    ...prev,
-                    [config.provider]: { ...prev[config.provider], [key]: value },
-                  }))
-                }
-                onSave={() => handleSave(config.provider)}
-                saving={saving === config.provider}
               />
               {expanded === config.provider && (
                 <div className="ml-4 mt-2 p-4 border border-white/10 rounded-lg">
@@ -241,6 +191,13 @@ export default function SettingsPage() {
                       Add
                     </button>
                   </div>
+                  <button
+                    onClick={() => handleSaveSkus(config.provider)}
+                    disabled={saving === config.provider}
+                    className="mt-3 px-4 py-1.5 bg-gallery-accent text-gallery-black rounded text-sm font-medium hover:bg-gallery-accent-light transition-colors disabled:opacity-50"
+                  >
+                    {saving === config.provider ? 'Saving...' : 'Save SKUs'}
+                  </button>
                 </div>
               )}
             </div>

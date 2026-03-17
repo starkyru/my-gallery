@@ -2,7 +2,6 @@ import { Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/com
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ServiceConfigEntity } from './service-config.entity';
-import { CryptoService } from './crypto.service';
 import { PaymentRegistryService } from './providers/payment-registry.service';
 import { FulfillmentRegistryService } from './providers/fulfillment-registry.service';
 
@@ -13,7 +12,6 @@ export class ServicesService implements OnModuleInit {
   constructor(
     @InjectRepository(ServiceConfigEntity)
     private readonly repo: Repository<ServiceConfigEntity>,
-    private readonly crypto: CryptoService,
     private readonly paymentRegistry: PaymentRegistryService,
     private readonly fulfillmentRegistry: FulfillmentRegistryService,
   ) {}
@@ -73,72 +71,32 @@ export class ServicesService implements OnModuleInit {
     });
   }
 
-  decryptCredentials(config: ServiceConfigEntity): Record<string, string> {
-    if (!config.credentials) return {};
-    try {
-      return JSON.parse(this.crypto.decrypt(config.credentials));
-    } catch {
-      this.logger.warn(`Failed to decrypt credentials for ${config.provider}`);
-      return {};
-    }
-  }
-
   async update(
     provider: string,
     data: {
       enabled?: boolean;
-      credentials?: Record<string, string>;
-      settings?: Record<string, unknown>;
       skus?: { sku: string; description: string }[];
     },
   ): Promise<ServiceConfigEntity> {
     const config = await this.findByProvider(provider);
 
     if (data.enabled !== undefined) config.enabled = data.enabled;
-    if (data.settings !== undefined) config.settings = data.settings;
     if (data.skus !== undefined) config.skus = data.skus;
-
-    if (data.credentials !== undefined) {
-      // Merge with existing credentials — only overwrite keys that have non-empty values
-      const existing = this.decryptCredentials(config);
-      const merged = { ...existing };
-      for (const [key, value] of Object.entries(data.credentials)) {
-        if (value !== '') merged[key] = value;
-      }
-      config.credentials = this.crypto.encrypt(JSON.stringify(merged));
-    }
 
     return this.repo.save(config);
   }
 
-  getConfigWithSchema(config: ServiceConfigEntity) {
+  getConfigResponse(config: ServiceConfigEntity) {
     const paymentProvider = this.paymentRegistry.get(config.provider);
     const fulfillmentProvider = this.fulfillmentRegistry.get(config.provider);
     const provider = paymentProvider || fulfillmentProvider;
-
-    const credentialFields = provider?.credentialSchema || [];
-    const settingsSchema =
-      (fulfillmentProvider as { settingsSchema?: unknown[] })?.settingsSchema ||
-      (paymentProvider as { settingsSchema?: unknown[] })?.settingsSchema ||
-      [];
-
-    // Check which credential keys have values set
-    const existingCreds = this.decryptCredentials(config);
-    const maskedCredentials: Record<string, boolean> = {};
-    for (const field of credentialFields) {
-      maskedCredentials[field.key] = !!existingCreds[field.key];
-    }
 
     return {
       provider: config.provider,
       type: config.type,
       displayName: config.displayName,
       enabled: config.enabled,
-      configured: credentialFields.every((f) => !!existingCreds[f.key]),
-      credentialFields,
-      settingsSchema,
-      maskedCredentials,
-      settings: config.settings,
+      configured: provider?.configured ?? false,
       skus: config.skus,
     };
   }

@@ -11,7 +11,7 @@ export class ServicesController {
   @UseGuards(JwtAuthGuard, AdminGuard)
   async list() {
     const configs = await this.servicesService.findAll();
-    return configs.map((c) => this.servicesService.getConfigWithSchema(c));
+    return configs.map((c) => this.servicesService.getConfigResponse(c));
   }
 
   @Put(':provider')
@@ -21,13 +21,11 @@ export class ServicesController {
     @Body()
     body: {
       enabled?: boolean;
-      credentials?: Record<string, string>;
-      settings?: Record<string, unknown>;
       skus?: { sku: string; description: string }[];
     },
   ) {
     const config = await this.servicesService.update(provider, body);
-    return this.servicesService.getConfigWithSchema(config);
+    return this.servicesService.getConfigResponse(config);
   }
 
   @Get('payment/enabled')

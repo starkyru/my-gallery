@@ -1,5 +1,3 @@
-import { CredentialField, SettingsField } from './payment-provider.interface';
-
 export interface FulfillmentResult {
   id: string;
   status: string;
@@ -12,8 +10,7 @@ export interface FulfillmentWebhookResult {
 
 export interface FulfillmentProvider {
   readonly name: string;
-  readonly credentialSchema: CredentialField[];
-  readonly settingsSchema: SettingsField[];
+  readonly configured: boolean;
   createFulfillmentOrder(
     imageUrl: string,
     sku: string,
@@ -27,12 +24,6 @@ export interface FulfillmentProvider {
       country: string;
     },
     reference: string,
-    credentials: Record<string, string>,
-    settings: Record<string, unknown>,
   ): Promise<FulfillmentResult>;
-  handleWebhook(
-    payload: Record<string, unknown>,
-    credentials: Record<string, string>,
-    settings: Record<string, unknown>,
-  ): Promise<FulfillmentWebhookResult>;
+  handleWebhook(payload: Record<string, unknown>): Promise<FulfillmentWebhookResult>;
 }

@@ -16,15 +16,14 @@ export class FulfillmentController {
     @Param('provider') providerName: string,
     @Body() payload: Record<string, unknown>,
   ) {
-    const config = await this.servicesService.getEnabledConfig('fulfillment', providerName);
+    await this.servicesService.getEnabledConfig('fulfillment', providerName);
     const provider = this.fulfillmentRegistry.get(providerName);
     if (!provider) {
       this.logger.warn(`Unknown fulfillment provider: ${providerName}`);
       return { ok: false };
     }
 
-    const credentials = this.servicesService.decryptCredentials(config);
-    const result = await provider.handleWebhook(payload, credentials, config.settings);
+    const result = await provider.handleWebhook(payload);
     this.logger.log(`Fulfillment webhook from ${providerName}: ${JSON.stringify(result)}`);
     return result;
   }

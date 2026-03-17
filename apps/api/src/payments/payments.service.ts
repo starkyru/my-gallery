@@ -21,12 +21,11 @@ export class PaymentsService {
 
   async createPayment(orderId: number, providerName: string) {
     const order = await this.ordersService.findOne(orderId);
-    const config = await this.servicesService.getEnabledConfig('payment', providerName);
+    await this.servicesService.getEnabledConfig('payment', providerName);
     const provider = this.paymentRegistry.get(providerName);
     if (!provider) throw new NotFoundException(`Payment provider not found: ${providerName}`);
 
-    const credentials = this.servicesService.decryptCredentials(config);
-    const result = await provider.createPayment(order, credentials, config.settings);
+    const result = await provider.createPayment(order);
 
     await this.ordersService.updateStatus(
       orderId,
@@ -49,19 +48,13 @@ export class PaymentsService {
       throw new BadRequestException('Payment ID mismatch');
     }
 
-    const config = await this.servicesService.getEnabledConfig('payment', providerName);
+    await this.servicesService.getEnabledConfig('payment', providerName);
     const provider = this.paymentRegistry.get(providerName);
     if (!provider?.capturePayment) {
       throw new NotFoundException(`Capture not supported for provider: ${providerName}`);
     }
 
-    const credentials = this.servicesService.decryptCredentials(config);
-    const result = await provider.capturePayment(
-      orderId,
-      captureData,
-      credentials,
-      config.settings,
-    );
+    const result = await provider.capturePayment(orderId, captureData);
 
     if (result.status === 'COMPLETED') {
       await this.ordersService.updateStatus(orderId, OrderStatus.Paid);
@@ -78,18 +71,11 @@ export class PaymentsService {
     rawBody?: Buffer,
     headers?: Record<string, string>,
   ) {
-    const config = await this.servicesService.getEnabledConfig('payment', providerName);
+    await this.servicesService.getEnabledConfig('payment', providerName);
     const provider = this.paymentRegistry.get(providerName);
     if (!provider) throw new NotFoundException(`Payment provider not found: ${providerName}`);
 
-    const credentials = this.servicesService.decryptCredentials(config);
-    const result = await provider.handleWebhook(
-      payload,
-      credentials,
-      config.settings,
-      rawBody,
-      headers,
-    );
+    const result = await provider.handleWebhook(payload, rawBody, headers);
 
     if (result.paid && result.orderId) {
       await this.ordersService.updateStatus(result.orderId, OrderStatus.Paid);
@@ -109,7 +95,6 @@ export class PaymentsService {
       return;
     }
 
-    // Find the first enabled fulfillment provider
     const fulfillmentConfigs = await this.servicesService.getEnabledByType('fulfillment');
 
     for (const item of printItems) {
@@ -127,7 +112,6 @@ export class PaymentsService {
 
         const imageUrl = this.imagesService.generateDownloadUrl(item.imageId);
 
-        // Use the fulfillment provider from the item, or find it by matching SKU
         const providerName =
           item.fulfillmentProvider ||
           this.findFulfillmentProvider(item.printSku!, fulfillmentConfigs);
@@ -150,7 +134,6 @@ export class PaymentsService {
           continue;
         }
 
-        const credentials = this.servicesService.decryptCredentials(config);
         const result = await provider.createFulfillmentOrder(
           imageUrl,
           item.printSku!,
@@ -164,8 +147,6 @@ export class PaymentsService {
             country: order.shippingCountry!,
           },
           `order-${order.id}-item-${item.id}`,
-          credentials,
-          config.settings,
         );
 
         await this.ordersService.updateItemFulfillment(item.id, result.id, providerName);
@@ -185,7 +166,6 @@ export class PaymentsService {
         return config.provider;
       }
     }
-    // Fallback: use first enabled fulfillment provider
     return configs.length > 0 ? configs[0].provider : null;
   }
 }

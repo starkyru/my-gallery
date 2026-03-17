@@ -4,39 +4,41 @@ import {
   PaymentResult,
   CaptureResult,
   WebhookResult,
-  CredentialField,
-} from './payment-provider.interface';
-import { SettingsField } from './payment-provider.interface';
+} from '../payment-provider.interface';
+import { loadProviderEnv } from '../load-env';
 
 @Injectable()
 export class PayPalProvider implements PaymentProvider {
   private readonly logger = new Logger(PayPalProvider.name);
+  private readonly clientId: string;
+  private readonly clientSecret: string;
+  private readonly webhookId: string;
+  private readonly sandbox: boolean;
 
   readonly name = 'paypal';
 
-  readonly credentialSchema: CredentialField[] = [
-    { key: 'clientId', label: 'Client ID', type: 'text' },
-    { key: 'clientSecret', label: 'Client Secret', type: 'password' },
-    { key: 'webhookId', label: 'Webhook ID', type: 'text' },
-  ];
-
-  readonly settingsSchema: SettingsField[] = [
-    { key: 'sandbox', label: 'Sandbox Mode', type: 'boolean', default: true },
-  ];
-
-  private getBaseUrl(settings: Record<string, unknown>): string {
-    return settings.sandbox ? 'https://api-m.sandbox.paypal.com' : 'https://api-m.paypal.com';
+  constructor() {
+    const env = loadProviderEnv(__dirname);
+    this.clientId = env.PAYPAL_CLIENT_ID || '';
+    this.clientSecret = env.PAYPAL_CLIENT_SECRET || '';
+    this.webhookId = env.PAYPAL_WEBHOOK_ID || '';
+    this.sandbox = env.PAYPAL_SANDBOX !== 'false';
   }
 
-  private async getAccessToken(
-    credentials: Record<string, string>,
-    settings: Record<string, unknown>,
-  ): Promise<string> {
-    const baseUrl = this.getBaseUrl(settings);
+  get configured(): boolean {
+    return !!(this.clientId && this.clientSecret);
+  }
+
+  private getBaseUrl(): string {
+    return this.sandbox ? 'https://api-m.sandbox.paypal.com' : 'https://api-m.paypal.com';
+  }
+
+  private async getAccessToken(): Promise<string> {
+    const baseUrl = this.getBaseUrl();
     const authResponse = await fetch(`${baseUrl}/v1/oauth2/token`, {
       method: 'POST',
       headers: {
-        Authorization: `Basic ${Buffer.from(`${credentials.clientId}:${credentials.clientSecret}`).toString('base64')}`,
+        Authorization: `Basic ${Buffer.from(`${this.clientId}:${this.clientSecret}`).toString('base64')}`,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: 'grant_type=client_credentials',
@@ -45,13 +47,9 @@ export class PayPalProvider implements PaymentProvider {
     return access_token;
   }
 
-  async createPayment(
-    order: { id: number; total: number },
-    credentials: Record<string, string>,
-    settings: Record<string, unknown>,
-  ): Promise<PaymentResult> {
-    const baseUrl = this.getBaseUrl(settings);
-    const accessToken = await this.getAccessToken(credentials, settings);
+  async createPayment(order: { id: number; total: number }): Promise<PaymentResult> {
+    const baseUrl = this.getBaseUrl();
+    const accessToken = await this.getAccessToken();
 
     const response = await fetch(`${baseUrl}/v2/checkout/orders`, {
       method: 'POST',
@@ -82,11 +80,9 @@ export class PayPalProvider implements PaymentProvider {
   async capturePayment(
     _orderId: number,
     captureData: Record<string, unknown>,
-    credentials: Record<string, string>,
-    settings: Record<string, unknown>,
   ): Promise<CaptureResult> {
-    const baseUrl = this.getBaseUrl(settings);
-    const accessToken = await this.getAccessToken(credentials, settings);
+    const baseUrl = this.getBaseUrl();
+    const accessToken = await this.getAccessToken();
 
     const response = await fetch(
       `${baseUrl}/v2/checkout/orders/${captureData.paypalOrderId}/capture`,
@@ -103,12 +99,7 @@ export class PayPalProvider implements PaymentProvider {
     return result;
   }
 
-  async handleWebhook(
-    _payload: Record<string, unknown>,
-    _credentials: Record<string, string>,
-    _settings: Record<string, unknown>,
-  ): Promise<WebhookResult> {
-    // PayPal webhooks are not currently used — capture is done client-side
+  async handleWebhook(_payload: Record<string, unknown>): Promise<WebhookResult> {
     return {};
   }
 }

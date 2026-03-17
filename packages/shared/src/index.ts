@@ -38,29 +38,12 @@ export enum PaymentMethod {
 
 export type ServiceType = 'payment' | 'fulfillment';
 
-export interface CredentialField {
-  key: string;
-  label: string;
-  type: 'text' | 'password';
-}
-
-export interface SettingsField {
-  key: string;
-  label: string;
-  type: 'boolean' | 'text';
-  default?: string | boolean;
-}
-
 export interface ServiceConfig {
   provider: string;
   type: ServiceType;
   displayName: string;
   enabled: boolean;
   configured: boolean;
-  credentialFields: CredentialField[];
-  settingsSchema: SettingsField[];
-  maskedCredentials: Record<string, boolean>;
-  settings: Record<string, unknown>;
   skus: FulfillmentSku[];
 }
 
@@ -94,6 +77,7 @@ export interface Artist {
   name: string;
   bio: string | null;
   avatarUrl: string | null;
+  portraitPath: string | null;
   loginEnabled?: boolean;
   isActive?: boolean;
   createdAt: Date;

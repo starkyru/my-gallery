@@ -3,25 +3,29 @@ import {
   FulfillmentProvider,
   FulfillmentResult,
   FulfillmentWebhookResult,
-} from './fulfillment-provider.interface';
-import { CredentialField, SettingsField } from './payment-provider.interface';
+} from '../fulfillment-provider.interface';
+import { loadProviderEnv } from '../load-env';
 
 @Injectable()
 export class ProdigiProvider implements FulfillmentProvider {
   private readonly logger = new Logger(ProdigiProvider.name);
+  private readonly apiKey: string;
+  private readonly sandbox: boolean;
 
   readonly name = 'prodigi';
 
-  readonly credentialSchema: CredentialField[] = [
-    { key: 'apiKey', label: 'API Key', type: 'password' },
-  ];
+  constructor() {
+    const env = loadProviderEnv(__dirname);
+    this.apiKey = env.PRODIGI_API_KEY || '';
+    this.sandbox = env.PRODIGI_SANDBOX !== 'false';
+  }
 
-  readonly settingsSchema: SettingsField[] = [
-    { key: 'sandbox', label: 'Sandbox Mode', type: 'boolean', default: true },
-  ];
+  get configured(): boolean {
+    return !!this.apiKey;
+  }
 
-  private getBaseUrl(settings: Record<string, unknown>): string {
-    return settings.sandbox ? 'https://api.sandbox.prodigi.com' : 'https://api.prodigi.com';
+  private getBaseUrl(): string {
+    return this.sandbox ? 'https://api.sandbox.prodigi.com' : 'https://api.prodigi.com';
   }
 
   async createFulfillmentOrder(
@@ -37,16 +41,14 @@ export class ProdigiProvider implements FulfillmentProvider {
       country: string;
     },
     reference: string,
-    credentials: Record<string, string>,
-    settings: Record<string, unknown>,
   ): Promise<FulfillmentResult> {
-    const baseUrl = this.getBaseUrl(settings);
+    const baseUrl = this.getBaseUrl();
 
     const response = await fetch(`${baseUrl}/v4.0/orders`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-API-Key': credentials.apiKey,
+        'X-API-Key': this.apiKey,
       },
       body: JSON.stringify({
         merchantReference: reference,
@@ -84,11 +86,7 @@ export class ProdigiProvider implements FulfillmentProvider {
     return { id: result.order.id, status: result.order.status.stage };
   }
 
-  async handleWebhook(
-    payload: Record<string, unknown>,
-    _credentials: Record<string, string>,
-    _settings: Record<string, unknown>,
-  ): Promise<FulfillmentWebhookResult> {
+  async handleWebhook(payload: Record<string, unknown>): Promise<FulfillmentWebhookResult> {
     this.logger.log(`Prodigi webhook: ${payload.event}`);
     if (payload.event === 'order.status.update') {
       const order = payload.order as Record<string, unknown> | undefined;
