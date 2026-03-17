@@ -66,8 +66,28 @@ export class ArtistsService {
     return this.findOne(id);
   }
 
-  async remove(id: number) {
-    await this.findOne(id);
+  async remove(id: number, requesterArtistId?: number) {
+    if (requesterArtistId !== undefined && requesterArtistId === id) {
+      throw new BadRequestException('Cannot delete your own artist profile');
+    }
+    const count = await this.repo.count();
+    if (count <= 1) {
+      throw new BadRequestException('Cannot delete the last artist');
+    }
+    const artist = await this.findOne(id);
+
+    if (artist.portraitPath) {
+      const originalPath = path.join(this.uploadDir, artist.portraitPath);
+      const thumbnailPath = path.join(
+        this.uploadDir,
+        artist.portraitPath.replace('portraits/originals/', 'portraits/thumbnails/'),
+      );
+      await Promise.all([
+        fs.unlink(originalPath).catch(() => {}),
+        fs.unlink(thumbnailPath).catch(() => {}),
+      ]);
+    }
+
     await this.repo.delete(id);
   }
 
