@@ -89,9 +89,16 @@ export class ArtistsController {
   }
 
   @Post(':id/portrait')
-  @UseGuards(JwtAuthGuard, AdminGuard)
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor('file', { storage: undefined }))
-  uploadPortrait(@Param('id') id: string, @UploadedFile() file: Express.Multer.File) {
+  uploadPortrait(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req: { user: { role: string; artistId?: number } },
+  ) {
+    if (req.user.role !== 'admin' && req.user.artistId !== +id) {
+      throw new ForbiddenException('You can only upload your own portrait');
+    }
     return this.service.uploadPortrait(+id, file);
   }
 

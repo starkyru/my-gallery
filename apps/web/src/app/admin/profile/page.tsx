@@ -1,17 +1,22 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
+
+const UPLOAD_URL = process.env.NEXT_PUBLIC_UPLOAD_URL || 'http://localhost:4000/uploads';
 
 export default function ArtistProfilePage() {
   const { token, role, artistId } = useAuthStore();
   const router = useRouter();
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
+  const [portraitPath, setPortraitPath] = useState<string | null>(null);
+  const [uploadingPortrait, setUploadingPortrait] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -28,9 +33,27 @@ export default function ArtistProfilePage() {
       api.artists.get(artistId).then((p: any) => {
         setName(p.name);
         setBio(p.bio || '');
+        setPortraitPath(p.portraitPath || null);
       });
     }
   }, [role, artistId, token, router]);
+
+  async function handlePortraitUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !token || !artistId) return;
+    setUploadingPortrait(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const result = await api.artists.uploadPortrait(artistId, formData, token);
+      setPortraitPath(result.portraitPath);
+    } catch {
+      setMessage('Failed to upload portrait');
+    } finally {
+      setUploadingPortrait(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  }
 
   async function handleSaveBio(e: React.FormEvent) {
     e.preventDefault();
@@ -79,6 +102,43 @@ export default function ArtistProfilePage() {
   return (
     <div className="max-w-xl space-y-8">
       <h1 className="font-serif text-3xl">My Profile</h1>
+
+      <div className="flex items-center gap-6">
+        {portraitPath ? (
+          <img
+            src={`${UPLOAD_URL}/${portraitPath}`}
+            alt={name}
+            className="w-24 h-24 rounded-full object-cover"
+          />
+        ) : (
+          <div className="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center">
+            <span className="text-3xl text-gallery-gray">
+              {name ? name.charAt(0).toUpperCase() : '?'}
+            </span>
+          </div>
+        )}
+        <div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handlePortraitUpload}
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploadingPortrait}
+            className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white hover:bg-white/10 transition-colors disabled:opacity-50"
+          >
+            {uploadingPortrait
+              ? 'Uploading...'
+              : portraitPath
+                ? 'Change Portrait'
+                : 'Upload Portrait'}
+          </button>
+        </div>
+      </div>
 
       <form onSubmit={handleSaveBio} className="space-y-4">
         <div>
