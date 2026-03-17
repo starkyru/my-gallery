@@ -82,6 +82,21 @@ export interface Project {
   createdAt: Date;
 }
 
+export interface ProtectedGallery {
+  id: number;
+  name: string;
+  slug: string;
+  isActive: boolean;
+  imageCount?: number;
+  createdAt: Date;
+}
+
+export interface ProtectedGalleryPublic {
+  name: string;
+  slug: string;
+  images: GalleryImage[];
+}
+
 export interface Artist {
   id: number;
   name: string;

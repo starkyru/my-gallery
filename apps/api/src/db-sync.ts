@@ -10,6 +10,8 @@ import { ServiceConfigEntity } from './services/service-config.entity';
 import { GalleryConfigEntity } from './gallery-config/gallery-config.entity';
 import { CategoryEntity } from './categories/category.entity';
 import { ProjectEntity } from './projects/project.entity';
+import { ProtectedGalleryEntity } from './protected-galleries/protected-gallery.entity';
+import { ProtectedGalleryImageEntity } from './protected-galleries/protected-gallery-image.entity';
 
 const required = ['DATABASE_HOST', 'DATABASE_USER', 'DATABASE_PASSWORD', 'DATABASE_NAME'] as const;
 for (const key of required) {
@@ -37,6 +39,8 @@ const ds = new DataSource({
     GalleryConfigEntity,
     CategoryEntity,
     ProjectEntity,
+    ProtectedGalleryEntity,
+    ProtectedGalleryImageEntity,
   ],
   synchronize: true,
 });

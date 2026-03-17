@@ -15,6 +15,9 @@ import { CategoriesModule } from './categories/categories.module';
 import { CategoryEntity } from './categories/category.entity';
 import { ProjectsModule } from './projects/projects.module';
 import { ProjectEntity } from './projects/project.entity';
+import { ProtectedGalleriesModule } from './protected-galleries/protected-galleries.module';
+import { ProtectedGalleryEntity } from './protected-galleries/protected-gallery.entity';
+import { ProtectedGalleryImageEntity } from './protected-galleries/protected-gallery-image.entity';
 import { ArtistEntity } from './artists/artist.entity';
 import { ImageEntity } from './images/image.entity';
 import { OrderEntity } from './orders/order.entity';
@@ -46,6 +49,8 @@ import { ServiceConfigEntity } from './services/service-config.entity';
           GalleryConfigEntity,
           CategoryEntity,
           ProjectEntity,
+          ProtectedGalleryEntity,
+          ProtectedGalleryImageEntity,
         ],
         synchronize: config.get('NODE_ENV') !== 'production',
       }),
@@ -61,6 +66,7 @@ import { ServiceConfigEntity } from './services/service-config.entity';
     GalleryConfigModule,
     CategoriesModule,
     ProjectsModule,
+    ProtectedGalleriesModule,
   ],
 })
 export class AppModule {}

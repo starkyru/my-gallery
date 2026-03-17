@@ -47,6 +47,7 @@ export class ImagesService {
       .leftJoinAndSelect('image.project', 'project')
       .andWhere('image.isArchived = false')
       .andWhere('artist.isActive = true')
+      .andWhere('image.id NOT IN (SELECT pgi.image_id FROM protected_gallery_images pgi)')
       .orderBy('image.sortOrder', 'ASC')
       .addOrderBy('image.createdAt', 'DESC');
 

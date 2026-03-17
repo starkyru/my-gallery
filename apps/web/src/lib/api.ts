@@ -6,6 +6,8 @@ import type {
   GalleryConfig,
   Category,
   Project,
+  ProtectedGallery,
+  ProtectedGalleryPublic,
   Order,
   Artist,
 } from '@gallery/shared';
@@ -215,6 +217,59 @@ export const api = {
         method: 'POST',
         headers: authHeaders(token),
       }),
+  },
+  protectedGalleries: {
+    listAdmin: (token: string) =>
+      request<ProtectedGallery[]>('/protected-galleries/admin', {
+        headers: authHeaders(token),
+      }),
+    create: (data: { name: string; slug: string; password: string }, token: string) =>
+      request<ProtectedGallery>('/protected-galleries', {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: authHeaders(token),
+      }),
+    update: (
+      id: number,
+      data: { name?: string; slug?: string; password?: string; isActive?: boolean },
+      token: string,
+    ) =>
+      request<ProtectedGallery>(`/protected-galleries/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+        headers: authHeaders(token),
+      }),
+    delete: (id: number, deleteImages?: boolean, token?: string) =>
+      request(`/protected-galleries/${id}${deleteImages ? '?deleteImages=true' : ''}`, {
+        method: 'DELETE',
+        headers: authHeaders(token!),
+      }),
+    getImages: (id: number, token: string) =>
+      request<GalleryImage[]>(`/protected-galleries/${id}/images`, {
+        headers: authHeaders(token),
+      }),
+    addImages: (id: number, imageIds: number[], token: string) =>
+      request(`/protected-galleries/${id}/images`, {
+        method: 'POST',
+        body: JSON.stringify({ imageIds }),
+        headers: authHeaders(token),
+      }),
+    removeImage: (id: number, imageId: number, token: string) =>
+      request(`/protected-galleries/${id}/images/${imageId}`, {
+        method: 'DELETE',
+        headers: authHeaders(token),
+      }),
+    authenticate: (slug: string, password: string) =>
+      request<{ accessToken: string }>(`/protected-galleries/${slug}/auth`, {
+        method: 'POST',
+        body: JSON.stringify({ password }),
+      }),
+    getPublic: (slug: string, accessToken: string) =>
+      request<ProtectedGalleryPublic>(
+        `/protected-galleries/${slug}?token=${encodeURIComponent(accessToken)}`,
+      ),
+    downloadUrl: (slug: string, accessToken: string) =>
+      `${API_URL}/api/protected-galleries/${slug}/download?token=${encodeURIComponent(accessToken)}`,
   },
   auth: {
     login: (username: string, password: string) =>
