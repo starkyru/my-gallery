@@ -2,6 +2,7 @@
   "name": "my-gallery",
   "private": true,
   "scripts": {
+    "front-dev": "pnpm --filter @gallery/web dev ",
     "dev": "turbo dev",
     "build": "turbo build",
     "lint": "turbo lint",
