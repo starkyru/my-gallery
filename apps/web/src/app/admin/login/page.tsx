@@ -28,8 +28,14 @@ export default function AdminLoginPage() {
       } else {
         router.push('/admin');
       }
-    } catch {
-      setError('Invalid credentials');
+    } catch (err: unknown) {
+      const status = (err as { status?: number })?.status;
+      const message = (err as { message?: string })?.message;
+      if (status === 429) {
+        setError(message || 'Too many login attempts. Please wait a moment.');
+      } else {
+        setError('Invalid credentials');
+      }
     } finally {
       setLoading(false);
     }
