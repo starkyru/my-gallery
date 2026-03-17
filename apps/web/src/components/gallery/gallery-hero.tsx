@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { config } from '@/config';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -50,13 +51,10 @@ export function GalleryHero() {
       className="relative flex flex-col items-center justify-center min-h-screen px-6 text-center"
     >
       <h1 ref={titleRef} className="font-serif text-5xl md:text-7xl lg:text-8xl tracking-tight">
-        Fine Art
-        <br />
-        <span className="text-gallery-accent">Photography</span>
+        {config.galleryName}
       </h1>
       <p ref={subtitleRef} className="mt-6 text-gallery-gray text-lg md:text-xl max-w-xl">
-        Curated collection of original prints, each telling its own story through light and
-        composition.
+        {config.galleryDescription}
       </p>
       <div className="absolute bottom-12 animate-bounce">
         <svg
