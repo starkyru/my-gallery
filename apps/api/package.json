@@ -6,6 +6,7 @@
     "dev": "nest start --watch",
     "build": "nest build",
     "start": "node dist/main",
+    "db:sync": "node dist/db-sync.js",
     "lint": "eslint src/",
     "type-check": "tsc --noEmit"
   },

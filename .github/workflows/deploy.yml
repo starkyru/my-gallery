@@ -32,8 +32,41 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            set -e
+
             cd /var/www/gallery
+
+            # Pull latest code
             git pull origin main
-            pnpm install --frozen-lockfile
+
+            # Install dependencies (CI=true for non-interactive mode)
+            CI=true pnpm install --frozen-lockfile
+
+            # Build all packages
             pnpm turbo build
-            pm2 restart ecosystem.config.cjs
+
+            # Sync database schema (create new tables/columns)
+            cd apps/api && pnpm db:sync && cd ../..
+
+            # Stop services and clean up any orphaned gallery processes
+            pm2 stop ecosystem.config.cjs || true
+            pm2 delete gallery-api gallery-web 2>/dev/null || true
+            pkill -f 'dist/main.js' -u "$(whoami)" 2>/dev/null || true
+            pkill -f 'next start.*3002' -u "$(whoami)" 2>/dev/null || true
+            sleep 1
+            pm2 start ecosystem.config.cjs
+
+            # Wait for services to start, then verify health
+            sleep 8
+
+            API_STATUS=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:4000/api/gallery-config)
+            WEB_STATUS=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3002)
+
+            if [ "$API_STATUS" != "200" ] || [ "$WEB_STATUS" != "200" ]; then
+              echo "Health check failed! API=$API_STATUS WEB=$WEB_STATUS"
+              pm2 logs --nostream --lines 20
+              exit 1
+            fi
+
+            echo "Deploy successful — API=$API_STATUS WEB=$WEB_STATUS"
+            pm2 save
