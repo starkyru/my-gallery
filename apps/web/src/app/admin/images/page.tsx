@@ -44,7 +44,7 @@ export default function AdminImagesPage() {
 
   // Shared upload controls
   const [sharedArtistId, setSharedArtistId] = useState('');
-  const [sharedCategory, setSharedCategory] = useState('other');
+  const sharedCategory = 'other';
 
   // Filters & sorting
   const [filterArtist, setFilterArtist] = useState('');
@@ -166,11 +166,6 @@ export default function AdminImagesPage() {
 
   function removeDroppedFile(index: number) {
     setDroppedFiles((prev) => prev.filter((_, i) => i !== index));
-  }
-
-  function handleSharedCategoryChange(cat: string) {
-    setSharedCategory(cat);
-    setDroppedFiles((prev) => prev.map((f) => ({ ...f, category: cat })));
   }
 
   async function handleUploadAll() {
@@ -339,35 +334,19 @@ export default function AdminImagesPage() {
       {/* Metadata form */}
       {droppedFiles.length > 0 && (
         <div className="mb-8 p-6 border border-white/10 rounded-lg space-y-4">
-          <div className="flex gap-4 items-end">
-            <div className="flex-1">
-              <label className="block text-xs text-gallery-gray mb-1">Artist (all images)</label>
-              <select
-                value={sharedArtistId}
-                onChange={(e) => setSharedArtistId(e.target.value)}
-                className={`${selectClass} w-full`}
-              >
-                {artists.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex-1">
-              <label className="block text-xs text-gallery-gray mb-1">Category (all images)</label>
-              <select
-                value={sharedCategory}
-                onChange={(e) => handleSharedCategoryChange(e.target.value)}
-                className={`${selectClass} w-full`}
-              >
-                {categories.map((c) => (
-                  <option key={c.slug} value={c.slug}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <div>
+            <label className="block text-xs text-gallery-gray mb-1">Artist (all images)</label>
+            <select
+              value={sharedArtistId}
+              onChange={(e) => setSharedArtistId(e.target.value)}
+              className={`${selectClass} w-full`}
+            >
+              {artists.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="space-y-3">
@@ -387,7 +366,7 @@ export default function AdminImagesPage() {
                   value={df.title}
                   onChange={(e) => updateDroppedFile(idx, 'title', e.target.value)}
                   placeholder="Title"
-                  className={`${inputClass} flex-1`}
+                  className={`${inputClass} flex-1 min-w-0`}
                 />
                 <input
                   value={df.price}
@@ -395,19 +374,8 @@ export default function AdminImagesPage() {
                   placeholder="Price"
                   type="number"
                   step="0.01"
-                  className={`${inputClass} w-24`}
+                  className={`${inputClass} w-24 flex-shrink-0`}
                 />
-                <select
-                  value={df.category}
-                  onChange={(e) => updateDroppedFile(idx, 'category', e.target.value)}
-                  className={selectClass}
-                >
-                  {categories.map((c) => (
-                    <option key={c.slug} value={c.slug}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
                 <button
                   onClick={() => removeDroppedFile(idx)}
                   className="text-red-400 hover:text-red-300 text-lg px-1"

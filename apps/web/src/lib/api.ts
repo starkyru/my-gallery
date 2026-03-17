@@ -71,7 +71,13 @@ export const api = {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
-      }).then((r) => r.json()),
+      }).then(async (r) => {
+        if (!r.ok) {
+          const error = await r.json().catch(() => ({ message: r.statusText }));
+          throw new Error(error.message || 'Upload failed');
+        }
+        return r.json();
+      }),
     update: (id: number, data: Record<string, unknown>, token: string) =>
       request(`/images/${id}`, {
         method: 'PUT',
