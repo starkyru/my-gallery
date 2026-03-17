@@ -8,7 +8,7 @@ export interface SettingsField {
   key: string;
   label: string;
   type: 'boolean' | 'text';
-  default?: any;
+  default?: string | boolean;
 }
 
 export interface PaymentResult {
@@ -18,7 +18,7 @@ export interface PaymentResult {
 
 export interface CaptureResult {
   status: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface WebhookResult {
@@ -30,19 +30,21 @@ export interface PaymentProvider {
   readonly name: string;
   readonly credentialSchema: CredentialField[];
   createPayment(
-    order: any,
+    order: { id: number; total: number },
     credentials: Record<string, string>,
-    settings: Record<string, any>,
+    settings: Record<string, unknown>,
   ): Promise<PaymentResult>;
   capturePayment?(
     orderId: number,
-    captureData: any,
+    captureData: Record<string, unknown>,
     credentials: Record<string, string>,
-    settings: Record<string, any>,
+    settings: Record<string, unknown>,
   ): Promise<CaptureResult>;
   handleWebhook(
-    payload: any,
+    payload: Record<string, unknown>,
     credentials: Record<string, string>,
-    settings: Record<string, any>,
+    settings: Record<string, unknown>,
+    rawBody?: Buffer,
+    headers?: Record<string, string>,
   ): Promise<WebhookResult>;
 }

@@ -14,6 +14,9 @@ export class AdminUserEntity {
   @Column({ name: 'password_hash' })
   passwordHash!: string;
 
+  @Column({ name: 'must_change_password', default: true })
+  mustChangePassword!: boolean;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 }

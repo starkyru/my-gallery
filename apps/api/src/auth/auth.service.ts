@@ -38,6 +38,7 @@ export class AuthService implements OnModuleInit {
         username: 'admin',
         email,
         passwordHash: hash,
+        mustChangePassword: true,
       });
     }
   }
@@ -50,7 +51,11 @@ export class AuthService implements OnModuleInit {
       if (!valid) throw new UnauthorizedException('Invalid credentials');
 
       const payload = { sub: admin.id, username: admin.username, role: 'admin' as const };
-      return { accessToken: this.jwtService.sign(payload), role: 'admin' as const };
+      return {
+        accessToken: this.jwtService.sign(payload),
+        role: 'admin' as const,
+        ...(admin.mustChangePassword && { mustChangePassword: true }),
+      };
     }
 
     // Try photographer
@@ -101,6 +106,7 @@ export class AuthService implements OnModuleInit {
     if (!valid) throw new BadRequestException('Current password is incorrect');
 
     user.passwordHash = await bcrypt.hash(newPassword, 12);
+    user.mustChangePassword = false;
     await this.adminRepo.save(user);
   }
 
@@ -140,7 +146,10 @@ export class AuthService implements OnModuleInit {
     return { id: user.id, username: user.username, email: user.email, createdAt: user.createdAt };
   }
 
-  async removeUser(userId: number, _requesterId: number) {
+  async removeUser(userId: number, requesterId: number) {
+    if (userId === requesterId) {
+      throw new BadRequestException('Cannot delete your own account');
+    }
     const count = await this.adminRepo.count();
     if (count <= 1) {
       throw new BadRequestException('Cannot delete the last admin user');
@@ -157,11 +166,11 @@ export class AuthService implements OnModuleInit {
       return;
     }
 
-    const secret = this.configService.get('JWT_SECRET', 'dev-secret-change-me');
+    const secret = this.configService.get<string>('JWT_SECRET');
     const timestamp = Date.now();
-    const data = `${user.id}:${timestamp}`;
-    const hmac = crypto.createHmac('sha256', secret).update(data).digest('hex');
-    const token = Buffer.from(`${data}:${hmac}`).toString('base64url');
+    const data = `${user.id}:${timestamp}:${user.passwordHash.slice(-8)}`;
+    const hmac = crypto.createHmac('sha256', secret!).update(data).digest('hex');
+    const token = Buffer.from(`${user.id}:${timestamp}:${hmac}`).toString('base64url');
 
     const publicUrl = this.configService.get('PUBLIC_URL', 'http://localhost:3000');
     const resetLink = `${publicUrl}/admin/reset-password?token=${token}`;
@@ -177,7 +186,7 @@ export class AuthService implements OnModuleInit {
   }
 
   async resetPassword(token: string, newPassword: string) {
-    const secret = this.configService.get('JWT_SECRET', 'dev-secret-change-me');
+    const secret = this.configService.get<string>('JWT_SECRET');
 
     let decoded: string;
     try {
@@ -190,10 +199,21 @@ export class AuthService implements OnModuleInit {
     if (parts.length !== 3) throw new BadRequestException('Invalid reset token');
 
     const [userIdStr, timestampStr, hmac] = parts;
-    const data = `${userIdStr}:${timestampStr}`;
-    const expectedHmac = crypto.createHmac('sha256', secret).update(data).digest('hex');
 
-    if (hmac !== expectedHmac) throw new BadRequestException('Invalid reset token');
+    const userId = parseInt(userIdStr, 10);
+    const user = await this.adminRepo.findOne({ where: { id: userId } });
+    if (!user) throw new BadRequestException('Invalid reset token');
+
+    // Recompute HMAC including current passwordHash — token is invalid if password already changed
+    const data = `${userIdStr}:${timestampStr}:${user.passwordHash.slice(-8)}`;
+    const expectedHmac = crypto.createHmac('sha256', secret!).update(data).digest('hex');
+
+    // Timing-safe comparison with length check
+    const hmacBuf = Buffer.from(hmac);
+    const expectedBuf = Buffer.from(expectedHmac);
+    if (hmacBuf.length !== expectedBuf.length || !crypto.timingSafeEqual(hmacBuf, expectedBuf)) {
+      throw new BadRequestException('Invalid reset token');
+    }
 
     const timestamp = parseInt(timestampStr, 10);
     const oneHour = 60 * 60 * 1000;
@@ -201,11 +221,8 @@ export class AuthService implements OnModuleInit {
       throw new BadRequestException('Reset token has expired');
     }
 
-    const userId = parseInt(userIdStr, 10);
-    const user = await this.adminRepo.findOne({ where: { id: userId } });
-    if (!user) throw new BadRequestException('Invalid reset token');
-
     user.passwordHash = await bcrypt.hash(newPassword, 12);
+    user.mustChangePassword = false;
     await this.adminRepo.save(user);
   }
 

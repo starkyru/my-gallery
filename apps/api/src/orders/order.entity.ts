@@ -22,6 +22,9 @@ export class OrderEntity {
   @Column({ name: 'payment_id', type: 'varchar', nullable: true })
   paymentId!: string | null;
 
+  @Column({ name: 'access_token', type: 'varchar', unique: true })
+  accessToken!: string;
+
   @OneToMany(() => OrderItemEntity, (item) => item.order, { cascade: true })
   items!: OrderItemEntity[];
 

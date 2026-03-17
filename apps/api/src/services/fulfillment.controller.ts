@@ -12,7 +12,10 @@ export class FulfillmentController {
   ) {}
 
   @Post(':provider/webhook')
-  async handleWebhook(@Param('provider') providerName: string, @Body() payload: any) {
+  async handleWebhook(
+    @Param('provider') providerName: string,
+    @Body() payload: Record<string, unknown>,
+  ) {
     const config = await this.servicesService.getEnabledConfig('fulfillment', providerName);
     const provider = this.fulfillmentRegistry.get(providerName);
     if (!provider) {

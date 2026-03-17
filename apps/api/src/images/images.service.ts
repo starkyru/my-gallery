@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
@@ -9,6 +9,8 @@ import * as crypto from 'crypto';
 import { ImageEntity } from './image.entity';
 import { ImagePrintOptionEntity } from './image-print-option.entity';
 import { ImageCategory } from '@gallery/shared';
+
+const ALLOWED_FORMATS = ['jpeg', 'png', 'webp', 'tiff'];
 
 @Injectable()
 export class ImagesService {
@@ -22,6 +24,14 @@ export class ImagesService {
     private readonly configService: ConfigService,
   ) {
     this.uploadDir = this.configService.get('UPLOAD_DIR', './uploads');
+  }
+
+  private getSigningKey(): string {
+    return (
+      this.configService.get<string>('DOWNLOAD_SIGNING_KEY') ||
+      this.configService.get<string>('JWT_SECRET') ||
+      'dev-secret-change-me'
+    );
   }
 
   findAll(query?: { category?: ImageCategory; featured?: boolean }) {
@@ -52,8 +62,14 @@ export class ImagesService {
   }
 
   async upload(file: Express.Multer.File, data: Partial<ImageEntity>) {
+    // Validate actual image content using sharp
+    const metadata = await sharp(file.buffer).metadata();
+    if (!metadata.format || !ALLOWED_FORMATS.includes(metadata.format)) {
+      throw new BadRequestException('Only JPEG, PNG, WebP, and TIFF images are allowed');
+    }
+
     const id = crypto.randomUUID();
-    const ext = path.extname(file.originalname);
+    const ext = '.' + (metadata.format === 'jpeg' ? 'jpg' : metadata.format);
 
     const dirs = ['originals', 'thumbnails', 'medium', 'watermarked'].map((d) =>
       path.join(this.uploadDir, d),
@@ -66,8 +82,6 @@ export class ImagesService {
     const watermarkPath = path.join(this.uploadDir, 'watermarked', `${id}.webp`);
 
     await fs.writeFile(originalPath, file.buffer);
-
-    const metadata = await sharp(file.buffer).metadata();
 
     await Promise.all([
       sharp(file.buffer).resize(400).webp({ quality: 80 }).toFile(thumbnailPath),
@@ -103,7 +117,7 @@ export class ImagesService {
       .toFile(outputPath);
   }
 
-  async update(id: number, data: Record<string, any>) {
+  async update(id: number, data: Record<string, unknown>) {
     await this.findOne(id);
     const { printOptions, ...imageData } = data;
     if (Object.keys(imageData).length > 0) {
@@ -111,11 +125,9 @@ export class ImagesService {
     }
     if (printOptions !== undefined) {
       await this.printOptionRepo.delete({ imageId: id });
-      if (printOptions.length > 0) {
-        const entities = printOptions.map(
-          (opt: { sku: string; description: string; price: number }) =>
-            this.printOptionRepo.create({ ...opt, imageId: id }),
-        );
+      const opts = printOptions as { sku: string; description: string; price: number }[];
+      if (opts.length > 0) {
+        const entities = opts.map((opt) => this.printOptionRepo.create({ ...opt, imageId: id }));
         await this.printOptionRepo.save(entities);
       }
     }
@@ -151,7 +163,7 @@ export class ImagesService {
   }
 
   generateDownloadUrl(imageId: number): string {
-    const secret = this.configService.get('JWT_SECRET', 'dev-secret');
+    const secret = this.getSigningKey();
     const expires = Date.now() + 24 * 60 * 60 * 1000;
     const data = `${imageId}:${expires}`;
     const signature = crypto.createHmac('sha256', secret).update(data).digest('hex');
@@ -161,9 +173,12 @@ export class ImagesService {
 
   verifyDownloadSignature(imageId: number, expires: string, signature: string): boolean {
     if (Date.now() > parseInt(expires)) return false;
-    const secret = this.configService.get('JWT_SECRET', 'dev-secret');
+    const secret = this.getSigningKey();
     const data = `${imageId}:${expires}`;
     const expected = crypto.createHmac('sha256', secret).update(data).digest('hex');
-    return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
+    const sigBuf = Buffer.from(signature);
+    const expectedBuf = Buffer.from(expected);
+    if (sigBuf.length !== expectedBuf.length) return false;
+    return crypto.timingSafeEqual(sigBuf, expectedBuf);
   }
 }

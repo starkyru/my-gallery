@@ -24,13 +24,13 @@ export class PayPalProvider implements PaymentProvider {
     { key: 'sandbox', label: 'Sandbox Mode', type: 'boolean', default: true },
   ];
 
-  private getBaseUrl(settings: Record<string, any>): string {
+  private getBaseUrl(settings: Record<string, unknown>): string {
     return settings.sandbox ? 'https://api-m.sandbox.paypal.com' : 'https://api-m.paypal.com';
   }
 
   private async getAccessToken(
     credentials: Record<string, string>,
-    settings: Record<string, any>,
+    settings: Record<string, unknown>,
   ): Promise<string> {
     const baseUrl = this.getBaseUrl(settings);
     const authResponse = await fetch(`${baseUrl}/v1/oauth2/token`, {
@@ -46,9 +46,9 @@ export class PayPalProvider implements PaymentProvider {
   }
 
   async createPayment(
-    order: any,
+    order: { id: number; total: number },
     credentials: Record<string, string>,
-    settings: Record<string, any>,
+    settings: Record<string, unknown>,
   ): Promise<PaymentResult> {
     const baseUrl = this.getBaseUrl(settings);
     const accessToken = await this.getAccessToken(credentials, settings);
@@ -81,9 +81,9 @@ export class PayPalProvider implements PaymentProvider {
 
   async capturePayment(
     _orderId: number,
-    captureData: { paypalOrderId: string },
+    captureData: Record<string, unknown>,
     credentials: Record<string, string>,
-    settings: Record<string, any>,
+    settings: Record<string, unknown>,
   ): Promise<CaptureResult> {
     const baseUrl = this.getBaseUrl(settings);
     const accessToken = await this.getAccessToken(credentials, settings);
@@ -104,9 +104,9 @@ export class PayPalProvider implements PaymentProvider {
   }
 
   async handleWebhook(
-    _payload: any,
+    _payload: Record<string, unknown>,
     _credentials: Record<string, string>,
-    _settings: Record<string, any>,
+    _settings: Record<string, unknown>,
   ): Promise<WebhookResult> {
     // PayPal webhooks are not currently used — capture is done client-side
     return {};

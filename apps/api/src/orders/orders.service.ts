@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import * as crypto from 'crypto';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { OrderEntity } from './order.entity';
@@ -74,6 +80,7 @@ export class OrdersService {
       customerEmail,
       total,
       status: OrderStatus.Pending,
+      accessToken: crypto.randomUUID(),
       items: orderItems as OrderItemEntity[],
       ...(shippingAddress && {
         shippingName: shippingAddress.name,
@@ -107,11 +114,19 @@ export class OrdersService {
     return order;
   }
 
+  async findOneSecure(id: number, token?: string, isAdmin?: boolean) {
+    const order = await this.findOne(id);
+    if (!isAdmin && order.accessToken !== token) {
+      throw new ForbiddenException('Invalid or missing order access token');
+    }
+    return order;
+  }
+
   async updateStatus(id: number, status: OrderStatus, paymentId?: string, paymentMethod?: string) {
     const order = await this.findOne(id);
     order.status = status;
     if (paymentId) order.paymentId = paymentId;
-    if (paymentMethod) order.paymentMethod = paymentMethod as any;
+    if (paymentMethod) order.paymentMethod = paymentMethod;
     return this.orderRepo.save(order);
   }
 
@@ -123,8 +138,8 @@ export class OrdersService {
     await this.itemRepo.update(itemId, { fulfillmentOrderId, fulfillmentProvider });
   }
 
-  async getDownloadLinks(orderId: number) {
-    const order = await this.findOne(orderId);
+  async getDownloadLinks(orderId: number, token?: string, isAdmin?: boolean) {
+    const order = await this.findOneSecure(orderId, token, isAdmin);
     if (order.status !== OrderStatus.Paid && order.status !== OrderStatus.Completed) {
       throw new NotFoundException('Order not paid');
     }

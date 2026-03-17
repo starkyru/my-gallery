@@ -64,7 +64,11 @@ export class PhotographersController {
 
   @Put(':id')
   @UseGuards(JwtAuthGuard)
-  update(@Param('id') id: string, @Body() dto: UpdatePhotographerDto, @Request() req: any) {
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdatePhotographerDto,
+    @Request() req: { user: { role: string; photographerId?: number } },
+  ) {
     if (req.user.role !== 'admin') {
       if (req.user.photographerId !== +id) {
         throw new ForbiddenException('You can only edit your own profile');

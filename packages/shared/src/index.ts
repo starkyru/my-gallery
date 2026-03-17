@@ -48,7 +48,7 @@ export interface SettingsField {
   key: string;
   label: string;
   type: 'boolean' | 'text';
-  default?: any;
+  default?: string | boolean;
 }
 
 export interface ServiceConfig {
@@ -60,7 +60,7 @@ export interface ServiceConfig {
   credentialFields: CredentialField[];
   settingsSchema: SettingsField[];
   maskedCredentials: Record<string, boolean>;
-  settings: Record<string, any>;
+  settings: Record<string, unknown>;
   skus: FulfillmentSku[];
 }
 
@@ -108,6 +108,13 @@ export interface GalleryImage {
   createdAt: Date;
 }
 
+export interface LoginResponse {
+  accessToken: string;
+  role: 'admin' | 'photographer';
+  photographerId?: number;
+  mustChangePassword?: boolean;
+}
+
 export interface Order {
   id: number;
   customerEmail: string;
@@ -115,6 +122,7 @@ export interface Order {
   total: number;
   paymentMethod: string | null;
   paymentId: string | null;
+  accessToken?: string;
   items?: OrderItem[];
   shippingName: string | null;
   shippingAddress1: string | null;

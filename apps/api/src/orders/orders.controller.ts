@@ -1,5 +1,13 @@
-import { Controller, Get, Post, Put, Param, Body, Query, UseGuards } from '@nestjs/common';
-import { IsString, IsArray, IsEnum, IsOptional, ValidateNested, IsNumber } from 'class-validator';
+import { Controller, Get, Post, Put, Param, Body, Query, UseGuards, Request } from '@nestjs/common';
+import {
+  IsString,
+  IsArray,
+  IsEnum,
+  IsOptional,
+  IsEmail,
+  ValidateNested,
+  IsNumber,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { OrdersService } from './orders.service';
@@ -42,7 +50,7 @@ class ShippingAddressDto {
 }
 
 class CreateOrderDto {
-  @IsString()
+  @IsEmail()
   customerEmail!: string;
 
   @IsArray()
@@ -83,8 +91,13 @@ export class OrdersController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.service.findOne(+id);
+  findOne(
+    @Param('id') id: string,
+    @Query('token') token?: string,
+    @Request() req?: { user?: { role?: string } },
+  ) {
+    const isAdmin = req?.user?.role === 'admin';
+    return this.service.findOneSecure(+id, token, isAdmin);
   }
 
   @Put(':id/status')
@@ -94,7 +107,12 @@ export class OrdersController {
   }
 
   @Get(':id/downloads')
-  getDownloads(@Param('id') id: string) {
-    return this.service.getDownloadLinks(+id);
+  getDownloads(
+    @Param('id') id: string,
+    @Query('token') token?: string,
+    @Request() req?: { user?: { role?: string } },
+  ) {
+    const isAdmin = req?.user?.role === 'admin';
+    return this.service.getDownloadLinks(+id, token, isAdmin);
   }
 }

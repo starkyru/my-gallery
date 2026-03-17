@@ -1,4 +1,11 @@
-import type { ServiceConfig, EnabledPayment, FulfillmentSku } from '@gallery/shared';
+import type {
+  ServiceConfig,
+  EnabledPayment,
+  FulfillmentSku,
+  GalleryImage,
+  Order,
+  Photographer,
+} from '@gallery/shared';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
@@ -25,15 +32,15 @@ function authHeaders(token: string) {
 
 export const api = {
   images: {
-    list: (params?: string) => request<any[]>(`/images${params ? `?${params}` : ''}`),
-    get: (id: number) => request<any>(`/images/${id}`),
+    list: (params?: string) => request<GalleryImage[]>(`/images${params ? `?${params}` : ''}`),
+    get: (id: number) => request<GalleryImage>(`/images/${id}`),
     upload: (formData: FormData, token: string) =>
       fetch(`${API_URL}/api/images`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
       }).then((r) => r.json()),
-    update: (id: number, data: any, token: string) =>
+    update: (id: number, data: Record<string, unknown>, token: string) =>
       request(`/images/${id}`, {
         method: 'PUT',
         body: JSON.stringify(data),
@@ -49,15 +56,15 @@ export const api = {
       }),
   },
   photographers: {
-    list: () => request<any[]>('/photographers'),
-    get: (id: number) => request<any>(`/photographers/${id}`),
-    create: (data: any, token: string) =>
+    list: () => request<Photographer[]>('/photographers'),
+    get: (id: number) => request<Photographer>(`/photographers/${id}`),
+    create: (data: Record<string, unknown>, token: string) =>
       request('/photographers', {
         method: 'POST',
         body: JSON.stringify(data),
         headers: authHeaders(token),
       }),
-    update: (id: number, data: any, token: string) =>
+    update: (id: number, data: Record<string, unknown>, token: string) =>
       request(`/photographers/${id}`, {
         method: 'PUT',
         body: JSON.stringify(data),
@@ -79,20 +86,38 @@ export const api = {
         postalCode: string;
         country: string;
       };
-    }) => request<any>('/orders', { method: 'POST', body: JSON.stringify(data) }),
+    }) => request<Order>('/orders', { method: 'POST', body: JSON.stringify(data) }),
     list: (token: string, status?: string) =>
-      request<any[]>(`/orders${status ? `?status=${status}` : ''}`, {
+      request<Order[]>(`/orders${status ? `?status=${status}` : ''}`, {
         headers: authHeaders(token),
       }),
-    get: (id: number) => request<any>(`/orders/${id}`),
-    stats: (token: string) => request<any>('/orders/stats', { headers: authHeaders(token) }),
-    downloads: (id: number) => request<any[]>(`/orders/${id}/downloads`),
+    get: (id: number, accessToken?: string) =>
+      request<Order>(`/orders/${id}${accessToken ? `?token=${accessToken}` : ''}`),
+    stats: (token: string) =>
+      request<{ totalImages: number; totalOrders: number; paidOrders: number; revenue: number }>(
+        '/orders/stats',
+        { headers: authHeaders(token) },
+      ),
+    downloads: (id: number, accessToken?: string) =>
+      request<
+        {
+          imageId: number;
+          title?: string;
+          type: string;
+          downloadUrl?: string;
+          printSku?: string;
+          status?: string;
+        }[]
+      >(`/orders/${id}/downloads${accessToken ? `?token=${accessToken}` : ''}`),
   },
   payments: {
     create: (orderId: number, provider: string) =>
-      request<any>(`/payments/orders/${orderId}/${provider}`, { method: 'POST' }),
-    capture: (orderId: number, provider: string, data: any) =>
-      request<any>(`/payments/orders/${orderId}/${provider}/capture`, {
+      request<{ paymentId: string; checkoutLink?: string }>(
+        `/payments/orders/${orderId}/${provider}`,
+        { method: 'POST' },
+      ),
+    capture: (orderId: number, provider: string, data: Record<string, unknown>) =>
+      request<{ status: string }>(`/payments/orders/${orderId}/${provider}/capture`, {
         method: 'POST',
         body: JSON.stringify(data),
       }),
@@ -104,7 +129,7 @@ export const api = {
       data: {
         enabled?: boolean;
         credentials?: Record<string, string>;
-        settings?: Record<string, any>;
+        settings?: Record<string, unknown>;
         skus?: { sku: string; description: string }[];
       },
       token: string,
@@ -126,7 +151,12 @@ export const api = {
   },
   auth: {
     login: (username: string, password: string) =>
-      request<{ accessToken: string; role: string; photographerId?: number }>('/auth/login', {
+      request<{
+        accessToken: string;
+        role: string;
+        photographerId?: number;
+        mustChangePassword?: boolean;
+      }>('/auth/login', {
         method: 'POST',
         body: JSON.stringify({ username, password }),
       }),

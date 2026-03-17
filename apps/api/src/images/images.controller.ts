@@ -125,7 +125,7 @@ export class ImagesController {
   @Put(':id')
   @UseGuards(JwtAuthGuard)
   update(@Param('id') id: string, @Body() dto: UpdateImageDto) {
-    return this.service.update(+id, dto);
+    return this.service.update(+id, { ...dto });
   }
 
   @Put('sort/order')

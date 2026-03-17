@@ -27,7 +27,7 @@ export class ServiceConfigEntity {
   credentials!: string | null; // AES-256-GCM encrypted JSON
 
   @Column({ type: 'jsonb', default: {} })
-  settings!: Record<string, any>;
+  settings!: Record<string, unknown>;
 
   @Column({ type: 'jsonb', default: [] })
   skus!: { sku: string; description: string }[];

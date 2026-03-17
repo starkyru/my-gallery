@@ -10,7 +10,9 @@ import {
   Request,
   ParseIntPipe,
 } from '@nestjs/common';
-import { IsString, IsEmail, IsBoolean } from 'class-validator';
+import { IsString, IsEmail, IsBoolean, MinLength } from 'class-validator';
+import { Throttle } from '@nestjs/throttler';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { AdminGuard } from './admin.guard';
@@ -20,6 +22,7 @@ class LoginDto {
   username!: string;
 
   @IsString()
+  @MinLength(1)
   password!: string;
 }
 
@@ -28,6 +31,7 @@ class ChangePasswordDto {
   currentPassword!: string;
 
   @IsString()
+  @MinLength(8)
   newPassword!: string;
 }
 
@@ -39,6 +43,7 @@ class CreateUserDto {
   email!: string;
 
   @IsString()
+  @MinLength(8)
   password!: string;
 }
 
@@ -52,11 +57,13 @@ class ResetPasswordDto {
   token!: string;
 
   @IsString()
+  @MinLength(8)
   newPassword!: string;
 }
 
 class SetPasswordDto {
   @IsString()
+  @MinLength(8)
   password!: string;
 }
 
@@ -70,13 +77,18 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('login')
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto.username, dto.password);
   }
 
   @UseGuards(JwtAuthGuard)
   @Put('password')
-  changePassword(@Request() req: any, @Body() dto: ChangePasswordDto) {
+  changePassword(
+    @Request() req: { user: { id: number; role: string } },
+    @Body() dto: ChangePasswordDto,
+  ) {
     return this.authService.changePassword(
       req.user.id,
       dto.currentPassword,
@@ -99,7 +111,7 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard, AdminGuard)
   @Delete('users/:id')
-  removeUser(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+  removeUser(@Param('id', ParseIntPipe) id: number, @Request() req: { user: { id: number } }) {
     return this.authService.removeUser(id, req.user.id);
   }
 
@@ -116,12 +128,16 @@ export class AuthController {
   }
 
   @Post('forgot-password')
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
     await this.authService.requestPasswordReset(dto.email);
     return { message: 'If that email is registered, a reset link has been sent.' };
   }
 
   @Post('reset-password')
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   async resetPassword(@Body() dto: ResetPasswordDto) {
     await this.authService.resetPassword(dto.token, dto.newPassword);
     return { message: 'Password has been reset successfully.' };

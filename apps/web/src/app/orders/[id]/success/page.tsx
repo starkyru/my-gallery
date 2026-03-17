@@ -1,21 +1,33 @@
 'use client';
 
 import { useEffect, useState, use } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 
 export default function OrderSuccessPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const [downloads, setDownloads] = useState<any[]>([]);
+  const searchParams = useSearchParams();
+  const token = searchParams.get('token') || undefined;
+  const [downloads, setDownloads] = useState<
+    {
+      imageId: number;
+      title?: string;
+      type: string;
+      downloadUrl?: string;
+      printSku?: string;
+      status?: string;
+    }[]
+  >([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     api.orders
-      .downloads(+id)
+      .downloads(+id, token)
       .then(setDownloads)
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, token]);
 
   const digitalItems = downloads.filter((d) => d.type === 'original' || d.downloadUrl);
   const printItems = downloads.filter((d) => d.type === 'print');

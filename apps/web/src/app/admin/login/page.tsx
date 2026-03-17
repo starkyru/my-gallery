@@ -21,9 +21,17 @@ export default function AdminLoginPage() {
     setLoading(true);
     setError('');
     try {
-      const { accessToken, role, photographerId } = await api.auth.login(username, password);
-      setAuth(accessToken, role as 'admin' | 'photographer', photographerId ?? null);
-      router.push('/admin');
+      const result = await api.auth.login(username, password);
+      setAuth(
+        result.accessToken,
+        result.role as 'admin' | 'photographer',
+        result.photographerId ?? null,
+      );
+      if (result.mustChangePassword) {
+        router.push('/admin/change-password?required=1');
+      } else {
+        router.push('/admin');
+      }
     } catch {
       setError('Invalid credentials');
     } finally {

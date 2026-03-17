@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { OrdersService } from '../orders/orders.service';
 import { ImagesService } from '../images/images.service';
 import { ServicesService } from '../services/services.service';
@@ -38,7 +38,17 @@ export class PaymentsService {
     return result;
   }
 
-  async capturePayment(orderId: number, providerName: string, captureData: any) {
+  async capturePayment(
+    orderId: number,
+    providerName: string,
+    captureData: Record<string, unknown>,
+  ) {
+    const order = await this.ordersService.findOne(orderId);
+    const paypalOrderId = captureData.paypalOrderId as string | undefined;
+    if (paypalOrderId && order.paymentId && order.paymentId !== paypalOrderId) {
+      throw new BadRequestException('Payment ID mismatch');
+    }
+
     const config = await this.servicesService.getEnabledConfig('payment', providerName);
     const provider = this.paymentRegistry.get(providerName);
     if (!provider?.capturePayment) {
@@ -62,13 +72,24 @@ export class PaymentsService {
     return result;
   }
 
-  async handleWebhook(providerName: string, payload: any) {
+  async handleWebhook(
+    providerName: string,
+    payload: Record<string, unknown>,
+    rawBody?: Buffer,
+    headers?: Record<string, string>,
+  ) {
     const config = await this.servicesService.getEnabledConfig('payment', providerName);
     const provider = this.paymentRegistry.get(providerName);
     if (!provider) throw new NotFoundException(`Payment provider not found: ${providerName}`);
 
     const credentials = this.servicesService.decryptCredentials(config);
-    const result = await provider.handleWebhook(payload, credentials, config.settings);
+    const result = await provider.handleWebhook(
+      payload,
+      credentials,
+      config.settings,
+      rawBody,
+      headers,
+    );
 
     if (result.paid && result.orderId) {
       await this.ordersService.updateStatus(result.orderId, OrderStatus.Paid);

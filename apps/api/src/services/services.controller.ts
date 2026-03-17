@@ -1,5 +1,6 @@
 import { Controller, Get, Put, Param, Body, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { AdminGuard } from '../auth/admin.guard';
 import { ServicesService } from './services.service';
 
 @Controller('services')
@@ -7,21 +8,21 @@ export class ServicesController {
   constructor(private readonly servicesService: ServicesService) {}
 
   @Get()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   async list() {
     const configs = await this.servicesService.findAll();
     return configs.map((c) => this.servicesService.getConfigWithSchema(c));
   }
 
   @Put(':provider')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   async update(
     @Param('provider') provider: string,
     @Body()
     body: {
       enabled?: boolean;
       credentials?: Record<string, string>;
-      settings?: Record<string, any>;
+      settings?: Record<string, unknown>;
       skus?: { sku: string; description: string }[];
     },
   ) {

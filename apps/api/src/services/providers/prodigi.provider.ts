@@ -20,7 +20,7 @@ export class ProdigiProvider implements FulfillmentProvider {
     { key: 'sandbox', label: 'Sandbox Mode', type: 'boolean', default: true },
   ];
 
-  private getBaseUrl(settings: Record<string, any>): string {
+  private getBaseUrl(settings: Record<string, unknown>): string {
     return settings.sandbox ? 'https://api.sandbox.prodigi.com' : 'https://api.prodigi.com';
   }
 
@@ -38,7 +38,7 @@ export class ProdigiProvider implements FulfillmentProvider {
     },
     reference: string,
     credentials: Record<string, string>,
-    settings: Record<string, any>,
+    settings: Record<string, unknown>,
   ): Promise<FulfillmentResult> {
     const baseUrl = this.getBaseUrl(settings);
 
@@ -85,15 +85,17 @@ export class ProdigiProvider implements FulfillmentProvider {
   }
 
   async handleWebhook(
-    payload: any,
+    payload: Record<string, unknown>,
     _credentials: Record<string, string>,
-    _settings: Record<string, any>,
+    _settings: Record<string, unknown>,
   ): Promise<FulfillmentWebhookResult> {
     this.logger.log(`Prodigi webhook: ${payload.event}`);
     if (payload.event === 'order.status.update') {
+      const order = payload.order as Record<string, unknown> | undefined;
+      const status = order?.status as Record<string, unknown> | undefined;
       return {
-        orderId: payload.order?.id,
-        status: payload.order?.status?.stage,
+        orderId: order?.id as string | undefined,
+        status: status?.stage as string | undefined,
       };
     }
     return {};

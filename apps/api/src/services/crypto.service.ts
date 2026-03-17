@@ -1,14 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 
 @Injectable()
 export class CryptoService {
+  private readonly logger = new Logger(CryptoService.name);
   private readonly key: Buffer;
 
   constructor(private readonly configService: ConfigService) {
     const hex = this.configService.get<string>('SERVICE_ENCRYPTION_KEY', '');
     if (hex.length !== 64) {
+      this.logger.warn(
+        'SERVICE_ENCRYPTION_KEY is not configured — service credential encryption will fail at runtime',
+      );
       // Allow startup without key — encrypt/decrypt will throw at call time
       this.key = Buffer.alloc(32);
     } else {

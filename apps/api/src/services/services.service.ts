@@ -88,7 +88,7 @@ export class ServicesService implements OnModuleInit {
     data: {
       enabled?: boolean;
       credentials?: Record<string, string>;
-      settings?: Record<string, any>;
+      settings?: Record<string, unknown>;
       skus?: { sku: string; description: string }[];
     },
   ): Promise<ServiceConfigEntity> {
@@ -118,8 +118,8 @@ export class ServicesService implements OnModuleInit {
 
     const credentialFields = provider?.credentialSchema || [];
     const settingsSchema =
-      (fulfillmentProvider as any)?.settingsSchema ||
-      (paymentProvider as any)?.settingsSchema ||
+      (fulfillmentProvider as { settingsSchema?: unknown[] })?.settingsSchema ||
+      (paymentProvider as { settingsSchema?: unknown[] })?.settingsSchema ||
       [];
 
     // Check which credential keys have values set

@@ -79,6 +79,7 @@ export default function CheckoutPage() {
     setError('');
     try {
       const order = await api.orders.create(buildOrderData());
+      const orderToken = order.accessToken;
       const result = await api.payments.create(order.id, provider);
 
       if (provider === 'paypal') {
@@ -88,17 +89,17 @@ export default function CheckoutPage() {
         });
         if (captureResult.status === 'COMPLETED') {
           clear();
-          router.push(`/orders/${order.id}/success`);
+          router.push(`/orders/${order.id}/success?token=${orderToken}`);
         }
       } else if (result.checkoutLink) {
         // BTCPay and similar: redirect to external checkout
         window.location.href = result.checkoutLink;
       } else {
         clear();
-        router.push(`/orders/${order.id}/success`);
+        router.push(`/orders/${order.id}/success?token=${orderToken}`);
       }
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Payment failed');
     } finally {
       setLoading(false);
     }

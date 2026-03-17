@@ -28,11 +28,11 @@ export interface FulfillmentProvider {
     },
     reference: string,
     credentials: Record<string, string>,
-    settings: Record<string, any>,
+    settings: Record<string, unknown>,
   ): Promise<FulfillmentResult>;
   handleWebhook(
-    payload: any,
+    payload: Record<string, unknown>,
     credentials: Record<string, string>,
-    settings: Record<string, any>,
+    settings: Record<string, unknown>,
   ): Promise<FulfillmentWebhookResult>;
 }

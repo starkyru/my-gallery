@@ -4,7 +4,20 @@ import helmet from 'helmet';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const jwtSecret = process.env.JWT_SECRET;
+  if (
+    !jwtSecret ||
+    jwtSecret === 'dev-secret-change-me' ||
+    jwtSecret === 'change-me-in-production'
+  ) {
+    if (process.env.NODE_ENV === 'production') {
+      console.error('FATAL: JWT_SECRET must be set to a secure value in production');
+      process.exit(1);
+    }
+    console.warn('WARNING: Using default JWT_SECRET — do NOT use in production');
+  }
+
+  const app = await NestFactory.create(AppModule, { rawBody: true });
   app.setGlobalPrefix('api');
   app.use(helmet());
   app.enableCors({
