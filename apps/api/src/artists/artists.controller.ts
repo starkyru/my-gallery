@@ -15,7 +15,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
-import { IsString, IsOptional, IsBoolean } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsUrl } from 'class-validator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AdminGuard } from '../auth/admin.guard';
 import { ArtistsService } from './artists.service';
@@ -31,6 +31,13 @@ class CreateArtistDto {
   @IsOptional()
   @IsString()
   avatarUrl?: string;
+
+  @IsOptional()
+  @IsUrl(
+    { protocols: ['https'], require_protocol: true },
+    { message: 'instagramUrl must be a valid HTTPS URL' },
+  )
+  instagramUrl?: string;
 }
 
 class UpdateArtistDto {
@@ -45,6 +52,13 @@ class UpdateArtistDto {
   @IsOptional()
   @IsString()
   avatarUrl?: string;
+
+  @IsOptional()
+  @IsUrl(
+    { protocols: ['https'], require_protocol: true },
+    { message: 'instagramUrl must be a valid HTTPS URL' },
+  )
+  instagramUrl?: string;
 
   @IsOptional()
   @IsBoolean()
@@ -83,8 +97,8 @@ export class ArtistsController {
       if (req.user.artistId !== +id) {
         throw new ForbiddenException('You can only edit your own profile');
       }
-      const { bio, avatarUrl } = dto;
-      return this.service.update(+id, { bio, avatarUrl });
+      const { bio, avatarUrl, instagramUrl } = dto;
+      return this.service.update(+id, { bio, avatarUrl, instagramUrl });
     }
     return this.service.update(+id, dto);
   }

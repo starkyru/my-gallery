@@ -15,6 +15,7 @@ const SELECT_FIELDS: (keyof ArtistEntity)[] = [
   'bio',
   'avatarUrl',
   'portraitPath',
+  'instagramUrl',
   'loginEnabled',
   'isActive',
   'createdAt',

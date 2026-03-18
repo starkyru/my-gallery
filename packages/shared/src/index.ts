@@ -103,6 +103,7 @@ export interface Artist {
   bio: string | null;
   avatarUrl: string | null;
   portraitPath: string | null;
+  instagramUrl: string | null;
   loginEnabled?: boolean;
   isActive?: boolean;
   createdAt: Date;

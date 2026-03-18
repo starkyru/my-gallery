@@ -25,6 +25,9 @@ export class ArtistEntity {
   @Column({ name: 'login_enabled', type: 'boolean', default: false })
   loginEnabled!: boolean;
 
+  @Column({ name: 'instagram_url', type: 'varchar', nullable: true })
+  instagramUrl!: string | null;
+
   @Column({ name: 'is_active', default: true })
   isActive!: boolean;
 
