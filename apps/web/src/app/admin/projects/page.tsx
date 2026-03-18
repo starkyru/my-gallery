@@ -1,12 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
+import { useNotification } from '@/hooks/useNotification';
+import { useRequest } from '@/hooks/useRequest';
 import type { Project, Artist } from '@gallery/shared';
 
 export default function AdminProjectsPage() {
   const { token } = useAuthStore();
+  const notify = useNotification();
   const [projects, setProjects] = useState<Project[]>([]);
   const [artists, setArtists] = useState<Artist[]>([]);
   const [filterArtistId, setFilterArtistId] = useState('');
@@ -14,6 +17,24 @@ export default function AdminProjectsPage() {
   const [newArtistId, setNewArtistId] = useState('');
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editName, setEditName] = useState('');
+
+  const createRequest = useRequest(
+    useCallback(
+      (data: { artistId: number; name: string; slug: string }) => api.projects.create(data, token!),
+      [token],
+    ),
+  );
+
+  const updateRequest = useRequest(
+    useCallback(
+      (id: number, data: { name: string; slug: string }) => api.projects.update(id, data, token!),
+      [token],
+    ),
+  );
+
+  const deleteRequest = useRequest(
+    useCallback((id: number) => api.projects.delete(id, token!), [token]),
+  );
 
   useEffect(() => {
     api.artists
@@ -49,28 +70,37 @@ export default function AdminProjectsPage() {
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     if (!token || !newName.trim() || !newArtistId) return;
-    await api.projects.create(
-      { artistId: Number(newArtistId), name: newName.trim(), slug: deriveSlug(newName) },
-      token,
-    );
-    setNewName('');
-    loadData();
+    const result = await createRequest.fetch({
+      artistId: Number(newArtistId),
+      name: newName.trim(),
+      slug: deriveSlug(newName),
+    });
+    if (result !== null) {
+      setNewName('');
+      notify.success('Project created');
+      loadData();
+    }
   }
 
   async function handleSaveEdit(id: number) {
     if (!token || !editName.trim()) return;
-    await api.projects.update(id, { name: editName.trim(), slug: deriveSlug(editName) }, token);
-    setEditingId(null);
-    loadData();
+    const result = await updateRequest.fetch(id, {
+      name: editName.trim(),
+      slug: deriveSlug(editName),
+    });
+    if (result !== null) {
+      setEditingId(null);
+      notify.success('Project updated');
+      loadData();
+    }
   }
 
   async function handleDelete(id: number) {
     if (!token || !confirm('Delete this project?')) return;
-    try {
-      await api.projects.delete(id, token);
+    const result = await deleteRequest.fetch(id);
+    if (result !== null) {
+      notify.success('Project deleted');
       loadData();
-    } catch (e: unknown) {
-      alert(e instanceof Error ? e.message : 'Failed to delete');
     }
   }
 
@@ -129,7 +159,8 @@ export default function AdminProjectsPage() {
         )}
         <button
           type="submit"
-          className="px-4 py-1.5 bg-gallery-accent text-gallery-black rounded text-sm font-medium hover:bg-gallery-accent-light transition-colors"
+          disabled={createRequest.isLoading}
+          className="px-4 py-1.5 bg-gallery-accent text-gallery-black rounded text-sm font-medium hover:bg-gallery-accent-light transition-colors disabled:opacity-30"
         >
           Create
         </button>

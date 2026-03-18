@@ -32,7 +32,9 @@ export function FilterToolbar({
       .then((cats) => {
         setCategories([
           { label: 'All', value: '' },
-          ...cats.map((c) => ({ label: c.name, value: c.slug })),
+          ...cats
+            .filter((c) => (c.imageCount ?? 0) > 0)
+            .map((c) => ({ label: c.name, value: c.slug })),
         ]);
       })
       .catch(() => {});

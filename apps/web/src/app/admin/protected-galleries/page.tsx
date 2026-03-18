@@ -1,13 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
+import { useNotification } from '@/hooks/useNotification';
+import { useRequest } from '@/hooks/useRequest';
 import type { ProtectedGallery } from '@gallery/shared';
 
 export default function AdminProtectedGalleriesPage() {
   const { token } = useAuthStore();
+  const notify = useNotification();
   const [galleries, setGalleries] = useState<ProtectedGallery[]>([]);
   const [newName, setNewName] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -16,6 +19,29 @@ export default function AdminProtectedGalleriesPage() {
   const [editPassword, setEditPassword] = useState('');
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
   const [deleteWithImages, setDeleteWithImages] = useState(false);
+
+  const createRequest = useRequest(
+    useCallback(
+      (data: { name: string; slug: string; password: string }) =>
+        api.protectedGalleries.create(data, token!),
+      [token],
+    ),
+  );
+
+  const updateRequest = useRequest(
+    useCallback(
+      (id: number, data: { name?: string; slug?: string; password?: string; isActive?: boolean }) =>
+        api.protectedGalleries.update(id, data, token!),
+      [token],
+    ),
+  );
+
+  const deleteRequest = useRequest(
+    useCallback(
+      (id: number, withImages: boolean) => api.protectedGalleries.delete(id, withImages, token!),
+      [token],
+    ),
+  );
 
   useEffect(() => {
     loadData();
@@ -40,13 +66,17 @@ export default function AdminProtectedGalleriesPage() {
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     if (!token || !newName.trim() || !newPassword) return;
-    await api.protectedGalleries.create(
-      { name: newName.trim(), slug: deriveSlug(newName), password: newPassword },
-      token,
-    );
-    setNewName('');
-    setNewPassword('');
-    loadData();
+    const result = await createRequest.fetch({
+      name: newName.trim(),
+      slug: deriveSlug(newName),
+      password: newPassword,
+    });
+    if (result !== null) {
+      setNewName('');
+      setNewPassword('');
+      notify.success('Gallery created');
+      loadData();
+    }
   }
 
   async function handleSaveEdit(id: number) {
@@ -56,24 +86,34 @@ export default function AdminProtectedGalleriesPage() {
       slug: deriveSlug(editName),
     };
     if (editPassword) data.password = editPassword;
-    await api.protectedGalleries.update(id, data, token);
-    setEditingId(null);
-    setEditPassword('');
-    loadData();
+    const result = await updateRequest.fetch(id, data);
+    if (result !== null) {
+      setEditingId(null);
+      setEditPassword('');
+      notify.success('Gallery updated');
+      loadData();
+    }
   }
 
   async function handleDelete(id: number) {
     if (!token) return;
-    await api.protectedGalleries.delete(id, deleteWithImages, token);
-    setDeleteConfirmId(null);
-    setDeleteWithImages(false);
-    loadData();
+    const withImages = deleteWithImages;
+    const result = await deleteRequest.fetch(id, withImages);
+    if (result !== null) {
+      setDeleteConfirmId(null);
+      setDeleteWithImages(false);
+      notify.success(withImages ? 'Gallery and images deleted' : 'Gallery deleted');
+      loadData();
+    }
   }
 
   async function handleToggleActive(g: ProtectedGallery) {
     if (!token) return;
-    await api.protectedGalleries.update(g.id, { isActive: !g.isActive }, token);
-    loadData();
+    const result = await updateRequest.fetch(g.id, { isActive: !g.isActive });
+    if (result !== null) {
+      notify.success(g.isActive ? 'Gallery deactivated' : 'Gallery activated');
+      loadData();
+    }
   }
 
   const inputClass =
@@ -109,7 +149,7 @@ export default function AdminProtectedGalleriesPage() {
         )}
         <button
           type="submit"
-          disabled={!newName.trim() || !newPassword}
+          disabled={!newName.trim() || !newPassword || createRequest.isLoading}
           className="px-4 py-1.5 bg-gallery-accent text-gallery-black rounded text-sm font-medium hover:bg-gallery-accent-light transition-colors disabled:opacity-30"
         >
           Create

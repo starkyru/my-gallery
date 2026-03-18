@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState, use } from 'react';
+import { useEffect, useState, useCallback, use } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
+import { useRequest } from '@/hooks/useRequest';
 import type { GalleryImage } from '@gallery/shared';
 
 const UPLOAD_URL = process.env.NEXT_PUBLIC_UPLOAD_URL || 'http://localhost:4000/uploads';
@@ -23,6 +24,20 @@ export default function AdminProtectedGalleryDetailPage({
   const [showAddPanel, setShowAddPanel] = useState(false);
   const [search, setSearch] = useState('');
   const [copied, setCopied] = useState(false);
+
+  const removeRequest = useRequest(
+    useCallback(
+      (imageId: number) => api.protectedGalleries.removeImage(galleryId, imageId, token!),
+      [galleryId, token],
+    ),
+  );
+
+  const addRequest = useRequest(
+    useCallback(
+      (imageIds: number[]) => api.protectedGalleries.addImages(galleryId, imageIds, token!),
+      [galleryId, token],
+    ),
+  );
 
   useEffect(() => {
     loadGalleryImages();
@@ -53,16 +68,37 @@ export default function AdminProtectedGalleryDetailPage({
 
   async function handleAddImages() {
     if (!token || selectedIds.size === 0) return;
-    await api.protectedGalleries.addImages(galleryId, Array.from(selectedIds), token);
+    const ids = Array.from(selectedIds);
+    const addedIdSet = new Set(ids);
+
+    // Optimistic: append selected images to gallery and close panel
+    const imagesToAdd = allImages.filter((img) => addedIdSet.has(img.id));
+    setGalleryImages((prev) => [...prev, ...imagesToAdd]);
     setShowAddPanel(false);
     setSelectedIds(new Set());
-    loadGalleryImages();
+
+    const result = await addRequest.fetch(ids);
+    if (result === null) {
+      // Rollback: remove optimistically added images
+      setGalleryImages((prev) => prev.filter((img) => !addedIdSet.has(img.id)));
+    } else {
+      // Refresh to get accurate server state
+      loadGalleryImages();
+    }
   }
 
   async function handleRemoveImage(imageId: number) {
     if (!token) return;
-    await api.protectedGalleries.removeImage(galleryId, imageId, token);
-    loadGalleryImages();
+
+    // Optimistic: remove image immediately
+    const snapshot = galleryImages;
+    setGalleryImages((prev) => prev.filter((img) => img.id !== imageId));
+
+    const result = await removeRequest.fetch(imageId);
+    if (result === null) {
+      // Rollback on error
+      setGalleryImages(snapshot);
+    }
   }
 
   function toggleSelect(imageId: number) {
@@ -76,8 +112,6 @@ export default function AdminProtectedGalleryDetailPage({
 
   function copyLink() {
     const origin = window.location.origin;
-    // We don't have slug here directly, but we can derive from gallery images loaded
-    // For now, just use the gallery URL pattern
     navigator.clipboard.writeText(`${origin}/g/${galleryId}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -171,7 +205,7 @@ export default function AdminProtectedGalleryDetailPage({
             />
             <button
               onClick={handleAddImages}
-              disabled={selectedIds.size === 0}
+              disabled={selectedIds.size === 0 || addRequest.isLoading}
               className="px-4 py-1.5 bg-gallery-accent text-gallery-black rounded text-sm font-medium hover:bg-gallery-accent-light transition-colors disabled:opacity-30"
             >
               Add {selectedIds.size} Selected
