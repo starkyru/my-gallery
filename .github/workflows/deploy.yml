@@ -34,6 +34,13 @@ jobs:
           script: |
             set -e
 
+            # Ensure Nginx allows large file uploads (default is 1MB)
+            if ! grep -q 'client_max_body_size' /etc/nginx/nginx.conf; then
+              sudo sed -i '/http {/a\    client_max_body_size 50m;' /etc/nginx/nginx.conf
+              sudo nginx -t && sudo systemctl reload nginx
+              echo "Updated Nginx client_max_body_size to 50m"
+            fi
+
             cd /var/www/gallery
 
             # Pull latest code (reset any local changes like lockfile diffs)
