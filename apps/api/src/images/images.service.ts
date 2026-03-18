@@ -150,7 +150,7 @@ export class ImagesService {
     await Promise.all([
       sharp(file.buffer).resize(400).webp({ quality: 80 }).toFile(thumbnailPath),
       sharp(file.buffer).resize(1200).webp({ quality: 85 }).toFile(mediumPath),
-      this.createWatermarked(file.buffer, watermarkPath, metadata.width || 1200),
+      this.createWatermarked(file.buffer, watermarkPath),
     ]);
 
     const image = this.repo.create({
@@ -170,9 +170,10 @@ export class ImagesService {
     }
   }
 
-  private async createWatermarked(buffer: Buffer, outputPath: string, width: number) {
-    const fontSize = Math.max(16, Math.round(width * 0.03));
-    const svg = `<svg width="${width}" height="${fontSize * 2}">
+  private async createWatermarked(buffer: Buffer, outputPath: string) {
+    const targetWidth = 1200;
+    const fontSize = Math.max(16, Math.round(targetWidth * 0.03));
+    const svg = `<svg width="${targetWidth}" height="${fontSize * 2}">
       <text x="50%" y="50%" font-family="sans-serif" font-size="${fontSize}"
         fill="white" fill-opacity="0.5" text-anchor="middle" dominant-baseline="middle">
         gallery.ilia.to
@@ -180,7 +181,7 @@ export class ImagesService {
     </svg>`;
 
     await sharp(buffer)
-      .resize(1200)
+      .resize(targetWidth)
       .composite([{ input: Buffer.from(svg), gravity: 'southeast' }])
       .webp({ quality: 85 })
       .toFile(outputPath);
