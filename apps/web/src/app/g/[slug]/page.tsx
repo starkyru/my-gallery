@@ -3,9 +3,9 @@
 import { useState, useEffect, useCallback, use } from 'react';
 import Image from 'next/image';
 import { api } from '@/lib/api';
+import { DownloadIcon } from '@/components/icons/download-icon';
 import type { GalleryImage } from '@gallery/shared';
-
-const UPLOAD_URL = process.env.NEXT_PUBLIC_UPLOAD_URL || 'http://localhost:4000/uploads';
+import { UPLOAD_URL } from '@/lib/consts';
 
 type BackdropColor = 'black' | 'white' | 'gray';
 
@@ -160,21 +160,7 @@ export default function ProtectedGalleryPage({ params }: { params: Promise<{ slu
                   title="Download original"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="7 10 12 15 17 10" />
-                    <line x1="12" y1="15" x2="12" y2="3" />
-                  </svg>
+                  <DownloadIcon />
                 </a>
               )}
             </div>

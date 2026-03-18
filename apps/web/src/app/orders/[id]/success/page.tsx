@@ -5,6 +5,18 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 
+function PrintItem({ item }: { item: { title?: string; printSku?: string; status?: string } }) {
+  return (
+    <div className="px-6 py-3 border border-white/10 rounded-lg text-left">
+      <p className="font-medium">{item.title}</p>
+      <p className="text-gallery-gray text-sm">{item.printSku}</p>
+      <p className="text-gallery-accent text-sm mt-1">
+        {item.status || 'Print order submitted — shipping updates via email'}
+      </p>
+    </div>
+  );
+}
+
 export default function OrderSuccessPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const searchParams = useSearchParams();
@@ -63,16 +75,7 @@ export default function OrderSuccessPage({ params }: { params: Promise<{ id: str
               <h2 className="font-serif text-xl mb-3">Print Orders</h2>
               <div className="space-y-3">
                 {printItems.map((item) => (
-                  <div
-                    key={`${item.imageId}-${item.printSku}`}
-                    className="px-6 py-3 border border-white/10 rounded-lg text-left"
-                  >
-                    <p className="font-medium">{item.title}</p>
-                    <p className="text-gallery-gray text-sm">{item.printSku}</p>
-                    <p className="text-gallery-accent text-sm mt-1">
-                      {item.status || 'Print order submitted — shipping updates via email'}
-                    </p>
-                  </div>
+                  <PrintItem key={`${item.imageId}-${item.printSku}`} item={item} />
                 ))}
               </div>
             </div>

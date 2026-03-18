@@ -6,10 +6,9 @@ import Link from 'next/link';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import type { GalleryImage } from './types';
+import { UPLOAD_URL } from '@/lib/consts';
 
 gsap.registerPlugin(ScrollTrigger);
-
-const UPLOAD_URL = process.env.NEXT_PUBLIC_UPLOAD_URL || 'http://localhost:4000/uploads';
 
 export function GalleryCard({ image, index }: { image: GalleryImage; index: number }) {
   const [loaded, setLoaded] = useState(false);

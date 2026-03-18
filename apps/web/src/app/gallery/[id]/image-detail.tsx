@@ -6,8 +6,7 @@ import Link from 'next/link';
 import { useCartStore } from '@/store/cart';
 import gsap from 'gsap';
 import type { ImagePrintOption } from '@gallery/shared';
-
-const UPLOAD_URL = process.env.NEXT_PUBLIC_UPLOAD_URL || 'http://localhost:4000/uploads';
+import { UPLOAD_URL } from '@/lib/consts';
 
 interface ImageDetailProps {
   image: {

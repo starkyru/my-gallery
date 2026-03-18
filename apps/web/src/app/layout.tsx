@@ -1,24 +1,14 @@
-import type { Metadata } from 'next';
 import { Inter, Playfair_Display } from 'next/font/google';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import { LenisProvider } from '@/components/lenis-provider';
+import { siteMetadata } from '@/lib/consts';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfair' });
 
-export const metadata: Metadata = {
-  title: 'Gallery — Fine Art Photography',
-  description: 'Curated fine art photography prints available for purchase.',
-  openGraph: {
-    title: 'Gallery — Fine Art Photography',
-    description: 'Curated fine art photography prints available for purchase.',
-    url: 'https://gallery.ilia.to',
-    siteName: 'Gallery',
-    type: 'website',
-  },
-};
+export const metadata = siteMetadata;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

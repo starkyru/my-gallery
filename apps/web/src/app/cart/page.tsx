@@ -3,8 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCartStore } from '@/store/cart';
-
-const UPLOAD_URL = process.env.NEXT_PUBLIC_UPLOAD_URL || 'http://localhost:4000/uploads';
+import { UPLOAD_URL } from '@/lib/consts';
 
 export default function CartPage() {
   const { items, removeItem, total } = useCartStore();

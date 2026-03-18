@@ -4,8 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
-
-const UPLOAD_URL = process.env.NEXT_PUBLIC_UPLOAD_URL || 'http://localhost:4000/uploads';
+import { UPLOAD_URL } from '@/lib/consts';
 
 export default function ArtistProfilePage() {
   const { token, role, artistId } = useAuthStore();
