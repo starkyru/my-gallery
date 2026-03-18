@@ -202,6 +202,7 @@ export const api = {
       data: {
         enabled?: boolean;
         skus?: { sku: string; description: string }[];
+        sandbox?: boolean;
       },
       token: string,
     ) =>

@@ -13,6 +13,7 @@ export default function SettingsPage() {
   const [skus, setSkus] = useState<Record<string, { sku: string; description: string }[]>>({});
   const [saving, setSaving] = useState<string | null>(null);
   const [newSku, setNewSku] = useState<Record<string, { sku: string; description: string }>>({});
+  const [sandboxState, setSandboxState] = useState<Record<string, boolean>>({});
 
   const [galleryName, setGalleryName] = useState('');
   const [savingGallery, setSavingGallery] = useState(false);
@@ -42,10 +43,13 @@ export default function SettingsPage() {
     const data = await api.services.list(token);
     setConfigs(data);
     const sk: Record<string, { sku: string; description: string }[]> = {};
+    const sb: Record<string, boolean> = {};
     for (const c of data) {
       sk[c.provider] = [...(c.skus || [])];
+      sb[c.provider] = c.sandbox;
     }
     setSkus(sk);
+    setSandboxState(sb);
   }
 
   async function handleToggle(provider: string, enabled: boolean) {
@@ -138,6 +142,30 @@ export default function SettingsPage() {
               />
               {expanded === config.provider && (
                 <div className="ml-4 mt-2 p-4 border border-white/10 rounded-lg">
+                  <label className="flex items-center gap-2 mb-4 text-sm cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={sandboxState[config.provider] ?? true}
+                      onChange={async (e) => {
+                        if (!token) return;
+                        const checked = e.target.checked;
+                        if (!checked) {
+                          const confirmed = window.confirm(
+                            'Disabling sandbox mode will route orders to the production API. Continue?',
+                          );
+                          if (!confirmed) return;
+                        }
+                        setSandboxState((prev) => ({ ...prev, [config.provider]: checked }));
+                        await api.services.update(config.provider, { sandbox: checked }, token);
+                        loadConfigs();
+                      }}
+                      className="accent-gallery-accent"
+                    />
+                    Sandbox mode
+                    <span className="text-xs text-gallery-gray">
+                      (uses sandbox API when enabled)
+                    </span>
+                  </label>
                   <h3 className="text-sm font-medium mb-3">Print Products</h3>
                   <div className="space-y-2">
                     {(skus[config.provider] || []).map((s, idx) => (

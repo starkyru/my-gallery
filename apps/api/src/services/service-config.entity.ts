@@ -26,6 +26,9 @@ export class ServiceConfigEntity {
   @Column({ type: 'jsonb', default: [] })
   skus!: { sku: string; description: string }[];
 
+  @Column({ type: 'boolean', default: true })
+  sandbox!: boolean;
+
   @Column({ name: 'sort_order', type: 'int', default: 0 })
   sortOrder!: number;
 

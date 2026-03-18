@@ -41,6 +41,7 @@ export class ServicesService implements OnModuleInit {
           displayName: 'Prodigi',
           enabled: false,
           skus: [],
+          sandbox: true,
           sortOrder: 0,
         }),
       ]);
@@ -76,12 +77,14 @@ export class ServicesService implements OnModuleInit {
     data: {
       enabled?: boolean;
       skus?: { sku: string; description: string }[];
+      sandbox?: boolean;
     },
   ): Promise<ServiceConfigEntity> {
     const config = await this.findByProvider(provider);
 
     if (data.enabled !== undefined) config.enabled = data.enabled;
     if (data.skus !== undefined) config.skus = data.skus;
+    if (data.sandbox !== undefined) config.sandbox = data.sandbox;
 
     return this.repo.save(config);
   }
@@ -98,6 +101,7 @@ export class ServicesService implements OnModuleInit {
       enabled: config.enabled,
       configured: provider?.configured ?? false,
       skus: config.skus,
+      sandbox: config.sandbox,
     };
   }
 }

@@ -45,6 +45,7 @@ export interface ServiceConfig {
   enabled: boolean;
   configured: boolean;
   skus: FulfillmentSku[];
+  sandbox: boolean;
 }
 
 export interface EnabledPayment {

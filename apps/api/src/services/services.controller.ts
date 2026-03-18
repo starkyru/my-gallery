@@ -2,6 +2,7 @@ import { Controller, Get, Put, Param, Body, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AdminGuard } from '../auth/admin.guard';
 import { ServicesService } from './services.service';
+import { UpdateServiceDto } from './update-service.dto';
 
 @Controller('services')
 export class ServicesController {
@@ -16,14 +17,7 @@ export class ServicesController {
 
   @Put(':provider')
   @UseGuards(JwtAuthGuard, AdminGuard)
-  async update(
-    @Param('provider') provider: string,
-    @Body()
-    body: {
-      enabled?: boolean;
-      skus?: { sku: string; description: string }[];
-    },
-  ) {
+  async update(@Param('provider') provider: string, @Body() body: UpdateServiceDto) {
     const config = await this.servicesService.update(provider, body);
     return this.servicesService.getConfigResponse(config);
   }

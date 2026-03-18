@@ -1,31 +1,38 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import {
   FulfillmentProvider,
   FulfillmentResult,
   FulfillmentWebhookResult,
 } from '../fulfillment-provider.interface';
 import { loadProviderEnv } from '../load-env';
+import { ServiceConfigEntity } from '../../service-config.entity';
+import { ProdigiOrderResponse, ProdigiWebhookPayload } from './prodigi.types';
 
 @Injectable()
 export class ProdigiProvider implements FulfillmentProvider {
   private readonly logger = new Logger(ProdigiProvider.name);
   private readonly apiKey: string;
-  private readonly sandbox: boolean;
 
   readonly name = 'prodigi';
 
-  constructor() {
+  constructor(
+    @InjectRepository(ServiceConfigEntity)
+    private readonly configRepo: Repository<ServiceConfigEntity>,
+  ) {
     const env = loadProviderEnv(__dirname);
     this.apiKey = env.PRODIGI_API_KEY || '';
-    this.sandbox = env.PRODIGI_SANDBOX !== 'false';
   }
 
   get configured(): boolean {
     return !!this.apiKey;
   }
 
-  private getBaseUrl(): string {
-    return this.sandbox ? 'https://api.sandbox.prodigi.com' : 'https://api.prodigi.com';
+  private async getBaseUrl(): Promise<string> {
+    const config = await this.configRepo.findOne({ where: { provider: 'prodigi' } });
+    const sandbox = config?.sandbox ?? true;
+    return sandbox ? 'https://api.sandbox.prodigi.com' : 'https://api.prodigi.com';
   }
 
   async createFulfillmentOrder(
@@ -42,7 +49,7 @@ export class ProdigiProvider implements FulfillmentProvider {
     },
     reference: string,
   ): Promise<FulfillmentResult> {
-    const baseUrl = this.getBaseUrl();
+    const baseUrl = await this.getBaseUrl();
 
     const response = await fetch(`${baseUrl}/v4.0/orders`, {
       method: 'POST',
@@ -76,24 +83,22 @@ export class ProdigiProvider implements FulfillmentProvider {
       }),
     });
 
-    const result = await response.json();
+    const result: ProdigiOrderResponse = await response.json();
     if (!response.ok) {
       this.logger.error('Prodigi order creation failed', result);
-      throw new Error(`Prodigi order failed: ${result.message || response.statusText}`);
+      throw new Error(`Prodigi order failed: ${response.statusText}`);
     }
 
     this.logger.log(`Prodigi order created: ${result.order.id}`);
     return { id: result.order.id, status: result.order.status.stage };
   }
 
-  async handleWebhook(payload: Record<string, unknown>): Promise<FulfillmentWebhookResult> {
+  async handleWebhook(payload: ProdigiWebhookPayload): Promise<FulfillmentWebhookResult> {
     this.logger.log(`Prodigi webhook: ${payload.event}`);
     if (payload.event === 'order.status.update') {
-      const order = payload.order as Record<string, unknown> | undefined;
-      const status = order?.status as Record<string, unknown> | undefined;
       return {
-        orderId: order?.id as string | undefined,
-        status: status?.stage as string | undefined,
+        orderId: payload.order.id,
+        status: payload.order.status.stage,
       };
     }
     return {};
