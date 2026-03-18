@@ -5,7 +5,6 @@ import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { config } from '@/config';
 import type { GalleryImage } from './types';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -16,8 +15,6 @@ interface GalleryHeroProps {
 
 export function GalleryHero({ images }: GalleryHeroProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const titleRef = useRef<HTMLHeadingElement>(null);
-  const subtitleRef = useRef<HTMLParagraphElement>(null);
 
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, [
     Autoplay({ delay: 5000, stopOnInteraction: false }),
@@ -29,20 +26,6 @@ export function GalleryHero({ images }: GalleryHeroProps) {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
     const ctx = gsap.context(() => {
-      gsap.from(titleRef.current, {
-        y: 60,
-        opacity: 0,
-        duration: 1.2,
-        ease: 'power3.out',
-      });
-      gsap.from(subtitleRef.current, {
-        y: 40,
-        opacity: 0,
-        duration: 1,
-        delay: 0.3,
-        ease: 'power3.out',
-      });
-
       gsap.to(containerRef.current, {
         scrollTrigger: {
           trigger: containerRef.current,
@@ -61,37 +44,24 @@ export function GalleryHero({ images }: GalleryHeroProps) {
   const hasImages = images.length > 0;
 
   return (
-    <section ref={containerRef} className="relative min-h-screen overflow-hidden">
+    <section ref={containerRef} className="relative h-screen overflow-hidden">
       {hasImages ? (
-        <div ref={emblaRef} className="absolute inset-0">
+        <div ref={emblaRef} className="h-full overflow-hidden">
           <div className="flex h-full">
             {images.map((img) => (
-              <div key={img.id} className="relative min-w-0 flex-[0_0_100%]">
+              <div key={img.id} className="relative h-full min-w-0 flex-[0_0_100%]">
                 <img
                   src={img.watermarkPath}
                   alt={img.title}
                   className="h-full w-full object-cover"
                 />
-                <div className="absolute inset-0 bg-black/40" />
               </div>
             ))}
           </div>
         </div>
       ) : (
-        <div className="absolute inset-0 bg-black" />
+        <div className="h-full bg-black" />
       )}
-
-      <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-6 text-center">
-        <h1
-          ref={titleRef}
-          className="font-serif text-5xl tracking-tight text-white md:text-7xl lg:text-8xl"
-        >
-          {config.galleryName}
-        </h1>
-        <p ref={subtitleRef} className="mt-6 max-w-xl text-lg text-white/80 md:text-xl">
-          {config.galleryDescription}
-        </p>
-      </div>
 
       {hasImages && images.length > 1 && (
         <div className="absolute bottom-20 left-1/2 z-10 flex -translate-x-1/2 gap-2">
