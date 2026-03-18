@@ -272,6 +272,8 @@ export const api = {
       ),
     downloadUrl: (slug: string, accessToken: string) =>
       `${API_URL}/api/protected-galleries/${slug}/download?token=${encodeURIComponent(accessToken)}`,
+    imageDownloadUrl: (slug: string, imageId: number, accessToken: string) =>
+      `${API_URL}/api/protected-galleries/${slug}/images/${imageId}/download?token=${encodeURIComponent(accessToken)}`,
   },
   auth: {
     login: (username: string, password: string) =>

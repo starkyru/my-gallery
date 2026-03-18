@@ -233,10 +233,41 @@ export class ProtectedGalleriesService {
 
     const images = await this.getGalleryImages(gallery.id);
 
+    const safeImages = images.map(({ filePath: _filePath, ...rest }) => rest);
+
     return {
       name: gallery.name,
       slug: gallery.slug,
-      images,
+      images: safeImages,
+    };
+  }
+
+  async getOriginalPathForImage(
+    slug: string,
+    imageId: number,
+    token: string,
+  ): Promise<{ name: string; filePath: string }> {
+    if (!this.verifyAccessToken(slug, token)) {
+      throw new UnauthorizedException('Invalid or expired access token');
+    }
+
+    const gallery = await this.galleryRepo.findOne({ where: { slug, isActive: true } });
+    if (!gallery) throw new NotFoundException('Gallery not found');
+
+    const joinRow = await this.joinRepo.findOne({
+      where: { protectedGalleryId: gallery.id, imageId },
+    });
+    if (!joinRow) throw new NotFoundException('Image not in this gallery');
+
+    const image = await this.imageRepo.findOne({ where: { id: imageId } });
+    if (!image) throw new NotFoundException('Image not found');
+    if (!image.allowDownloadOriginal) {
+      throw new UnauthorizedException('Download not allowed for this image');
+    }
+
+    return {
+      name: `${image.title || image.id}${path.extname(image.filePath)}`,
+      filePath: path.join(this.uploadDir, image.filePath),
     };
   }
 

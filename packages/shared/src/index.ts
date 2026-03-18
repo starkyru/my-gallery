@@ -128,6 +128,7 @@ export interface GalleryImage {
   printEnabled: boolean;
   printLimit: number | null;
   printsSold: number;
+  allowDownloadOriginal: boolean;
   isArchived: boolean;
   printOptions: ImagePrintOption[];
   createdAt: Date;

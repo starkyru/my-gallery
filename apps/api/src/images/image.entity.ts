@@ -78,6 +78,9 @@ export class ImageEntity {
   @JoinColumn({ name: 'project_id' })
   project!: ProjectEntity | null;
 
+  @Column({ name: 'allow_download_original', default: false })
+  allowDownloadOriginal!: boolean;
+
   @Column({ name: 'is_archived', default: false })
   isArchived!: boolean;
 

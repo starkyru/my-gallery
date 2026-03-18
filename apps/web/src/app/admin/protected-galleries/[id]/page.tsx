@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, use } from 'react';
+import { useEffect, useState, useCallback, useRef, use } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { api } from '@/lib/api';
@@ -24,6 +24,16 @@ export default function AdminProtectedGalleryDetailPage({
   const [showAddPanel, setShowAddPanel] = useState(false);
   const [search, setSearch] = useState('');
   const [copied, setCopied] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(20);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  const toggleDownloadRequest = useRequest(
+    useCallback(
+      (imageId: number, allow: boolean) =>
+        api.images.update(imageId, { allowDownloadOriginal: allow }, token!),
+      [token],
+    ),
+  );
 
   const removeRequest = useRequest(
     useCallback(
@@ -117,6 +127,44 @@ export default function AdminProtectedGalleryDetailPage({
     setTimeout(() => setCopied(false), 2000);
   }
 
+  useEffect(() => {
+    setVisibleCount(20);
+  }, [galleryImages]);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setVisibleCount((prev) => prev + 20);
+        }
+      },
+      { rootMargin: '200px' },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [galleryImages]);
+
+  async function handleToggleDownload(imageId: number, currentValue: boolean) {
+    const newValue = !currentValue;
+    // Optimistic update
+    setGalleryImages((prev) =>
+      prev.map((img) => (img.id === imageId ? { ...img, allowDownloadOriginal: newValue } : img)),
+    );
+    const result = await toggleDownloadRequest.fetch(imageId, newValue);
+    if (result === null) {
+      // Rollback
+      setGalleryImages((prev) =>
+        prev.map((img) =>
+          img.id === imageId ? { ...img, allowDownloadOriginal: currentValue } : img,
+        ),
+      );
+    }
+  }
+
+  const visibleImages = galleryImages.slice(0, visibleCount);
+
   const galleryImageIds = new Set(galleryImages.map((img) => img.id));
   const availableImages = allImages.filter((img) => !galleryImageIds.has(img.id));
   const filteredAvailable = search
@@ -165,30 +213,45 @@ export default function AdminProtectedGalleryDetailPage({
             No images assigned to this gallery yet.
           </p>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-            {galleryImages.map((img) => (
-              <div key={img.id} className="relative group rounded-lg overflow-hidden bg-white/5">
-                <Image
-                  src={`${UPLOAD_URL}/${img.thumbnailPath}`}
-                  alt={img.title}
-                  width={400}
-                  height={Math.round((400 * img.height) / img.width)}
-                  className="w-full h-auto"
-                />
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <button
-                    onClick={() => handleRemoveImage(img.id)}
-                    className="px-3 py-1 bg-red-500 text-white rounded text-xs"
-                  >
-                    Remove
-                  </button>
+          <>
+            <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5">
+              {visibleImages.map((img) => (
+                <div
+                  key={img.id}
+                  className="relative group rounded-lg overflow-hidden bg-white/5 break-inside-avoid mb-3"
+                >
+                  <Image
+                    src={`${UPLOAD_URL}/${img.thumbnailPath}`}
+                    alt={img.title}
+                    width={400}
+                    height={Math.round((400 * img.height) / img.width)}
+                    className="w-full h-auto"
+                  />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                    <button
+                      onClick={() => handleRemoveImage(img.id)}
+                      className="px-3 py-1 bg-red-500 text-white rounded text-xs"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                  <label className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-black/70 rounded px-1.5 py-0.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={img.allowDownloadOriginal}
+                      onChange={() => handleToggleDownload(img.id, img.allowDownloadOriginal)}
+                      className="accent-gallery-accent w-3 h-3"
+                    />
+                    <span className="text-[10px] text-white">DL</span>
+                  </label>
+                  <div className="absolute bottom-0 left-0 right-0 px-2 py-1 bg-black/50 text-xs truncate">
+                    {img.title}
+                  </div>
                 </div>
-                <div className="absolute bottom-0 left-0 right-0 px-2 py-1 bg-black/50 text-xs truncate">
-                  {img.title}
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+            {visibleCount < galleryImages.length && <div ref={sentinelRef} className="h-10" />}
+          </>
         )}
       </div>
 

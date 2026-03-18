@@ -101,6 +101,10 @@ class UpdateImageDto {
   isArchived?: boolean;
 
   @IsOptional()
+  @IsBoolean()
+  allowDownloadOriginal?: boolean;
+
+  @IsOptional()
   @Type(() => Number)
   @IsNumber()
   projectId?: number | null;
@@ -169,7 +173,7 @@ export class ImagesController {
   }
 
   @Put(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   update(@Param('id') id: string, @Body() dto: UpdateImageDto) {
     return this.service.update(+id, { ...dto });
   }

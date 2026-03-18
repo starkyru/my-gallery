@@ -132,7 +132,8 @@ export class ImagesService {
       throw new BadRequestException('Only JPEG, PNG, WebP, and TIFF images are allowed');
     }
 
-    const id = crypto.randomUUID();
+    const originalId = crypto.randomUUID();
+    const previewId = crypto.randomUUID();
     const ext = '.' + (metadata.format === 'jpeg' ? 'jpg' : metadata.format);
 
     const dirs = ['originals', 'thumbnails', 'medium', 'watermarked'].map((d) =>
@@ -140,10 +141,10 @@ export class ImagesService {
     );
     await Promise.all(dirs.map((d) => fs.mkdir(d, { recursive: true })));
 
-    const originalPath = path.join(this.uploadDir, 'originals', `${id}${ext}`);
-    const thumbnailPath = path.join(this.uploadDir, 'thumbnails', `${id}.webp`);
-    const mediumPath = path.join(this.uploadDir, 'medium', `${id}.webp`);
-    const watermarkPath = path.join(this.uploadDir, 'watermarked', `${id}.webp`);
+    const originalPath = path.join(this.uploadDir, 'originals', `${originalId}${ext}`);
+    const thumbnailPath = path.join(this.uploadDir, 'thumbnails', `${previewId}.webp`);
+    const mediumPath = path.join(this.uploadDir, 'medium', `${previewId}.webp`);
+    const watermarkPath = path.join(this.uploadDir, 'watermarked', `${previewId}.webp`);
 
     await fs.writeFile(originalPath, file.buffer);
 
@@ -155,9 +156,9 @@ export class ImagesService {
 
     const image = this.repo.create({
       ...data,
-      filePath: `originals/${id}${ext}`,
-      thumbnailPath: `thumbnails/${id}.webp`,
-      watermarkPath: `watermarked/${id}.webp`,
+      filePath: `originals/${originalId}${ext}`,
+      thumbnailPath: `thumbnails/${previewId}.webp`,
+      watermarkPath: `watermarked/${previewId}.webp`,
       width: metadata.width || 0,
       height: metadata.height || 0,
     });

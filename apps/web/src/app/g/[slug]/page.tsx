@@ -1,11 +1,19 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, useCallback, use } from 'react';
 import Image from 'next/image';
 import { api } from '@/lib/api';
 import type { GalleryImage } from '@gallery/shared';
 
 const UPLOAD_URL = process.env.NEXT_PUBLIC_UPLOAD_URL || 'http://localhost:4000/uploads';
+
+type BackdropColor = 'black' | 'white' | 'gray';
+
+const backdropClasses: Record<BackdropColor, string> = {
+  black: 'bg-black/90',
+  white: 'bg-white',
+  gray: 'bg-neutral-500',
+};
 
 export default function ProtectedGalleryPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
@@ -17,6 +25,10 @@ export default function ProtectedGalleryPage({ params }: { params: Promise<{ slu
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true);
+  const [selectedImage, setSelectedImage] = useState<GalleryImage | null>(null);
+  const [backdropColor, setBackdropColor] = useState<BackdropColor>('black');
+
+  const closeLightbox = useCallback(() => setSelectedImage(null), []);
 
   useEffect(() => {
     const stored = sessionStorage.getItem(`gallery-token-${slug}`);
@@ -26,6 +38,15 @@ export default function ProtectedGalleryPage({ params }: { params: Promise<{ slu
       setChecking(false);
     }
   }, [slug]);
+
+  useEffect(() => {
+    if (!selectedImage) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeLightbox();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [selectedImage, closeLightbox]);
 
   async function loadGallery(token: string) {
     try {
@@ -120,7 +141,8 @@ export default function ProtectedGalleryPage({ params }: { params: Promise<{ slu
           {images.map((image) => (
             <div
               key={image.id}
-              className="break-inside-avoid rounded-lg overflow-hidden bg-white/5"
+              className="break-inside-avoid rounded-lg overflow-hidden bg-white/5 relative group cursor-pointer"
+              onClick={() => setSelectedImage(image)}
             >
               <Image
                 src={`${UPLOAD_URL}/${image.watermarkPath}`}
@@ -130,6 +152,31 @@ export default function ProtectedGalleryPage({ params }: { params: Promise<{ slu
                 className="w-full h-auto"
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
               />
+              {image.allowDownloadOriginal && (
+                <a
+                  href={api.protectedGalleries.imageDownloadUrl(slug, image.id, accessToken)}
+                  rel="noopener noreferrer"
+                  className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/70 hover:bg-black/90 text-white rounded-full p-2"
+                  title="Download original"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                </a>
+              )}
             </div>
           ))}
         </div>
@@ -138,6 +185,71 @@ export default function ProtectedGalleryPage({ params }: { params: Promise<{ slu
           <p className="text-center text-gallery-gray py-24">No images in this gallery.</p>
         )}
       </div>
+
+      {selectedImage && (
+        <div
+          className={`fixed inset-0 z-50 ${backdropClasses[backdropColor]} flex items-center justify-center cursor-pointer`}
+          onClick={closeLightbox}
+        >
+          {/* Backdrop color picker */}
+          <div
+            className="absolute top-4 right-4 flex gap-2 z-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {(
+              [
+                ['black', 'bg-black'],
+                ['white', 'bg-white'],
+                ['gray', 'bg-neutral-500'],
+              ] as const
+            ).map(([value, bg]) => (
+              <button
+                key={value}
+                className={`w-6 h-6 rounded border border-white/30 ${bg} ${
+                  backdropColor === value ? 'ring-2 ring-white' : ''
+                }`}
+                onClick={() => setBackdropColor(value)}
+              />
+            ))}
+          </div>
+
+          <Image
+            src={`${UPLOAD_URL}/${selectedImage.watermarkPath}`}
+            alt={selectedImage.title}
+            width={selectedImage.width}
+            height={selectedImage.height}
+            className="max-w-full max-h-full object-contain"
+            sizes="100vw"
+            priority
+          />
+
+          {selectedImage.allowDownloadOriginal && (
+            <a
+              href={api.protectedGalleries.imageDownloadUrl(slug, selectedImage.id, accessToken)}
+              rel="noopener noreferrer"
+              className="absolute bottom-4 right-4 bg-black/70 hover:bg-black/90 text-white rounded-full p-3"
+              title="Download original"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+            </a>
+          )}
+        </div>
+      )}
     </div>
   );
 }

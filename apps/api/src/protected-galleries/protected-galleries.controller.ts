@@ -129,6 +129,18 @@ export class ProtectedGalleriesController {
     return this.service.findBySlugPublic(slug, token);
   }
 
+  @Get(':slug/images/:imageId/download')
+  async downloadImage(
+    @Param('slug') slug: string,
+    @Param('imageId') imageId: string,
+    @Query('token') token: string,
+    @Res() res: Response,
+  ) {
+    if (!token) throw new UnauthorizedException('Access token required');
+    const file = await this.service.getOriginalPathForImage(slug, +imageId, token);
+    res.download(file.filePath, file.name);
+  }
+
   @Get(':slug/download')
   async download(@Param('slug') slug: string, @Query('token') token: string, @Res() res: Response) {
     if (!token) throw new UnauthorizedException('Access token required');
