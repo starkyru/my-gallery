@@ -8,7 +8,7 @@ import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { useNotification } from '@/hooks/useNotification';
 import type { Category, Project } from '@gallery/shared';
-import { UPLOAD_URL } from '@/lib/consts';
+import { UPLOAD_URL } from '@/config';
 
 interface PrintOptionRow {
   sku: string;

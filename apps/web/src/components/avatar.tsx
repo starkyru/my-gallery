@@ -1,4 +1,4 @@
-import { UPLOAD_URL } from '@/lib/consts';
+import { UPLOAD_URL } from '@/config';
 
 export function Avatar({ name, portraitPath }: { name: string; portraitPath?: string | null }) {
   if (portraitPath) {

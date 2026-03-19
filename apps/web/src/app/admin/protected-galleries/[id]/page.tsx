@@ -7,7 +7,7 @@ import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { useRequest } from '@/hooks/useRequest';
 import type { GalleryImage } from '@gallery/shared';
-import { UPLOAD_URL } from '@/lib/consts';
+import { UPLOAD_URL } from '@/config';
 
 export default function AdminProtectedGalleryDetailPage({
   params,

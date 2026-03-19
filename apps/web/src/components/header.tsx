@@ -1,25 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCartStore } from '@/store/cart';
-import { api } from '@/lib/api';
+import { useConfigStore } from '@/store/config';
 
 export function Header() {
   const itemCount = useCartStore((s) => s.items.length);
   const pathname = usePathname();
   const isAdmin = pathname.startsWith('/admin');
-  const [galleryName, setGalleryName] = useState('Gallery');
-
-  useEffect(() => {
-    api.galleryConfig
-      .get()
-      .then((c) => {
-        if (c.galleryName) setGalleryName(c.galleryName);
-      })
-      .catch(() => {});
-  }, []);
+  const galleryName = useConfigStore((s) => s.config.galleryName);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-gallery-black/80 backdrop-blur-md border-b border-white/5">

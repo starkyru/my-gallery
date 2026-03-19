@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { useNotification } from '@/hooks/useNotification';
-import { UPLOAD_URL } from '@/lib/consts';
+import { UPLOAD_URL } from '@/config';
 
 export default function ArtistProfilePage() {
   const { token, role, artistId } = useAuthStore();

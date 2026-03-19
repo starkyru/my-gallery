@@ -63,6 +63,8 @@ export type UserRole = 'admin' | 'artist';
 
 export interface GalleryConfig {
   galleryName: string;
+  subtitle: string;
+  siteUrl: string;
 }
 
 export interface Category {

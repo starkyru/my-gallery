@@ -2,8 +2,10 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { GalleryConfigEntity } from './gallery-config.entity';
+import type { UpdateGalleryConfigDto } from './update-gallery-config.dto';
+import type { GalleryConfig } from '@gallery/shared';
 
-const DEFAULT_SETTINGS = { galleryName: 'Gallery' };
+const DEFAULT_SETTINGS: GalleryConfig = { galleryName: 'Gallery', subtitle: '', siteUrl: '' };
 
 @Injectable()
 export class GalleryConfigService implements OnModuleInit {
@@ -19,18 +21,18 @@ export class GalleryConfigService implements OnModuleInit {
     }
   }
 
-  async get(): Promise<Record<string, unknown>> {
+  async get(): Promise<GalleryConfig> {
     const row = await this.repo.findOne({ where: {} });
-    return row?.settings ?? DEFAULT_SETTINGS;
+    return { ...DEFAULT_SETTINGS, ...(row?.settings as Partial<GalleryConfig>) };
   }
 
-  async update(data: Record<string, unknown>): Promise<Record<string, unknown>> {
+  async update(data: UpdateGalleryConfigDto): Promise<GalleryConfig> {
     let row = await this.repo.findOne({ where: {} });
     if (!row) {
       row = this.repo.create({ settings: DEFAULT_SETTINGS });
     }
-    row.settings = { ...row.settings, ...data };
+    row.settings = { ...(row.settings as GalleryConfig), ...data };
     await this.repo.save(row);
-    return row.settings;
+    return row.settings as GalleryConfig;
   }
 }

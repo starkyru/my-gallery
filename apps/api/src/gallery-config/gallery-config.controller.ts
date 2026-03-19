@@ -2,6 +2,7 @@ import { Controller, Get, Put, Body, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AdminGuard } from '../auth/admin.guard';
 import { GalleryConfigService } from './gallery-config.service';
+import { UpdateGalleryConfigDto } from './update-gallery-config.dto';
 
 @Controller('gallery-config')
 export class GalleryConfigController {
@@ -14,7 +15,7 @@ export class GalleryConfigController {
 
   @Put()
   @UseGuards(JwtAuthGuard, AdminGuard)
-  update(@Body() data: Record<string, unknown>) {
+  update(@Body() data: UpdateGalleryConfigDto) {
     return this.service.update(data);
   }
 }

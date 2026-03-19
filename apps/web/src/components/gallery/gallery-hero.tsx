@@ -7,7 +7,7 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Link from 'next/link';
 import type { GalleryImage } from './types';
-import { UPLOAD_URL } from '@/lib/consts';
+import { UPLOAD_URL } from '@/config';
 
 gsap.registerPlugin(ScrollTrigger);
 

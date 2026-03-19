@@ -18,6 +18,8 @@ export default function SettingsPage() {
   const [sandboxState, setSandboxState] = useState<Record<string, boolean>>({});
 
   const [galleryName, setGalleryName] = useState('');
+  const [subtitle, setSubtitle] = useState('');
+  const [siteUrl, setSiteUrl] = useState('');
   const [savingGallery, setSavingGallery] = useState(false);
 
   useEffect(() => {
@@ -25,19 +27,23 @@ export default function SettingsPage() {
       loadConfigs();
       api.galleryConfig
         .get()
-        .then((c) => setGalleryName(c.galleryName || 'Gallery'))
+        .then((c) => {
+          setGalleryName(c.galleryName || 'Gallery');
+          setSubtitle(c.subtitle || '');
+          setSiteUrl(c.siteUrl || '');
+        })
         .catch(() => {});
     }
   }, [token]);
 
-  async function handleSaveGalleryName() {
+  async function handleSaveGallerySettings() {
     if (!token) return;
     setSavingGallery(true);
     try {
-      await api.galleryConfig.update({ galleryName }, token);
-      notify.success('Gallery name saved');
+      await api.galleryConfig.update({ galleryName, subtitle, siteUrl }, token);
+      notify.success('Gallery settings saved');
     } catch (e: unknown) {
-      notify.error(e instanceof Error ? e.message : 'Failed to save gallery name');
+      notify.error(e instanceof Error ? e.message : 'Failed to save gallery settings');
     } finally {
       setSavingGallery(false);
     }
@@ -108,8 +114,8 @@ export default function SettingsPage() {
 
       <section className="mb-10">
         <h2 className="font-serif text-xl mb-4">Gallery Settings</h2>
-        <div className="p-4 border border-white/10 rounded-lg flex gap-3 items-end">
-          <div className="flex-1">
+        <div className="p-4 border border-white/10 rounded-lg space-y-3">
+          <div>
             <label className="block text-xs text-gallery-gray mb-1">Gallery Name</label>
             <input
               value={galleryName}
@@ -117,8 +123,26 @@ export default function SettingsPage() {
               className="w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded text-sm text-white focus:outline-none focus:border-gallery-accent"
             />
           </div>
+          <div>
+            <label className="block text-xs text-gallery-gray mb-1">Subtitle</label>
+            <input
+              value={subtitle}
+              onChange={(e) => setSubtitle(e.target.value)}
+              placeholder="e.g. Fine Art Photography"
+              className="w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded text-sm text-white focus:outline-none focus:border-gallery-accent"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gallery-gray mb-1">Site URL</label>
+            <input
+              value={siteUrl}
+              onChange={(e) => setSiteUrl(e.target.value)}
+              placeholder="e.g. https://gallery.example.com"
+              className="w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded text-sm text-white focus:outline-none focus:border-gallery-accent"
+            />
+          </div>
           <button
-            onClick={handleSaveGalleryName}
+            onClick={handleSaveGallerySettings}
             disabled={savingGallery}
             className="px-4 py-1.5 bg-gallery-accent text-gallery-black rounded text-sm font-medium hover:bg-gallery-accent-light transition-colors disabled:opacity-50"
           >

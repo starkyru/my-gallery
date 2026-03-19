@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { api } from '@/lib/api';
 import { DownloadIcon } from '@/components/icons/download-icon';
 import type { GalleryImage } from '@gallery/shared';
-import { UPLOAD_URL } from '@/lib/consts';
+import { UPLOAD_URL } from '@/config';
 
 type BackdropColor = 'black' | 'white' | 'gray';
 

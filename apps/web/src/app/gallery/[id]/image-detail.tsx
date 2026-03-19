@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useCartStore } from '@/store/cart';
 import gsap from 'gsap';
 import type { ImagePrintOption } from '@gallery/shared';
-import { UPLOAD_URL } from '@/lib/consts';
+import { UPLOAD_URL } from '@/config';
 
 interface ImageDetailProps {
   image: {

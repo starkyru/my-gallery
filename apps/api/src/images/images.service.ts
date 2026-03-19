@@ -215,16 +215,26 @@ export class ImagesService {
   private async createWatermarked(buffer: Buffer, outputPath: string) {
     const targetWidth = 1200;
     const fontSize = Math.max(16, Math.round(targetWidth * 0.03));
-    const svg = `<svg width="${targetWidth}" height="${fontSize * 2}">
-      <text x="50%" y="50%" font-family="sans-serif" font-size="${fontSize}"
-        fill="white" fill-opacity="0.5" text-anchor="middle" dominant-baseline="middle">
-        gallery.ilia.to
-      </text>
-    </svg>`;
+    const svgWidth = fontSize * 2;
+    const svgHeight = targetWidth;
+    const cx = svgWidth / 2;
+    const cy = svgHeight / 2;
+    const svg = Buffer.from(
+      `<svg width="${svgWidth}" height="${svgHeight}">
+        <text x="${cx}" y="${cy}" font-family="sans-serif" font-size="${fontSize}"
+          fill="white" fill-opacity="0.25" text-anchor="middle" dominant-baseline="middle"
+          transform="rotate(-90, ${cx}, ${cy})">
+          gallery.ilia.to
+        </text>
+      </svg>`,
+    );
 
     await sharp(buffer)
       .resize(targetWidth)
-      .composite([{ input: Buffer.from(svg), gravity: 'southeast' }])
+      .composite([
+        { input: svg, gravity: 'west' },
+        { input: svg, gravity: 'east' },
+      ])
       .webp({ quality: 85 })
       .toFile(outputPath);
   }

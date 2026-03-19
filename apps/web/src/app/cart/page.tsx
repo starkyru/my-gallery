@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useCartStore } from '@/store/cart';
 import { api } from '@/lib/api';
-import { UPLOAD_URL } from '@/lib/consts';
+import { UPLOAD_URL } from '@/config';
 
 export default function CartPage() {
   const { items, removeItem, removeByImageId, total } = useCartStore();
