@@ -21,6 +21,7 @@ interface ImageDetailProps {
     category: string;
     artistId?: number;
     artist?: { id?: number; name: string; bio: string | null };
+    allowDownloadOriginal: boolean;
     printEnabled: boolean;
     printLimit: number | null;
     printsSold: number;
@@ -114,32 +115,34 @@ export function ImageDetail({ image }: ImageDetailProps) {
           )}
 
           {/* Digital Original */}
-          <div className="mb-6 p-4 border border-white/10 rounded-lg hover:border-white/20 transition-colors duration-300">
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <p className="font-medium">Digital Original</p>
-                <p className="text-gallery-gray text-sm">Full resolution download</p>
+          {image.allowDownloadOriginal && (
+            <div className="mb-6 p-4 border border-white/10 rounded-lg hover:border-white/20 transition-colors duration-300">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <p className="font-medium">Digital Original</p>
+                  <p className="text-gallery-gray text-sm">Full resolution download</p>
+                </div>
+                <p className="text-2xl font-light">${image.price}</p>
               </div>
-              <p className="text-2xl font-light">${image.price}</p>
+              <button
+                onClick={() =>
+                  addItem({
+                    imageId: image.id,
+                    title: image.title,
+                    price: image.price,
+                    thumbnailPath: image.thumbnailPath,
+                    type: 'original' as any,
+                    printSku: null,
+                    printDescription: null,
+                  })
+                }
+                disabled={originalInCart}
+                className="w-full px-6 py-2.5 bg-gallery-accent text-gallery-black font-medium rounded-lg hover:bg-gallery-accent-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              >
+                {originalInCart ? 'In Cart' : 'Add to Cart'}
+              </button>
             </div>
-            <button
-              onClick={() =>
-                addItem({
-                  imageId: image.id,
-                  title: image.title,
-                  price: image.price,
-                  thumbnailPath: image.thumbnailPath,
-                  type: 'original' as any,
-                  printSku: null,
-                  printDescription: null,
-                })
-              }
-              disabled={originalInCart}
-              className="w-full px-6 py-2.5 bg-gallery-accent text-gallery-black font-medium rounded-lg hover:bg-gallery-accent-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-            >
-              {originalInCart ? 'In Cart' : 'Add to Cart'}
-            </button>
-          </div>
+          )}
 
           {/* Print Options */}
           {image.printEnabled && image.printOptions?.length > 0 && (

@@ -60,6 +60,9 @@ export class OrdersService {
         );
         total += Number(printOption.price);
       } else {
+        if (!image.allowDownloadOriginal) {
+          throw new BadRequestException(`Digital original not available for "${image.title}"`);
+        }
         orderItems.push(
           this.itemRepo.create({
             imageId: image.id,

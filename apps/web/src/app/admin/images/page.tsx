@@ -219,6 +219,7 @@ export default function AdminImagesPage() {
   function startEdit(image: any) {
     setEditingId(image.id);
     setEditData({
+      allowDownloadOriginal: image.allowDownloadOriginal ?? false,
       printEnabled: image.printEnabled ?? false,
       printLimit: image.printLimit,
     });
@@ -545,8 +546,18 @@ export default function AdminImagesPage() {
                       ))}
                   </select>
 
-                  {/* Print settings */}
+                  {/* Download & Print settings */}
                   <div className="border-t border-white/10 pt-2 mt-2">
+                    <label className="flex items-center gap-2 text-sm mb-2">
+                      <input
+                        type="checkbox"
+                        checked={editData.allowDownloadOriginal ?? false}
+                        onChange={(e) =>
+                          setEditData({ ...editData, allowDownloadOriginal: e.target.checked })
+                        }
+                      />
+                      Allow full resolution download
+                    </label>
                     <label className="flex items-center gap-2 text-sm mb-2">
                       <input
                         type="checkbox"
