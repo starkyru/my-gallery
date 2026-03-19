@@ -8,11 +8,13 @@ export function ServiceCard({
   expanded,
   onToggle,
   onEnableChange,
+  disabled,
 }: {
   config: ServiceConfig;
   expanded: boolean;
   onToggle: () => void;
   onEnableChange: (enabled: boolean) => void;
+  disabled?: boolean;
 }) {
   return (
     <div className="border border-white/10 rounded-lg overflow-hidden">
@@ -38,14 +40,18 @@ export function ServiceCard({
             )}
           </div>
         </button>
-        <label className="flex items-center gap-2 cursor-pointer">
+        <label
+          className={`flex items-center gap-2 ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+        >
           <input
             type="checkbox"
             checked={config.enabled}
             onChange={(e) => onEnableChange(e.target.checked)}
+            disabled={disabled}
             className="accent-gallery-accent"
           />
           <span className="text-sm text-gallery-gray">Enabled</span>
+          {disabled && <span className="text-xs text-red-400">Encryption key required</span>}
         </label>
       </div>
       {expanded && (

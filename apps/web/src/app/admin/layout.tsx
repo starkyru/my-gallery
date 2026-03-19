@@ -3,8 +3,9 @@
 import Link from 'next/link';
 import { usePathname, useRouter, redirect } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Toaster } from 'sonner';
+import { api } from '@/lib/api';
 
 const ADMIN_NAV = [
   { href: '/admin', label: 'Dashboard' },
@@ -38,12 +39,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const router = useRouter();
   const { token, role, hydrated, setAuth } = useAuthStore();
+  const [encryptionKeyMissing, setEncryptionKeyMissing] = useState(false);
 
   useEffect(() => {
     if (token && role === 'artist' && ADMIN_ONLY_ROUTES.some((r) => pathname.startsWith(r))) {
       router.push('/admin');
     }
   }, [token, role, pathname, router]);
+
+  useEffect(() => {
+    if (token && role === 'admin') {
+      api.services
+        .status(token)
+        .then((s) => setEncryptionKeyMissing(!s.encryptionKeySet))
+        .catch(() => {});
+    }
+  }, [token, role]);
 
   if (pathname === '/admin/login' || pathname === '/admin/reset-password') return <>{children}</>;
 
@@ -89,6 +100,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </button>
         </div>
       </nav>
+      {encryptionKeyMissing && (
+        <div className="bg-red-900/80 border border-red-500/50 px-6 py-3">
+          <div className="mx-auto max-w-7xl text-sm text-red-200">
+            SERVICE_ENCRYPTION_KEY is not set. Payment and fulfillment services cannot be enabled.
+            See PLUGINS.md for setup instructions.
+          </div>
+        </div>
+      )}
       <div className="mx-auto max-w-7xl px-6 py-8">{children}</div>
       <Toaster
         position="top-right"

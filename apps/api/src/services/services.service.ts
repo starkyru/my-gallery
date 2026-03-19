@@ -1,4 +1,11 @@
-import { Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+  OnModuleInit,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ServiceConfigEntity } from './service-config.entity';
@@ -12,6 +19,7 @@ export class ServicesService implements OnModuleInit {
   constructor(
     @InjectRepository(ServiceConfigEntity)
     private readonly repo: Repository<ServiceConfigEntity>,
+    private readonly configService: ConfigService,
     private readonly paymentRegistry: PaymentRegistryService,
     private readonly fulfillmentRegistry: FulfillmentRegistryService,
   ) {}
@@ -82,11 +90,21 @@ export class ServicesService implements OnModuleInit {
   ): Promise<ServiceConfigEntity> {
     const config = await this.findByProvider(provider);
 
+    if (data.enabled === true && !this.isEncryptionKeySet()) {
+      throw new BadRequestException(
+        'Cannot enable services: SERVICE_ENCRYPTION_KEY is not configured',
+      );
+    }
+
     if (data.enabled !== undefined) config.enabled = data.enabled;
     if (data.skus !== undefined) config.skus = data.skus;
     if (data.sandbox !== undefined) config.sandbox = data.sandbox;
 
     return this.repo.save(config);
+  }
+
+  isEncryptionKeySet(): boolean {
+    return !!this.configService.get<string>('SERVICE_ENCRYPTION_KEY');
   }
 
   getConfigResponse(config: ServiceConfigEntity) {

@@ -8,6 +8,12 @@ import { UpdateServiceDto } from './update-service.dto';
 export class ServicesController {
   constructor(private readonly servicesService: ServicesService) {}
 
+  @Get('status')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  getStatus() {
+    return { encryptionKeySet: this.servicesService.isEncryptionKeySet() };
+  }
+
   @Get()
   @UseGuards(JwtAuthGuard, AdminGuard)
   async list() {

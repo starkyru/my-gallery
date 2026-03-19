@@ -16,6 +16,7 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState<string | null>(null);
   const [newSku, setNewSku] = useState<Record<string, { sku: string; description: string }>>({});
   const [sandboxState, setSandboxState] = useState<Record<string, boolean>>({});
+  const [encryptionKeySet, setEncryptionKeySet] = useState(true);
 
   const [galleryName, setGalleryName] = useState('');
   const [subtitle, setSubtitle] = useState('');
@@ -25,6 +26,10 @@ export default function SettingsPage() {
   useEffect(() => {
     if (token) {
       loadConfigs();
+      api.services
+        .status(token)
+        .then((s) => setEncryptionKeySet(s.encryptionKeySet))
+        .catch(() => {});
       api.galleryConfig
         .get()
         .then((c) => {
@@ -161,6 +166,7 @@ export default function SettingsPage() {
               expanded={expanded === config.provider}
               onToggle={() => setExpanded(expanded === config.provider ? null : config.provider)}
               onEnableChange={(enabled) => handleToggle(config.provider, enabled)}
+              disabled={!encryptionKeySet}
             />
           ))}
         </div>
@@ -176,6 +182,7 @@ export default function SettingsPage() {
                 expanded={expanded === config.provider}
                 onToggle={() => setExpanded(expanded === config.provider ? null : config.provider)}
                 onEnableChange={(enabled) => handleToggle(config.provider, enabled)}
+                disabled={!encryptionKeySet}
               />
               {expanded === config.provider && (
                 <div className="ml-4 mt-2 p-4 border border-white/10 rounded-lg">

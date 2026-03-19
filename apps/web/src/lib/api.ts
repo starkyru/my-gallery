@@ -198,6 +198,10 @@ export const api = {
       }),
   },
   services: {
+    status: (token: string) =>
+      request<{ encryptionKeySet: boolean }>('/services/status', {
+        headers: authHeaders(token),
+      }),
     list: (token: string) => request<ServiceConfig[]>('/services', { headers: authHeaders(token) }),
     update: (
       provider: string,
