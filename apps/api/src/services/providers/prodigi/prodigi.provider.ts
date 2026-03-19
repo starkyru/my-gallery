@@ -1,6 +1,13 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import {
+  ProdigiClient,
+  ProdigiApiError,
+  OrderBuilder,
+  type Environment,
+  type Order,
+} from 'prodigi-print-api';
 import {
   FulfillmentProvider,
   FulfillmentResult,
@@ -8,12 +15,17 @@ import {
 } from '../fulfillment-provider.interface';
 import { loadProviderEnv } from '../load-env';
 import { ServiceConfigEntity } from '../../service-config.entity';
-import { ProdigiOrderResponse, ProdigiWebhookPayload } from './prodigi.types';
+
+interface WebhookPayload {
+  event: string;
+  order: Order;
+}
 
 @Injectable()
 export class ProdigiProvider implements FulfillmentProvider {
   private readonly logger = new Logger(ProdigiProvider.name);
   private readonly apiKey: string;
+  private readonly clientCache = new Map<Environment, ProdigiClient>();
 
   readonly name = 'prodigi';
 
@@ -29,10 +41,14 @@ export class ProdigiProvider implements FulfillmentProvider {
     return !!this.apiKey;
   }
 
-  private async getBaseUrl(): Promise<string> {
+  private async getClient(): Promise<ProdigiClient> {
     const config = await this.configRepo.findOne({ where: { provider: 'prodigi' } });
-    const sandbox = config?.sandbox ?? true;
-    return sandbox ? 'https://api.sandbox.prodigi.com' : 'https://api.prodigi.com';
+    const environment: Environment = (config?.sandbox ?? true) ? 'sandbox' : 'production';
+    const cached = this.clientCache.get(environment);
+    if (cached) return cached;
+    const client = new ProdigiClient({ apiKey: this.apiKey, environment });
+    this.clientCache.set(environment, client);
+    return client;
   }
 
   async createFulfillmentOrder(
@@ -49,51 +65,38 @@ export class ProdigiProvider implements FulfillmentProvider {
     },
     reference: string,
   ): Promise<FulfillmentResult> {
-    const baseUrl = await this.getBaseUrl();
+    const client = await this.getClient();
 
-    const response = await fetch(`${baseUrl}/v4.0/orders`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-API-Key': this.apiKey,
-      },
-      body: JSON.stringify({
-        merchantReference: reference,
-        shippingMethod: 'Standard',
-        recipient: {
-          name: shippingAddress.name,
-          address: {
-            line1: shippingAddress.address1,
-            line2: shippingAddress.address2 || '',
-            postalOrZipCode: shippingAddress.postalCode,
-            townOrCity: shippingAddress.city,
-            stateOrCounty: shippingAddress.state,
-            countryCode: shippingAddress.country,
-          },
+    const request = new OrderBuilder()
+      .shippingMethod('Standard')
+      .merchantReference(reference)
+      .recipient({
+        name: shippingAddress.name,
+        address: {
+          line1: shippingAddress.address1,
+          line2: shippingAddress.address2 || '',
+          postalOrZipCode: shippingAddress.postalCode,
+          townOrCity: shippingAddress.city,
+          stateOrCounty: shippingAddress.state,
+          countryCode: shippingAddress.country,
         },
-        items: [
-          {
-            merchantReference: reference,
-            sku,
-            copies: 1,
-            sizing: 'fillPrintArea',
-            assets: [{ printArea: 'default', url: imageUrl }],
-          },
-        ],
-      }),
-    });
+      })
+      .addPrint(sku, imageUrl, { copies: 1, sizing: 'fillPrintArea' })
+      .build();
 
-    const result: ProdigiOrderResponse = await response.json();
-    if (!response.ok) {
-      this.logger.error('Prodigi order creation failed', result);
-      throw new Error(`Prodigi order failed: ${response.statusText}`);
+    try {
+      const result = await client.orders.create(request);
+      this.logger.log(`Prodigi order created: ${result.order.id}`);
+      return { id: result.order.id, status: result.order.status.stage };
+    } catch (error) {
+      if (error instanceof ProdigiApiError) {
+        this.logger.error(`Prodigi order creation failed: ${error.message}`, error.data);
+      }
+      throw new InternalServerErrorException('Fulfillment order creation failed');
     }
-
-    this.logger.log(`Prodigi order created: ${result.order.id}`);
-    return { id: result.order.id, status: result.order.status.stage };
   }
 
-  async handleWebhook(payload: ProdigiWebhookPayload): Promise<FulfillmentWebhookResult> {
+  async handleWebhook(payload: WebhookPayload): Promise<FulfillmentWebhookResult> {
     this.logger.log(`Prodigi webhook: ${payload.event}`);
     if (payload.event === 'order.status.update') {
       return {

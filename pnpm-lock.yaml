@@ -97,6 +97,9 @@ importers:
       pg:
         specifier: ^8.13.0
         version: 8.20.0
+      prodigi-print-api:
+        specifier: ^1.0.0
+        version: 1.0.0
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -5517,6 +5520,13 @@ packages:
       }
     engines: { node: '>= 0.6.0' }
 
+  prodigi-print-api@1.0.0:
+    resolution:
+      {
+        integrity: sha512-8zC06DZW1zZ3zxruF//R9zYLBJc6xngpOHa+99eE6VyEQi/0EFzol66k+4umTGPa9p+ScTEesIvUMNhRbbDvCw==,
+      }
+    engines: { node: '>=18.0.0' }
+
   prop-types@15.8.1:
     resolution:
       {
@@ -10109,6 +10119,8 @@ snapshots:
   process-nextick-args@2.0.1: {}
 
   process@0.11.10: {}
+
+  prodigi-print-api@1.0.0: {}
 
   prop-types@15.8.1:
     dependencies:
