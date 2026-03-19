@@ -5,6 +5,7 @@ import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import Link from 'next/link';
 import type { GalleryImage } from './types';
 import { UPLOAD_URL } from '@/lib/consts';
 
@@ -18,7 +19,7 @@ export function GalleryHero({ images }: GalleryHeroProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, [
-    Autoplay({ delay: 5000, stopOnInteraction: false }),
+    Autoplay({ delay: 15000, stopOnInteraction: false }),
   ]);
 
   const scrollTo = useCallback((index: number) => emblaApi?.scrollTo(index), [emblaApi]);
@@ -54,8 +55,22 @@ export function GalleryHero({ images }: GalleryHeroProps) {
                 <img
                   src={`${UPLOAD_URL}/${img.watermarkPath}`}
                   alt={img.title}
-                  className="h-full w-full object-cover"
+                  className="h-full w-full object-contain"
                 />
+                <Link
+                  href={`/gallery/${img.id}`}
+                  className="absolute right-4 top-4 z-10 rounded-full bg-black/40 p-2 text-white/80 transition-colors hover:bg-black/60 hover:text-white"
+                  aria-label={`View ${img.title}`}
+                >
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M7 17L17 7M17 7H7M17 7v10"
+                    />
+                  </svg>
+                </Link>
               </div>
             ))}
           </div>

@@ -56,6 +56,7 @@ export default function AdminImagesPage() {
     'createdAt',
   );
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [colsPerRow, setColsPerRow] = useState<number>(3);
 
   // Bulk selection
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
@@ -323,6 +324,13 @@ export default function AdminImagesPage() {
     }
   }
 
+  const gridOptions = [
+    { cols: 1, label: '1 per row', className: 'grid-cols-1' },
+    { cols: 3, label: '3 per row', className: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' },
+    { cols: 5, label: '5 per row', className: 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5' },
+    { cols: 10, label: '10 per row', className: 'grid-cols-3 sm:grid-cols-5 lg:grid-cols-10' },
+  ];
+
   const inputClass =
     'w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded text-sm text-white';
   const selectClass =
@@ -485,10 +493,23 @@ export default function AdminImagesPage() {
         <span className="text-xs text-gallery-gray ml-auto">
           {filteredImages.length} image{filteredImages.length !== 1 ? 's' : ''}
         </span>
+        <select
+          value={colsPerRow}
+          onChange={(e) => setColsPerRow(Number(e.target.value))}
+          className={selectClass}
+        >
+          {gridOptions.map((opt) => (
+            <option key={opt.cols} value={opt.cols}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Image grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div
+        className={`grid gap-4 ${gridOptions.find((o) => o.cols === colsPerRow)?.className ?? gridOptions[1].className}`}
+      >
         {filteredImages.map((image) => (
           <div
             key={image.id}
@@ -520,7 +541,7 @@ export default function AdminImagesPage() {
               alt={image.title}
               width={400}
               height={300}
-              className={`w-full h-48 object-cover ${image.isArchived ? 'opacity-50' : ''}`}
+              className={`w-full h-auto ${image.isArchived ? 'opacity-50' : ''}`}
             />
             <div className="p-4">
               {editingId === image.id ? (
