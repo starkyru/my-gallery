@@ -4,23 +4,23 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
+import { useNotification } from '@/hooks/useNotification';
 import { UPLOAD_URL } from '@/lib/consts';
 
 export default function ArtistProfilePage() {
   const { token, role, artistId } = useAuthStore();
   const router = useRouter();
+  const notify = useNotification();
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
   const [portraitPath, setPortraitPath] = useState<string | null>(null);
   const [uploadingPortrait, setUploadingPortrait] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [pwMessage, setPwMessage] = useState('');
   const [pwSaving, setPwSaving] = useState(false);
 
   useEffect(() => {
@@ -47,7 +47,7 @@ export default function ArtistProfilePage() {
       const result = await api.artists.uploadPortrait(artistId, formData, token);
       setPortraitPath(result.portraitPath);
     } catch {
-      setMessage('Failed to upload portrait');
+      notify.error('Failed to upload portrait');
     } finally {
       setUploadingPortrait(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -58,13 +58,11 @@ export default function ArtistProfilePage() {
     e.preventDefault();
     if (!token || !artistId) return;
     setSaving(true);
-    setMessage('');
     try {
       await api.artists.update(artistId, { bio }, token);
-      setMessage('Profile updated');
-      setTimeout(() => setMessage(''), 3000);
+      notify.success('Profile updated');
     } catch {
-      setMessage('Failed to update profile');
+      notify.error('Failed to update profile');
     } finally {
       setSaving(false);
     }
@@ -74,20 +72,18 @@ export default function ArtistProfilePage() {
     e.preventDefault();
     if (!token) return;
     if (newPassword !== confirmPassword) {
-      setPwMessage('Passwords do not match');
+      notify.error('Passwords do not match');
       return;
     }
     setPwSaving(true);
-    setPwMessage('');
     try {
       await api.auth.changePassword(token, currentPassword, newPassword);
-      setPwMessage('Password changed');
+      notify.success('Password changed');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      setTimeout(() => setPwMessage(''), 3000);
     } catch {
-      setPwMessage('Failed to change password');
+      notify.error('Failed to change password');
     } finally {
       setPwSaving(false);
     }
@@ -161,7 +157,6 @@ export default function ArtistProfilePage() {
           >
             {saving ? 'Saving...' : 'Save'}
           </button>
-          {message && <span className="text-sm text-green-400">{message}</span>}
         </div>
       </form>
 
@@ -200,13 +195,6 @@ export default function ArtistProfilePage() {
             >
               {pwSaving ? 'Changing...' : 'Change Password'}
             </button>
-            {pwMessage && (
-              <span
-                className={`text-sm ${pwMessage.includes('Failed') || pwMessage.includes('match') ? 'text-red-400' : 'text-green-400'}`}
-              >
-                {pwMessage}
-              </span>
-            )}
           </div>
         </form>
       </div>

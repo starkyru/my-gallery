@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useMemo } from 'react';
 import Image from 'next/image';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
+import { useNotification } from '@/hooks/useNotification';
 import type { Category, Project } from '@gallery/shared';
 import { UPLOAD_URL } from '@/lib/consts';
 
@@ -22,6 +23,7 @@ interface DroppedFile {
 
 export default function AdminImagesPage() {
   const { token } = useAuthStore();
+  const notify = useNotification();
   const [images, setImages] = useState<any[]>([]);
   const [artists, setArtists] = useState<any[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -193,6 +195,7 @@ export default function AdminImagesPage() {
     }
     setUploadProgress(null);
     setDroppedFiles([]);
+    notify.success('Upload complete');
     loadData();
   }
 
@@ -202,9 +205,10 @@ export default function AdminImagesPage() {
     try {
       const { description } = await api.ai.describe(imageId, token);
       await api.images.update(imageId, { description }, token);
+      notify.success('Description generated');
       loadData();
-    } catch (e: any) {
-      alert(e.message);
+    } catch (e: unknown) {
+      notify.error(e instanceof Error ? e.message : 'Failed to generate description');
     } finally {
       setAiLoading(null);
     }
@@ -212,8 +216,13 @@ export default function AdminImagesPage() {
 
   async function handleToggleArchive(image: any) {
     if (!token) return;
-    await api.images.update(image.id, { isArchived: !image.isArchived }, token);
-    loadData();
+    try {
+      await api.images.update(image.id, { isArchived: !image.isArchived }, token);
+      notify.success(image.isArchived ? 'Image unarchived' : 'Image archived');
+      loadData();
+    } catch {
+      notify.error('Failed to update image');
+    }
   }
 
   function startEdit(image: any) {
@@ -234,16 +243,21 @@ export default function AdminImagesPage() {
 
   async function handleSaveEdit() {
     if (!token || editingId === null) return;
-    await api.images.update(
-      editingId,
-      {
-        ...editData,
-        printOptions: editPrintOptions,
-      },
-      token,
-    );
-    setEditingId(null);
-    loadData();
+    try {
+      await api.images.update(
+        editingId,
+        {
+          ...editData,
+          printOptions: editPrintOptions,
+        },
+        token,
+      );
+      setEditingId(null);
+      notify.success('Image updated');
+      loadData();
+    } catch {
+      notify.error('Failed to update image');
+    }
   }
 
   async function handleDelete(id: number) {
@@ -299,9 +313,14 @@ export default function AdminImagesPage() {
 
   async function handleBulkAction(action: string, value?: string) {
     if (!token || selectedIds.size === 0) return;
-    await api.images.bulkAction({ ids: Array.from(selectedIds), action, value }, token);
-    setSelectedIds(new Set());
-    loadData();
+    try {
+      await api.images.bulkAction({ ids: Array.from(selectedIds), action, value }, token);
+      setSelectedIds(new Set());
+      notify.success('Bulk action applied');
+      loadData();
+    } catch {
+      notify.error('Failed to apply bulk action');
+    }
   }
 
   const inputClass =

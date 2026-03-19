@@ -3,11 +3,13 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
+import { useNotification } from '@/hooks/useNotification';
 import { ServiceCard, inputClass } from '@/components/service-card';
 import type { ServiceConfig } from '@gallery/shared';
 
 export default function SettingsPage() {
   const { token } = useAuthStore();
+  const notify = useNotification();
   const [configs, setConfigs] = useState<ServiceConfig[]>([]);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [skus, setSkus] = useState<Record<string, { sku: string; description: string }[]>>({});
@@ -33,6 +35,9 @@ export default function SettingsPage() {
     setSavingGallery(true);
     try {
       await api.galleryConfig.update({ galleryName }, token);
+      notify.success('Gallery name saved');
+    } catch (e: unknown) {
+      notify.error(e instanceof Error ? e.message : 'Failed to save gallery name');
     } finally {
       setSavingGallery(false);
     }
@@ -54,8 +59,13 @@ export default function SettingsPage() {
 
   async function handleToggle(provider: string, enabled: boolean) {
     if (!token) return;
-    await api.services.update(provider, { enabled }, token);
-    loadConfigs();
+    try {
+      await api.services.update(provider, { enabled }, token);
+      notify.success('Service updated');
+      loadConfigs();
+    } catch (e: unknown) {
+      notify.error(e instanceof Error ? e.message : 'Failed to update service');
+    }
   }
 
   async function handleSaveSkus(provider: string) {
@@ -63,7 +73,10 @@ export default function SettingsPage() {
     setSaving(provider);
     try {
       await api.services.update(provider, { skus: skus[provider] }, token);
+      notify.success('SKUs saved');
       loadConfigs();
+    } catch (e: unknown) {
+      notify.error(e instanceof Error ? e.message : 'Failed to save SKUs');
     } finally {
       setSaving(null);
     }
@@ -156,8 +169,15 @@ export default function SettingsPage() {
                           if (!confirmed) return;
                         }
                         setSandboxState((prev) => ({ ...prev, [config.provider]: checked }));
-                        await api.services.update(config.provider, { sandbox: checked }, token);
-                        loadConfigs();
+                        try {
+                          await api.services.update(config.provider, { sandbox: checked }, token);
+                          notify.success('Sandbox mode updated');
+                          loadConfigs();
+                        } catch (err: unknown) {
+                          notify.error(
+                            err instanceof Error ? err.message : 'Failed to update sandbox mode',
+                          );
+                        }
                       }}
                       className="accent-gallery-accent"
                     />

@@ -3,16 +3,17 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
+import { useNotification } from '@/hooks/useNotification';
 import { UPLOAD_URL } from '@/lib/consts';
 
 export default function AdminArtistsPage() {
   const { token } = useAuthStore();
+  const notify = useNotification();
   const [artists, setArtists] = useState<any[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState({ name: '', bio: '', instagramUrl: '' });
   const [passwords, setPasswords] = useState<Record<number, string>>({});
-  const [passwordMsg, setPasswordMsg] = useState<Record<number, string>>({});
 
   useEffect(() => {
     loadData();
@@ -28,15 +29,20 @@ export default function AdminArtistsPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!token) return;
-    if (editingId) {
-      await api.artists.update(editingId, form, token);
-    } else {
-      await api.artists.create(form, token);
+    try {
+      if (editingId) {
+        await api.artists.update(editingId, form, token);
+      } else {
+        await api.artists.create(form, token);
+      }
+      notify.success(editingId ? 'Artist updated' : 'Artist created');
+      setForm({ name: '', bio: '', instagramUrl: '' });
+      setShowForm(false);
+      setEditingId(null);
+      loadData();
+    } catch {
+      notify.error(editingId ? 'Failed to update artist' : 'Failed to create artist');
     }
-    setForm({ name: '', bio: '', instagramUrl: '' });
-    setShowForm(false);
-    setEditingId(null);
-    loadData();
   }
 
   async function handleDelete(id: number) {
@@ -47,14 +53,24 @@ export default function AdminArtistsPage() {
 
   async function handleToggleActive(id: number, isActive: boolean) {
     if (!token) return;
-    await api.artists.update(id, { isActive }, token);
-    loadData();
+    try {
+      await api.artists.update(id, { isActive }, token);
+      notify.success('Artist updated');
+      loadData();
+    } catch {
+      notify.error('Failed to update artist');
+    }
   }
 
   async function handleToggleLogin(id: number, enabled: boolean) {
     if (!token) return;
-    await api.auth.toggleArtistLogin(token, id, enabled);
-    loadData();
+    try {
+      await api.auth.toggleArtistLogin(token, id, enabled);
+      notify.success('Login setting updated');
+      loadData();
+    } catch {
+      notify.error('Failed to update login setting');
+    }
   }
 
   async function handleSetPassword(id: number) {
@@ -64,19 +80,23 @@ export default function AdminArtistsPage() {
     try {
       await api.auth.setArtistPassword(token, id, pw);
       setPasswords((p) => ({ ...p, [id]: '' }));
-      setPasswordMsg((m) => ({ ...m, [id]: 'Password set' }));
-      setTimeout(() => setPasswordMsg((m) => ({ ...m, [id]: '' })), 3000);
+      notify.success('Password set');
     } catch {
-      setPasswordMsg((m) => ({ ...m, [id]: 'Failed to set password' }));
+      notify.error('Failed to set password');
     }
   }
 
   async function handlePortraitUpload(id: number, file: File) {
     if (!token) return;
-    const formData = new FormData();
-    formData.append('file', file);
-    await api.artists.uploadPortrait(id, formData, token);
-    loadData();
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      await api.artists.uploadPortrait(id, formData, token);
+      notify.success('Portrait uploaded');
+      loadData();
+    } catch {
+      notify.error('Failed to upload portrait');
+    }
   }
 
   const inputClass =
@@ -237,9 +257,6 @@ export default function AdminArtistsPage() {
                   >
                     Set Password
                   </button>
-                  {passwordMsg[a.id] && (
-                    <span className="text-xs text-green-400">{passwordMsg[a.id]}</span>
-                  )}
                 </div>
               )}
             </div>

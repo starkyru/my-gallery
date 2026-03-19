@@ -3,10 +3,12 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
+import { useNotification } from '@/hooks/useNotification';
 import type { Category } from '@gallery/shared';
 
 export default function AdminCategoriesPage() {
   const { token } = useAuthStore();
+  const notify = useNotification();
   const [categories, setCategories] = useState<Category[]>([]);
   const [newName, setNewName] = useState('');
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -34,16 +36,26 @@ export default function AdminCategoriesPage() {
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     if (!token || !newName.trim()) return;
-    await api.categories.create({ name: newName.trim(), slug: deriveSlug(newName) }, token);
-    setNewName('');
-    loadData();
+    try {
+      await api.categories.create({ name: newName.trim(), slug: deriveSlug(newName) }, token);
+      setNewName('');
+      notify.success('Category created');
+      loadData();
+    } catch {
+      notify.error('Failed to create category');
+    }
   }
 
   async function handleSaveEdit(id: number) {
     if (!token || !editName.trim()) return;
-    await api.categories.update(id, { name: editName.trim(), slug: deriveSlug(editName) }, token);
-    setEditingId(null);
-    loadData();
+    try {
+      await api.categories.update(id, { name: editName.trim(), slug: deriveSlug(editName) }, token);
+      setEditingId(null);
+      notify.success('Category updated');
+      loadData();
+    } catch {
+      notify.error('Failed to update category');
+    }
   }
 
   async function handleDelete(id: number) {
@@ -51,8 +63,8 @@ export default function AdminCategoriesPage() {
     try {
       await api.categories.delete(id, token);
       loadData();
-    } catch (e: any) {
-      alert(e.message);
+    } catch (e: unknown) {
+      notify.error(e instanceof Error ? e.message : 'Failed to delete category');
     }
   }
 
