@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/store/cart';
 import { api } from '@/lib/api';
@@ -15,13 +15,14 @@ const PROVIDER_STYLES: Record<string, { bg: string; hover: string; label: string
 };
 
 export default function CheckoutPage() {
-  const { items, total, clear, hasPrintItems } = useCartStore();
+  const { items, total, clear, hasPrintItems, removeByImageId } = useCartStore();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [enabledPayments, setEnabledPayments] = useState<EnabledPayment[]>([]);
   const needsShipping = hasPrintItems();
+  const validatedRef = useRef<Set<number>>(new Set());
 
   const [shipping, setShipping] = useState({
     name: '',
@@ -40,6 +41,27 @@ export default function CheckoutPage() {
       .then(setEnabledPayments)
       .catch(() => {});
   }, [items.length, router]);
+
+  useEffect(() => {
+    const imageIds = [...new Set(items.map((i) => i.imageId))];
+    const toValidate = imageIds.filter((id) => !validatedRef.current.has(id));
+    if (toValidate.length === 0) return;
+
+    Promise.allSettled(
+      toValidate.map((id) =>
+        api.images.get(id).then(
+          () => ({ id, valid: true }),
+          () => ({ id, valid: false }),
+        ),
+      ),
+    ).then((results) => {
+      for (const r of results) {
+        if (r.status !== 'fulfilled') continue;
+        if (r.value.valid) validatedRef.current.add(r.value.id);
+        else removeByImageId(r.value.id);
+      }
+    });
+  }, [items, removeByImageId]);
 
   if (items.length === 0) return null;
 

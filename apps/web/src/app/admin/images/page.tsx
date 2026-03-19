@@ -2,17 +2,12 @@
 
 import { useEffect, useState, useRef, useMemo } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { useNotification } from '@/hooks/useNotification';
 import type { Category, Project } from '@gallery/shared';
 import { UPLOAD_URL } from '@/lib/consts';
-
-interface PrintOptionRow {
-  sku: string;
-  description: string;
-  price: number;
-}
 
 interface DroppedFile {
   file: File;
@@ -28,13 +23,6 @@ export default function AdminImagesPage() {
   const [artists, setArtists] = useState<any[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [editData, setEditData] = useState<any>({});
-  const [editPrintOptions, setEditPrintOptions] = useState<PrintOptionRow[]>([]);
-  const [aiLoading, setAiLoading] = useState<number | null>(null);
-  const [availableSkus, setAvailableSkus] = useState<
-    { provider: string; sku: string; description: string }[]
-  >([]);
 
   // Drop zone state
   const [isDragging, setIsDragging] = useState(false);
@@ -61,6 +49,15 @@ export default function AdminImagesPage() {
   // Bulk selection
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [bulkCategory, setBulkCategory] = useState('');
+  const [bulkProject, setBulkProject] = useState('');
+
+  const selectedArtistId = useMemo(() => {
+    if (selectedIds.size === 0) return null;
+    const artistIds = new Set(
+      images.filter((img) => selectedIds.has(img.id)).map((img) => img.artistId),
+    );
+    return artistIds.size === 1 ? [...artistIds][0] : null;
+  }, [selectedIds, images]);
 
   useEffect(() => {
     loadData();
@@ -85,10 +82,6 @@ export default function AdminImagesPage() {
     api.categories
       .list()
       .then(setCategories)
-      .catch(() => {});
-    api.services
-      .fulfillmentSkus()
-      .then(setAvailableSkus)
       .catch(() => {});
     api.projects
       .list()
@@ -200,21 +193,6 @@ export default function AdminImagesPage() {
     loadData();
   }
 
-  async function handleAiDescribe(imageId: number) {
-    if (!token) return;
-    setAiLoading(imageId);
-    try {
-      const { description } = await api.ai.describe(imageId, token);
-      await api.images.update(imageId, { description }, token);
-      notify.success('Description generated');
-      loadData();
-    } catch (e: unknown) {
-      notify.error(e instanceof Error ? e.message : 'Failed to generate description');
-    } finally {
-      setAiLoading(null);
-    }
-  }
-
   async function handleToggleArchive(image: any) {
     if (!token) return;
     try {
@@ -226,66 +204,10 @@ export default function AdminImagesPage() {
     }
   }
 
-  function startEdit(image: any) {
-    setEditingId(image.id);
-    setEditData({
-      allowDownloadOriginal: image.allowDownloadOriginal ?? false,
-      printEnabled: image.printEnabled ?? false,
-      printLimit: image.printLimit,
-    });
-    setEditPrintOptions(
-      (image.printOptions || []).map((o: any) => ({
-        sku: o.sku,
-        description: o.description,
-        price: Number(o.price),
-      })),
-    );
-  }
-
-  async function handleSaveEdit() {
-    if (!token || editingId === null) return;
-    try {
-      await api.images.update(
-        editingId,
-        {
-          ...editData,
-          printOptions: editPrintOptions,
-        },
-        token,
-      );
-      setEditingId(null);
-      notify.success('Image updated');
-      loadData();
-    } catch {
-      notify.error('Failed to update image');
-    }
-  }
-
   async function handleDelete(id: number) {
     if (!token || !confirm('Delete this image?')) return;
     await api.images.delete(id, token);
     loadData();
-  }
-
-  function addPrintOption() {
-    setEditPrintOptions((opts) => [...opts, { sku: '', description: '', price: 0 }]);
-  }
-
-  function updatePrintOption(index: number, field: string, value: any) {
-    setEditPrintOptions((opts) =>
-      opts.map((o, i) => {
-        if (i !== index) return o;
-        if (field === 'sku') {
-          const catalog = availableSkus.find((s) => s.sku === value);
-          return { ...o, sku: value, description: catalog?.description || o.description };
-        }
-        return { ...o, [field]: value };
-      }),
-    );
-  }
-
-  function removePrintOption(index: number) {
-    setEditPrintOptions((opts) => opts.filter((_, i) => i !== index));
   }
 
   function handleSortChange(value: string) {
@@ -331,8 +253,6 @@ export default function AdminImagesPage() {
     { cols: 10, label: '10 per row', className: 'grid-cols-3 sm:grid-cols-5 lg:grid-cols-10' },
   ];
 
-  const inputClass =
-    'w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded text-sm text-white';
   const selectClass =
     'px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-gallery-accent';
 
@@ -544,197 +464,119 @@ export default function AdminImagesPage() {
               className={`w-full h-auto ${image.isArchived ? 'opacity-50' : ''}`}
             />
             <div className="p-4">
-              {editingId === image.id ? (
-                <div className="space-y-2">
-                  <input
-                    value={editData.title ?? image.title}
-                    onChange={(e) => setEditData({ ...editData, title: e.target.value })}
-                    className={inputClass}
-                  />
-                  <textarea
-                    value={editData.description ?? image.description ?? ''}
-                    onChange={(e) => setEditData({ ...editData, description: e.target.value })}
-                    rows={3}
-                    className={inputClass}
-                  />
-                  <input
-                    value={editData.price ?? image.price}
-                    onChange={(e) => setEditData({ ...editData, price: +e.target.value })}
-                    type="number"
-                    step="0.01"
-                    className={inputClass}
-                  />
+              <h3 className="font-serif text-lg">{image.title}</h3>
+              <p className="text-gallery-gray text-sm truncate">
+                {image.description || 'No description'}
+              </p>
+              <p className="text-sm mt-1">
+                ${image.price} &middot; {image.artist?.name}
+              </p>
+              {image.printEnabled && (
+                <p className="text-gallery-accent text-xs mt-1">
+                  Prints: {image.printOptions?.length || 0} option(s)
+                  {image.printLimit && ` \u00B7 ${image.printsSold}/${image.printLimit} sold`}
+                </p>
+              )}
 
-                  {/* Project */}
-                  <select
-                    value={editData.projectId ?? image.projectId ?? ''}
-                    onChange={(e) =>
-                      setEditData({
-                        ...editData,
-                        projectId: e.target.value ? Number(e.target.value) : null,
-                      })
-                    }
-                    className={inputClass}
+              {colsPerRow >= 5 ? (
+                /* Icon buttons for compact views (5 or 10 per row) */
+                <div className="flex gap-1 mt-3">
+                  <Link
+                    href={`/admin/images/${image.id}`}
+                    title="Edit"
+                    className="p-1.5 rounded hover:bg-white/10 transition-colors"
                   >
-                    <option value="">No project</option>
-                    {projects
-                      .filter((p) => p.artistId === (editData.artistId ?? image.artistId))
-                      .map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name}
-                        </option>
-                      ))}
-                  </select>
-
-                  {/* Download & Print settings */}
-                  <div className="border-t border-white/10 pt-2 mt-2">
-                    <label className="flex items-center gap-2 text-sm mb-2">
-                      <input
-                        type="checkbox"
-                        checked={editData.allowDownloadOriginal ?? false}
-                        onChange={(e) =>
-                          setEditData({ ...editData, allowDownloadOriginal: e.target.checked })
-                        }
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
                       />
-                      Allow full resolution download
-                    </label>
-                    <label className="flex items-center gap-2 text-sm mb-2">
-                      <input
-                        type="checkbox"
-                        checked={editData.printEnabled ?? false}
-                        onChange={(e) =>
-                          setEditData({ ...editData, printEnabled: e.target.checked })
-                        }
-                      />
-                      Available as Print
-                    </label>
-
-                    {editData.printEnabled && (
-                      <>
-                        <div className="flex items-center gap-2 mb-2">
-                          <label className="text-xs text-gallery-gray whitespace-nowrap">
-                            Print Limit
-                          </label>
-                          <input
-                            value={editData.printLimit ?? ''}
-                            onChange={(e) =>
-                              setEditData({
-                                ...editData,
-                                printLimit: e.target.value ? +e.target.value : null,
-                              })
-                            }
-                            type="number"
-                            placeholder="Unlimited"
-                            className={`${inputClass} flex-1`}
-                          />
-                        </div>
-
-                        {image.printsSold > 0 && (
-                          <p className="text-xs text-gallery-gray mb-2">
-                            Prints sold: {image.printsSold}
-                          </p>
-                        )}
-
-                        <div className="space-y-2">
-                          {editPrintOptions.map((opt, idx) => (
-                            <div key={idx} className="flex gap-1.5 items-center">
-                              <select
-                                value={opt.sku}
-                                onChange={(e) => updatePrintOption(idx, 'sku', e.target.value)}
-                                className={`${inputClass} flex-1`}
-                              >
-                                <option value="">Select SKU</option>
-                                {availableSkus.map((s) => (
-                                  <option key={`${s.provider}-${s.sku}`} value={s.sku}>
-                                    {s.description} ({s.provider})
-                                  </option>
-                                ))}
-                              </select>
-                              <input
-                                value={opt.price || ''}
-                                onChange={(e) => updatePrintOption(idx, 'price', +e.target.value)}
-                                type="number"
-                                step="0.01"
-                                placeholder="Price"
-                                className={`${inputClass} w-20`}
-                              />
-                              <button
-                                onClick={() => removePrintOption(idx)}
-                                className="text-red-400 text-xs hover:text-red-300 px-1"
-                              >
-                                &times;
-                              </button>
-                            </div>
-                          ))}
-                          <button
-                            onClick={addPrintOption}
-                            className="text-xs text-gallery-accent hover:underline"
-                          >
-                            + Add print option
-                          </button>
-                        </div>
-                      </>
+                    </svg>
+                  </Link>
+                  <button
+                    onClick={() => handleToggleArchive(image)}
+                    title={image.isArchived ? 'Unarchive' : 'Archive'}
+                    className="p-1.5 rounded hover:bg-white/10 transition-colors"
+                  >
+                    {image.isArchived ? (
+                      <svg
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M3 10h18M3 6h18m-9 8l-3 3m0 0l3 3m-3-3h12"
+                        />
+                      </svg>
+                    ) : (
+                      <svg
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
+                        />
+                      </svg>
                     )}
-                  </div>
-
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleSaveEdit}
-                      className="px-3 py-1 bg-gallery-accent text-gallery-black rounded text-xs"
+                  </button>
+                  <button
+                    onClick={() => handleDelete(image.id)}
+                    title="Delete"
+                    className="p-1.5 rounded hover:bg-white/10 text-red-400 transition-colors"
+                  >
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
                     >
-                      Save
-                    </button>
-                    <button
-                      onClick={() => setEditingId(null)}
-                      className="px-3 py-1 border border-white/10 rounded text-xs"
-                    >
-                      Cancel
-                    </button>
-                  </div>
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
+                    </svg>
+                  </button>
                 </div>
               ) : (
-                <>
-                  <h3 className="font-serif text-lg">{image.title}</h3>
-                  <p className="text-gallery-gray text-sm truncate">
-                    {image.description || 'No description'}
-                  </p>
-                  <p className="text-sm mt-1">
-                    ${image.price} &middot; {image.artist?.name}
-                  </p>
-                  {image.printEnabled && (
-                    <p className="text-gallery-accent text-xs mt-1">
-                      Prints: {image.printOptions?.length || 0} option(s)
-                      {image.printLimit && ` \u00B7 ${image.printsSold}/${image.printLimit} sold`}
-                    </p>
-                  )}
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    <button
-                      onClick={() => startEdit(image)}
-                      className="px-3 py-1 border border-white/10 rounded text-xs hover:border-white/30"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleToggleArchive(image)}
-                      className="px-3 py-1 border border-white/10 rounded text-xs hover:border-white/30"
-                    >
-                      {image.isArchived ? 'Unarchive' : 'Archive'}
-                    </button>
-                    <button
-                      onClick={() => handleAiDescribe(image.id)}
-                      disabled={aiLoading === image.id}
-                      className="px-3 py-1 border border-gallery-accent text-gallery-accent rounded text-xs hover:bg-gallery-accent hover:text-gallery-black disabled:opacity-50"
-                    >
-                      {aiLoading === image.id ? 'Generating...' : 'AI Describe'}
-                    </button>
-                    <button
-                      onClick={() => handleDelete(image.id)}
-                      className="px-3 py-1 border border-red-500/30 text-red-400 rounded text-xs hover:bg-red-500/10"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </>
+                /* Text buttons for spacious views (1 or 3 per row) */
+                <div className="flex flex-wrap gap-2 mt-3">
+                  <Link
+                    href={`/admin/images/${image.id}`}
+                    className="px-3 py-1 border border-white/10 rounded text-xs hover:border-white/30"
+                  >
+                    Edit
+                  </Link>
+                  <button
+                    onClick={() => handleToggleArchive(image)}
+                    className="px-3 py-1 border border-white/10 rounded text-xs hover:border-white/30"
+                  >
+                    {image.isArchived ? 'Unarchive' : 'Archive'}
+                  </button>
+                  <button
+                    onClick={() => handleDelete(image.id)}
+                    className="px-3 py-1 border border-red-500/30 text-red-400 rounded text-xs hover:bg-red-500/10"
+                  >
+                    Delete
+                  </button>
+                </div>
               )}
             </div>
           </div>
@@ -789,6 +631,35 @@ export default function AdminImagesPage() {
                 onClick={() => {
                   handleBulkAction('setCategory', bulkCategory);
                   setBulkCategory('');
+                }}
+                className="px-3 py-1.5 bg-gallery-accent text-gallery-black rounded text-xs font-medium"
+              >
+                Apply
+              </button>
+            )}
+            <div className="border-l border-white/10 h-6" />
+            <select
+              value={bulkProject}
+              onChange={(e) => setBulkProject(e.target.value)}
+              disabled={selectedArtistId === null}
+              className={`${selectClass} text-xs`}
+            >
+              <option value="">
+                {selectedArtistId === null ? 'Set project (same artist only)' : 'Set project...'}
+              </option>
+              {projects
+                .filter((p) => p.artistId === selectedArtistId)
+                .map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+            </select>
+            {bulkProject && (
+              <button
+                onClick={() => {
+                  handleBulkAction('setProject', bulkProject);
+                  setBulkProject('');
                 }}
                 className="px-3 py-1.5 bg-gallery-accent text-gallery-black rounded text-xs font-medium"
               >

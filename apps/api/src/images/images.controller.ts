@@ -118,7 +118,7 @@ class BulkActionDto {
   @IsArray()
   ids!: number[];
 
-  @IsIn(['archive', 'unarchive', 'setCategory'])
+  @IsIn(['archive', 'unarchive', 'setCategory', 'setProject'])
   action!: string;
 
   @IsOptional()
@@ -160,13 +160,19 @@ export class ImagesController {
     return this.service.bulkAction(dto.ids, dto.action, dto.value);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
+  @Get('admin/:id')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  findOneAdmin(@Param('id') id: string) {
     return this.service.findOne(+id);
   }
 
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.service.findOnePublic(+id);
+  }
+
   @Post()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))
   upload(@UploadedFile() file: Express.Multer.File, @Body() dto: CreateImageDto) {
     return this.service.upload(file, dto);
@@ -179,13 +185,13 @@ export class ImagesController {
   }
 
   @Put('sort/order')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   updateSortOrder(@Body() updates: { id: number; sortOrder: number }[]) {
     return this.service.updateSortOrder(updates);
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   remove(@Param('id') id: string) {
     return this.service.remove(+id);
   }

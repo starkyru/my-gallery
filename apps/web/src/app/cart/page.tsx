@@ -1,12 +1,36 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCartStore } from '@/store/cart';
+import { api } from '@/lib/api';
 import { UPLOAD_URL } from '@/lib/consts';
 
 export default function CartPage() {
-  const { items, removeItem, total } = useCartStore();
+  const { items, removeItem, removeByImageId, total } = useCartStore();
+  const validatedRef = useRef<Set<number>>(new Set());
+
+  useEffect(() => {
+    const imageIds = [...new Set(items.map((i) => i.imageId))];
+    const toValidate = imageIds.filter((id) => !validatedRef.current.has(id));
+    if (toValidate.length === 0) return;
+
+    Promise.allSettled(
+      toValidate.map((id) =>
+        api.images.get(id).then(
+          () => ({ id, valid: true }),
+          () => ({ id, valid: false }),
+        ),
+      ),
+    ).then((results) => {
+      for (const r of results) {
+        if (r.status !== 'fulfilled') continue;
+        if (r.value.valid) validatedRef.current.add(r.value.id);
+        else removeByImageId(r.value.id);
+      }
+    });
+  }, [items, removeByImageId]);
 
   if (items.length === 0) {
     return (

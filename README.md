@@ -93,6 +93,22 @@ CREATE DATABASE gallery OWNER gallery_user;
 
 On first startup the API seeds the `service_configs` table with default entries for BTCPay, PayPal, and Prodigi (all disabled). Configure them from the admin settings page.
 
+## Plugins
+
+Payment providers and print fulfillment services are managed as configurable plugins — no hardcoded credentials or environment variables. Everything is configured from **Admin > Settings** and stored encrypted in the database.
+
+### Built-in providers
+
+| Type        | Provider                                   | Description                      |
+| ----------- | ------------------------------------------ | -------------------------------- |
+| Payment     | [BTCPay Server](https://btcpayserver.org/) | Bitcoin and Lightning payments   |
+| Payment     | [PayPal](https://developer.paypal.com/)    | Card and PayPal balance payments |
+| Fulfillment | [Prodigi](https://www.prodigi.com/)        | Print-on-demand fulfillment      |
+
+The Prodigi integration uses the [`prodigi-print-api`](https://www.npmjs.com/package/prodigi-print-api) npm package — a co-project that provides a typed Node.js client for the Prodigi API.
+
+See [PLUGINS.md](PLUGINS.md) for full setup instructions, credential schemas, webhook URLs, and how to add custom providers.
+
 ## How prints work
 
 - In the admin panel, enable prints per image and configure which sizes are available with custom retail prices.

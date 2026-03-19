@@ -104,6 +104,8 @@ export const api = {
     listAdmin: (token: string) =>
       request<GalleryImage[]>('/images/admin', { headers: authHeaders(token) }),
     get: (id: number) => request<GalleryImage>(`/images/${id}`),
+    getAdmin: (id: number, token: string) =>
+      request<GalleryImage>(`/images/admin/${id}`, { headers: authHeaders(token) }),
     upload: (formData: FormData, token: string) => uploadRequest('/images', formData, token),
     update: (id: number, data: Record<string, unknown>, token: string) =>
       request(`/images/${id}`, {

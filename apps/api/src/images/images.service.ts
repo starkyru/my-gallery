@@ -107,6 +107,14 @@ export class ImagesService {
             .execute();
         }
         break;
+      case 'setProject': {
+        const projectId = value ? Number(value) : null;
+        if (projectId !== null && isNaN(projectId)) {
+          throw new BadRequestException('Invalid project ID');
+        }
+        await this.repo.createQueryBuilder().update().set({ projectId }).whereInIds(ids).execute();
+        break;
+      }
     }
   }
 
@@ -115,6 +123,39 @@ export class ImagesService {
       where: { id },
       relations: ['artist', 'printOptions'],
     });
+    if (!image) throw new NotFoundException('Image not found');
+    return image;
+  }
+
+  async findOnePublic(id: number) {
+    const image = await this.repo
+      .createQueryBuilder('image')
+      .select([
+        'image.id',
+        'image.title',
+        'image.description',
+        'image.price',
+        'image.artistId',
+        'image.thumbnailPath',
+        'image.watermarkPath',
+        'image.width',
+        'image.height',
+        'image.category',
+        'image.isFeatured',
+        'image.sortOrder',
+        'image.blurHash',
+        'image.printEnabled',
+        'image.printLimit',
+        'image.printsSold',
+        'image.projectId',
+        'image.allowDownloadOriginal',
+        'image.isArchived',
+        'image.createdAt',
+      ])
+      .leftJoinAndSelect('image.artist', 'artist')
+      .leftJoinAndSelect('image.printOptions', 'printOptions')
+      .where('image.id = :id', { id })
+      .getOne();
     if (!image) throw new NotFoundException('Image not found');
     return image;
   }
