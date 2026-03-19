@@ -8,6 +8,8 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Link from 'next/link';
 import type { GalleryImage } from './types';
 import { UPLOAD_URL } from '@/config';
+import { ArrowUpRightIcon } from '@/components/icons/arrow-up-right-icon';
+import { ArrowDownIcon } from '@/components/icons/arrow-down-icon';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -62,14 +64,7 @@ export function GalleryHero({ images }: GalleryHeroProps) {
                   className="absolute right-4 top-4 z-10 rounded-full bg-black/40 p-2 text-white/80 transition-colors hover:bg-black/60 hover:text-white"
                   aria-label={`View ${img.title}`}
                 >
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M7 17L17 7M17 7H7M17 7v10"
-                    />
-                  </svg>
+                  <ArrowUpRightIcon />
                 </Link>
               </div>
             ))}
@@ -87,20 +82,8 @@ export function GalleryHero({ images }: GalleryHeroProps) {
         </div>
       )}
 
-      <div className="absolute bottom-12 left-1/2 z-10 -translate-x-1/2 animate-bounce">
-        <svg
-          className="h-6 w-6 text-white/70"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 14l-7 7m0 0l-7-7m7 7V3"
-          />
-        </svg>
+      <div className="absolute bottom-12 left-1/2 z-10 -translate-x-1/2 animate-bounce text-white/70">
+        <ArrowDownIcon />
       </div>
     </section>
   );

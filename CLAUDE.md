@@ -18,6 +18,10 @@ After editing any file, ensure there are no lint errors or warnings. In particul
 - No `@typescript-eslint/no-explicit-any` — use proper types instead of `any`.
 - Run `pnpm turbo lint` if unsure.
 
+## Code Quality: Icons
+
+SVG icons must be in separate files under `apps/web/src/components/icons/`. Do not inline SVGs — import the icon component instead. Follow the existing pattern (e.g., `download-icon.tsx`).
+
 ## Security: Post-Change Security Audit
 
 After **any** code changes, run the `security-vuln-checker` agent to assess security risks. This applies to all changes — new features, bug fixes, refactors, dependency updates, etc.
