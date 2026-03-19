@@ -6,6 +6,7 @@ import Autoplay from 'embla-carousel-autoplay';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import type { GalleryImage } from './types';
+import { UPLOAD_URL } from '@/lib/consts';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -51,7 +52,7 @@ export function GalleryHero({ images }: GalleryHeroProps) {
             {images.map((img) => (
               <div key={img.id} className="relative h-full min-w-0 flex-[0_0_100%]">
                 <img
-                  src={img.watermarkPath}
+                  src={`${UPLOAD_URL}/${img.watermarkPath}`}
                   alt={img.title}
                   className="h-full w-full object-cover"
                 />
