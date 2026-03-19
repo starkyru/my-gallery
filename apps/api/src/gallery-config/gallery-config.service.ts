@@ -23,7 +23,7 @@ export class GalleryConfigService implements OnModuleInit {
 
   async get(): Promise<GalleryConfig> {
     const row = await this.repo.findOne({ where: {} });
-    return { ...DEFAULT_SETTINGS, ...(row?.settings as Partial<GalleryConfig>) };
+    return { ...DEFAULT_SETTINGS, ...row?.settings };
   }
 
   async update(data: UpdateGalleryConfigDto): Promise<GalleryConfig> {
@@ -31,8 +31,8 @@ export class GalleryConfigService implements OnModuleInit {
     if (!row) {
       row = this.repo.create({ settings: DEFAULT_SETTINGS });
     }
-    row.settings = { ...(row.settings as GalleryConfig), ...data };
+    row.settings = { ...row.settings, ...data };
     await this.repo.save(row);
-    return row.settings as GalleryConfig;
+    return row.settings;
   }
 }

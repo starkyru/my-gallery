@@ -7,8 +7,9 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Link from 'next/link';
 import type { GalleryImage } from './types';
+import { ImageInfoOverlay } from './image-info-overlay';
 import { UPLOAD_URL } from '@/config';
-import { ArrowUpRightIcon } from '@/components/icons/arrow-up-right-icon';
+import { ShareIcon } from '@/components/icons/share-icon';
 import { ArrowDownIcon } from '@/components/icons/arrow-down-icon';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -53,20 +54,26 @@ export function GalleryHero({ images }: GalleryHeroProps) {
         <div ref={emblaRef} className="h-full overflow-hidden">
           <div className="flex h-full">
             {images.map((img) => (
-              <div key={img.id} className="relative h-full min-w-0 flex-[0_0_100%]">
+              <Link
+                key={img.id}
+                href={`/gallery/${img.id}`}
+                className="relative block h-full min-w-0 flex-[0_0_100%]"
+                aria-label={`View ${img.title}`}
+              >
                 <img
                   src={`${UPLOAD_URL}/${img.watermarkPath}`}
                   alt={img.title}
                   className="h-full w-full object-contain"
                 />
-                <Link
-                  href={`/gallery/${img.id}`}
-                  className="absolute right-4 top-4 z-10 rounded-full bg-black/40 p-2 text-white/80 transition-colors hover:bg-black/60 hover:text-white"
-                  aria-label={`View ${img.title}`}
-                >
-                  <ArrowUpRightIcon />
-                </Link>
-              </div>
+                <div className="absolute right-4 top-4 z-10 rounded-full bg-black/40 p-2 text-white/80">
+                  <ShareIcon />
+                </div>
+                <ImageInfoOverlay
+                  title={img.title}
+                  projectName={img.project?.name}
+                  artistName={img.artist?.name}
+                />
+              </Link>
             ))}
           </div>
         </div>

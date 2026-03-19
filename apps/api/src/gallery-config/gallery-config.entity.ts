@@ -1,4 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import type { GalleryConfig } from '@gallery/shared';
 
 @Entity('gallery_config')
 export class GalleryConfigEntity {
@@ -6,5 +7,5 @@ export class GalleryConfigEntity {
   id!: number;
 
   @Column({ type: 'jsonb', default: '{}' })
-  settings!: Record<string, unknown>;
+  settings!: GalleryConfig;
 }
