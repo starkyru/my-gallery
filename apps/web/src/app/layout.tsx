@@ -13,7 +13,13 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
 
 export async function generateMetadata(): Promise<Metadata> {
   try {
-    const res = await fetch(`${API_URL}/api/gallery-config`, { next: { revalidate: 60 } });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    const res = await fetch(`${API_URL}/api/gallery-config`, {
+      next: { revalidate: 60 },
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
     if (res.ok) {
       const config = await res.json();
       const title = config.subtitle
