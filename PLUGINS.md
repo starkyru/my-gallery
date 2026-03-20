@@ -61,10 +61,6 @@ Print-on-demand fulfillment. No subscription — pay per order.
 | ----------------- | -------------------------------------------------------------- |
 | `PRODIGI_API_KEY` | API key from [prodigi.com](https://www.prodigi.com/) dashboard |
 
-| Setting           | Description                                                          |
-| ----------------- | -------------------------------------------------------------------- |
-| `PRODIGI_SANDBOX` | Use sandbox API — orders won't be printed or charged (default: true) |
-
 **Webhook URL:** `https://your-domain.com/api/fulfillment/prodigi/webhook`
 
 After enabling Prodigi and entering the API key, add print products to its catalog on the settings page. Enter SKU codes from the [Prodigi product catalog](https://www.prodigi.com/products/) along with descriptions:
