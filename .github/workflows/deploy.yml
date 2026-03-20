@@ -47,7 +47,7 @@ jobs:
             pnpm turbo build
 
             # Sync database schema (create new tables/columns)
-            cd apps/api && pnpm db:sync && cd ../..
+            (cd apps/api && pnpm db:sync)
 
             # Restart services
             pm2 stop ecosystem.config.cjs || true

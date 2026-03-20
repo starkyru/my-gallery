@@ -1,4 +1,9 @@
-import 'dotenv/config';
+import { config } from 'dotenv';
+import { resolve } from 'path';
+
+// Load .env from monorepo root (CWD is apps/api/ during deploy)
+config({ path: resolve(process.cwd(), '../../.env') });
+config(); // also try CWD/.env as fallback
 import { DataSource } from 'typeorm';
 import { ArtistEntity } from './artists/artist.entity';
 import { ImageEntity } from './images/image.entity';
