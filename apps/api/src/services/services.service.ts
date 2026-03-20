@@ -118,6 +118,7 @@ export class ServicesService implements OnModuleInit {
       displayName: config.displayName,
       enabled: config.enabled,
       configured: provider?.configured ?? false,
+      configHint: provider?.configHint,
       skus: config.skus,
       sandbox: config.sandbox,
     };

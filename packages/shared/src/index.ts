@@ -44,6 +44,7 @@ export interface ServiceConfig {
   displayName: string;
   enabled: boolean;
   configured: boolean;
+  configHint?: string;
   skus: FulfillmentSku[];
   sandbox: boolean;
 }

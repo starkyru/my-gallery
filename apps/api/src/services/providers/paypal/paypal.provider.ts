@@ -29,6 +29,15 @@ export class PayPalProvider implements PaymentProvider {
     return !!(this.clientId && this.clientSecret);
   }
 
+  get configHint(): string | undefined {
+    if (this.configured) return undefined;
+    const missing = [
+      !this.clientId && 'PAYPAL_CLIENT_ID',
+      !this.clientSecret && 'PAYPAL_CLIENT_SECRET',
+    ].filter(Boolean);
+    return `Missing: ${missing.join(', ')}`;
+  }
+
   private getBaseUrl(): string {
     return this.sandbox ? 'https://api-m.sandbox.paypal.com' : 'https://api-m.paypal.com';
   }

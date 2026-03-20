@@ -54,10 +54,10 @@ export function ServiceCard({
           {disabled && <span className="text-xs text-red-400">Encryption key required</span>}
         </label>
       </div>
-      {expanded && (
+      {expanded && !config.configured && config.configHint && (
         <div className="px-4 pb-4 border-t border-white/10 pt-3">
           <p className="text-sm text-gallery-gray">
-            Configure credentials via the <code className="text-white/70">.env</code> file in the
+            {config.configHint} — set in the <code className="text-white/70">.env</code> file in the
             provider folder.
           </p>
         </div>

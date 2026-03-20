@@ -11,6 +11,7 @@ export interface FulfillmentWebhookResult {
 export interface FulfillmentProvider {
   readonly name: string;
   readonly configured: boolean;
+  readonly configHint?: string;
   createFulfillmentOrder(
     imageUrl: string,
     sku: string,

@@ -38,6 +38,11 @@ export class ProdigiProvider implements FulfillmentProvider {
     return !!this.apiKey;
   }
 
+  get configHint(): string | undefined {
+    if (this.configured) return undefined;
+    return 'Missing: PRODIGI_API_KEY';
+  }
+
   private async getClient(): Promise<ProdigiClient> {
     const config = await this.configRepo.findOne({ where: { provider: 'prodigi' } });
     const environment: Environment = (config?.sandbox ?? true) ? 'sandbox' : 'production';

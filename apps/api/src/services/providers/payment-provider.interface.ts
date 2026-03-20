@@ -16,6 +16,7 @@ export interface WebhookResult {
 export interface PaymentProvider {
   readonly name: string;
   readonly configured: boolean;
+  readonly configHint?: string;
   createPayment(order: { id: number; total: number }): Promise<PaymentResult>;
   capturePayment?(orderId: number, captureData: Record<string, unknown>): Promise<CaptureResult>;
   handleWebhook(

@@ -26,6 +26,17 @@ export class BtcPayProvider implements PaymentProvider {
     return !!(this.url && this.apiKey && this.storeId && this.webhookSecret);
   }
 
+  get configHint(): string | undefined {
+    if (this.configured) return undefined;
+    const missing = [
+      !this.url && 'BTCPAY_URL',
+      !this.apiKey && 'BTCPAY_API_KEY',
+      !this.storeId && 'BTCPAY_STORE_ID',
+      !this.webhookSecret && 'BTCPAY_WEBHOOK_SECRET',
+    ].filter(Boolean);
+    return `Missing: ${missing.join(', ')}`;
+  }
+
   async createPayment(order: { id: number; total: number }): Promise<PaymentResult> {
     const publicUrl = this.configService.get('PUBLIC_URL');
 
