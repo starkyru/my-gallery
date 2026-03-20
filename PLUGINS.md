@@ -57,13 +57,13 @@ Card and PayPal balance payments via the Orders v2 API.
 
 Print-on-demand fulfillment. No subscription — pay per order.
 
-| Credential | Description                                                    |
-| ---------- | -------------------------------------------------------------- |
-| `apiKey`   | API key from [prodigi.com](https://www.prodigi.com/) dashboard |
+| Credential        | Description                                                    |
+| ----------------- | -------------------------------------------------------------- |
+| `PRODIGI_API_KEY` | API key from [prodigi.com](https://www.prodigi.com/) dashboard |
 
-| Setting   | Description                                                          |
-| --------- | -------------------------------------------------------------------- |
-| `sandbox` | Use sandbox API — orders won't be printed or charged (default: true) |
+| Setting           | Description                                                          |
+| ----------------- | -------------------------------------------------------------------- |
+| `PRODIGI_SANDBOX` | Use sandbox API — orders won't be printed or charged (default: true) |
 
 **Webhook URL:** `https://your-domain.com/api/fulfillment/prodigi/webhook`
 
