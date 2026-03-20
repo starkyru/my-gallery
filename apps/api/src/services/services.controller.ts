@@ -1,17 +1,42 @@
-import { Controller, Get, Put, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Put, Param, Body, UseGuards, BadRequestException } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AdminGuard } from '../auth/admin.guard';
 import { ServicesService } from './services.service';
 import { UpdateServiceDto } from './update-service.dto';
+import { FulfillmentRegistryService } from './providers/fulfillment-registry.service';
+import { ProdigiProvider } from './providers/prodigi/prodigi.provider';
 
 @Controller('services')
 export class ServicesController {
-  constructor(private readonly servicesService: ServicesService) {}
+  constructor(
+    private readonly servicesService: ServicesService,
+    private readonly fulfillmentRegistry: FulfillmentRegistryService,
+  ) {}
 
   @Get('status')
   @UseGuards(JwtAuthGuard, AdminGuard)
   getStatus() {
     return { encryptionKeySet: this.servicesService.isEncryptionKeySet() };
+  }
+
+  @Get('catalogue/categories')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  async catalogueCategories() {
+    const provider = this.fulfillmentRegistry.get('prodigi');
+    if (!provider) {
+      throw new BadRequestException('Prodigi provider is not configured');
+    }
+    return (provider as ProdigiProvider).getCatalogueCategories();
+  }
+
+  @Get('catalogue/products/:slug')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  async catalogueProduct(@Param('slug') slug: string) {
+    const provider = this.fulfillmentRegistry.get('prodigi');
+    if (!provider) {
+      throw new BadRequestException('Prodigi provider is not configured');
+    }
+    return (provider as ProdigiProvider).getCatalogueProduct(slug);
   }
 
   @Get()

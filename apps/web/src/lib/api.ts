@@ -12,6 +12,55 @@ import type {
   Artist,
 } from '@gallery/shared';
 
+interface CatalogueProductSummary {
+  name: string;
+  slug: string;
+  productSlug: string;
+  global: boolean;
+  sizes: string[];
+  pricing: { source: string; value: string }[];
+  manufacturingRegions: string[];
+  image: string;
+  imageRequired: boolean;
+  loreSlug?: string;
+}
+
+interface CatalogueCategory {
+  name: string;
+  slug: string;
+  fullSlug?: string;
+  images?: string[];
+  products: Record<string, CatalogueProductSummary>;
+  subCategories: Record<string, CatalogueCategory>;
+}
+
+interface CatalogueProductDetail {
+  name: string;
+  availability: string;
+  description: string[];
+  features: string[];
+  manufacturing: { regions: string[]; time: string; shipsTo: string[] };
+  pricing: { source: string; value: string }[];
+  variants: {
+    columns: Record<
+      string,
+      { enableSorting: boolean; name: string; filterType: string; options?: string[] }
+    >;
+    rows: {
+      sku: string;
+      description: string;
+      attributeDescription: string;
+      productType: string;
+      price: string;
+      size?: string;
+      orientation?: string;
+    }[];
+  };
+  sizes: string[];
+}
+
+export type { CatalogueCategory, CatalogueProductDetail, CatalogueProductSummary };
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
@@ -219,6 +268,14 @@ export const api = {
       }),
     enabledPayments: () => request<EnabledPayment[]>('/services/payment/enabled'),
     fulfillmentSkus: () => request<FulfillmentSku[]>('/services/fulfillment/skus'),
+    catalogueCategories: (token: string) =>
+      request<Record<string, CatalogueCategory>>('/services/catalogue/categories', {
+        headers: authHeaders(token),
+      }),
+    catalogueProduct: (slug: string, token: string) =>
+      request<CatalogueProductDetail>('/services/catalogue/products/' + slug, {
+        headers: authHeaders(token),
+      }),
   },
   ai: {
     describe: (imageId: number, token: string) =>

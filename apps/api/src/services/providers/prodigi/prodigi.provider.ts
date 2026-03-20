@@ -7,6 +7,8 @@ import {
   OrderBuilder,
   type Environment,
   type CallbackEvent,
+  type CatalogueListResponse,
+  type CatalogueProductDetail,
 } from 'prodigi-print-api';
 import {
   FulfillmentProvider,
@@ -89,6 +91,16 @@ export class ProdigiProvider implements FulfillmentProvider {
       }
       throw new InternalServerErrorException('Fulfillment order creation failed');
     }
+  }
+
+  async getCatalogueCategories(): Promise<CatalogueListResponse> {
+    const client = await this.getClient();
+    return client.catalogue.list();
+  }
+
+  async getCatalogueProduct(slug: string): Promise<CatalogueProductDetail> {
+    const client = await this.getClient();
+    return client.catalogue.get(slug);
   }
 
   async handleWebhook(payload: CallbackEvent): Promise<FulfillmentWebhookResult> {

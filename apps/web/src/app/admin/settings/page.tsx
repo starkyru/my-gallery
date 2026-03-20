@@ -5,6 +5,7 @@ import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { useNotification } from '@/hooks/useNotification';
 import { ServiceCard, inputClass } from '@/components/service-card';
+import { CatalogueBrowser } from '@/components/catalogue-browser';
 import type { ServiceConfig } from '@gallery/shared';
 
 export default function SettingsPage() {
@@ -17,6 +18,7 @@ export default function SettingsPage() {
   const [newSku, setNewSku] = useState<Record<string, { sku: string; description: string }>>({});
   const [sandboxState, setSandboxState] = useState<Record<string, boolean>>({});
   const [encryptionKeySet, setEncryptionKeySet] = useState(true);
+  const [catalogueOpen, setCatalogueOpen] = useState(false);
 
   const [galleryName, setGalleryName] = useState('');
   const [subtitle, setSubtitle] = useState('');
@@ -108,6 +110,18 @@ export default function SettingsPage() {
       ...prev,
       [provider]: prev[provider].filter((_, i) => i !== index),
     }));
+  }
+
+  function handleCatalogueSelect(
+    provider: string,
+    selected: { sku: string; description: string }[],
+  ) {
+    setSkus((prev) => {
+      const existing = prev[provider] || [];
+      const existingCodes = new Set(existing.map((s) => s.sku));
+      const newItems = selected.filter((s) => !existingCodes.has(s.sku));
+      return { ...prev, [provider]: [...existing, ...newItems] };
+    });
   }
 
   const paymentConfigs = configs.filter((c) => c.type === 'payment');
@@ -269,6 +283,14 @@ export default function SettingsPage() {
                     >
                       Add
                     </button>
+                    {config.configured && (
+                      <button
+                        onClick={() => setCatalogueOpen(true)}
+                        className="px-3 py-1 border border-white/10 text-white rounded text-xs font-medium hover:bg-white/5 transition-colors"
+                      >
+                        Browse Catalogue
+                      </button>
+                    )}
                   </div>
                   <button
                     onClick={() => handleSaveSkus(config.provider)}
@@ -277,6 +299,14 @@ export default function SettingsPage() {
                   >
                     {saving === config.provider ? 'Saving...' : 'Save SKUs'}
                   </button>
+                  {config.configured && token && (
+                    <CatalogueBrowser
+                      open={catalogueOpen}
+                      onClose={() => setCatalogueOpen(false)}
+                      onSelectSkus={(selected) => handleCatalogueSelect(config.provider, selected)}
+                      token={token}
+                    />
+                  )}
                 </div>
               )}
             </div>
