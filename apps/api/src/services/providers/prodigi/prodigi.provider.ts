@@ -6,7 +6,7 @@ import {
   ProdigiApiError,
   OrderBuilder,
   type Environment,
-  type Order,
+  type CallbackEvent,
 } from 'prodigi-print-api';
 import {
   FulfillmentProvider,
@@ -15,11 +15,6 @@ import {
 } from '../fulfillment-provider.interface';
 import { loadProviderEnv } from '../load-env';
 import { ServiceConfigEntity } from '../../service-config.entity';
-
-interface WebhookPayload {
-  event: string;
-  order: Order;
-}
 
 @Injectable()
 export class ProdigiProvider implements FulfillmentProvider {
@@ -96,12 +91,12 @@ export class ProdigiProvider implements FulfillmentProvider {
     }
   }
 
-  async handleWebhook(payload: WebhookPayload): Promise<FulfillmentWebhookResult> {
-    this.logger.log(`Prodigi webhook: ${payload.event}`);
-    if (payload.event === 'order.status.update') {
+  async handleWebhook(payload: CallbackEvent): Promise<FulfillmentWebhookResult> {
+    this.logger.log(`Prodigi webhook: ${payload.type}`);
+    if (payload.type === 'order.status.update') {
       return {
-        orderId: payload.order.id,
-        status: payload.order.status.stage,
+        orderId: payload.data.id,
+        status: payload.data.status.stage,
       };
     }
     return {};
