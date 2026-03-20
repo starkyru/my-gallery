@@ -273,7 +273,7 @@ export const api = {
         headers: authHeaders(token),
       }),
     catalogueProduct: (slug: string, token: string) =>
-      request<CatalogueProductDetail>('/services/catalogue/products/' + slug, {
+      request<CatalogueProductDetail>(`/services/catalogue/products/${encodeURIComponent(slug)}`, {
         headers: authHeaders(token),
       }),
   },
