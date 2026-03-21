@@ -18,21 +18,14 @@ import { ProjectEntity } from './projects/project.entity';
 import { ProtectedGalleryEntity } from './protected-galleries/protected-gallery.entity';
 import { ProtectedGalleryImageEntity } from './protected-galleries/protected-gallery-image.entity';
 
-const required = ['DATABASE_HOST', 'DATABASE_USER', 'DATABASE_PASSWORD', 'DATABASE_NAME'] as const;
-for (const key of required) {
-  if (!process.env[key]) {
-    console.error(`Missing required env var: ${key}`);
-    process.exit(1);
-  }
-}
-
+// Use same defaults as app.module.ts TypeOrmModule config
 const ds = new DataSource({
   type: 'postgres',
-  host: process.env.DATABASE_HOST,
+  host: process.env.DATABASE_HOST || 'localhost',
   port: Number(process.env.DATABASE_PORT) || 5432,
-  database: process.env.DATABASE_NAME,
-  username: process.env.DATABASE_USER,
-  password: process.env.DATABASE_PASSWORD,
+  database: process.env.DATABASE_NAME || 'gallery',
+  username: process.env.DATABASE_USER || 'gallery_user',
+  password: process.env.DATABASE_PASSWORD || '',
   entities: [
     ArtistEntity,
     ImageEntity,
