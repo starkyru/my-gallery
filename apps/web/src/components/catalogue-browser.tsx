@@ -94,7 +94,7 @@ export function CatalogueBrowser({ open, onClose, onSelectSkus, token }: Catalog
               className="w-full text-left px-3 py-2 rounded bg-white/5 hover:bg-white/10 transition-colors"
             >
               <span className="text-sm text-white">{p.name}</span>
-              {p.sizes.length > 0 && (
+              {Array.isArray(p.sizes) && p.sizes.length > 0 && (
                 <span className="ml-2 text-xs text-gallery-gray">{p.sizes.join(', ')}</span>
               )}
             </button>
@@ -139,12 +139,34 @@ export function CatalogueBrowser({ open, onClose, onSelectSkus, token }: Catalog
           {!loading && !error && product && (
             <div>
               {product.description.length > 0 && (
-                <p className="text-xs text-gallery-gray mb-3">{product.description[0]}</p>
+                <p className="text-xs text-gallery-gray mb-1">{product.description[0]}</p>
               )}
+              {Array.isArray(product.manufacturing?.shipsTo) &&
+                product.manufacturing.shipsTo.length > 0 && (
+                  <p className="text-xs text-gallery-gray mb-3">
+                    Ships to: {product.manufacturing.shipsTo.join(', ')}
+                  </p>
+                )}
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-left text-xs text-gallery-gray border-b border-white/10">
-                    <th className="pb-2 pr-2 w-8"></th>
+                    <th className="pb-2 pr-2 w-8">
+                      <input
+                        type="checkbox"
+                        checked={
+                          product.variants.rows.length > 0 &&
+                          selectedSkus.size === product.variants.rows.length
+                        }
+                        onChange={() => {
+                          if (selectedSkus.size === product.variants.rows.length) {
+                            setSelectedSkus(new Set());
+                          } else {
+                            setSelectedSkus(new Set(product.variants.rows.map((_, i) => i)));
+                          }
+                        }}
+                        className="accent-gallery-accent"
+                      />
+                    </th>
                     <th className="pb-2 pr-2">SKU</th>
                     <th className="pb-2 pr-2">Description</th>
                     <th className="pb-2 pr-2">Size</th>
@@ -162,14 +184,26 @@ export function CatalogueBrowser({ open, onClose, onSelectSkus, token }: Catalog
                         <input
                           type="checkbox"
                           checked={selectedSkus.has(i)}
-                          onChange={() => toggleSku(i)}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            toggleSku(i);
+                          }}
+                          onClick={(e) => e.stopPropagation()}
                           className="accent-gallery-accent"
                         />
                       </td>
                       <td className="py-2 pr-2 font-mono text-xs text-gallery-gray">{row.sku}</td>
                       <td className="py-2 pr-2">{row.description}</td>
-                      <td className="py-2 pr-2 text-xs text-gallery-gray">{row.size || '-'}</td>
-                      <td className="py-2 text-xs">{row.price || '-'}</td>
+                      <td className="py-2 pr-2 text-xs text-gallery-gray">
+                        {(typeof row.size === 'object' && row.size !== null
+                          ? (row.size as unknown as { value: string }).value
+                          : row.size) || '-'}
+                      </td>
+                      <td className="py-2 text-xs">
+                        {(typeof row.price === 'object' && row.price !== null
+                          ? (row.price as unknown as { value: string }).value
+                          : row.price) || '-'}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
