@@ -43,17 +43,17 @@ export default function AdminProtectedGalleriesPage() {
     ),
   );
 
-  useEffect(() => {
-    loadData();
-  }, [token]);
-
-  function loadData() {
+  const loadData = useCallback(() => {
     if (!token) return;
     api.protectedGalleries
       .listAdmin(token)
       .then(setGalleries)
       .catch(() => {});
-  }
+  }, [token]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   function deriveSlug(name: string) {
     return name

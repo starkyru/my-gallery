@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { AdminUser } from './styles';
@@ -14,18 +14,18 @@ export default function UsersPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  useEffect(() => {
-    if (token) loadUsers();
-  }, [token]);
-
-  async function loadUsers() {
+  const loadUsers = useCallback(async () => {
     try {
       const data = await api.auth.listUsers(token!);
       setUsers(data);
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Failed to load users');
     }
-  }
+  }, [token]);
+
+  useEffect(() => {
+    if (token) loadUsers();
+  }, [token, loadUsers]);
 
   return (
     <div className="space-y-10">

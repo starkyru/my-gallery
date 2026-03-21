@@ -36,28 +36,28 @@ export default function AdminProjectsPage() {
     useCallback((id: number) => api.projects.delete(id, token!), [token]),
   );
 
-  useEffect(() => {
-    api.artists
-      .list()
-      .then((a) => {
-        setArtists(a);
-        if (a.length > 0 && !newArtistId) setNewArtistId(String(a[0].id));
-      })
-      .catch(() => {});
-    loadData();
-  }, [token]);
-
-  function loadData() {
+  const loadData = useCallback(() => {
     const artistId = filterArtistId ? Number(filterArtistId) : undefined;
     api.projects
       .list(artistId)
       .then(setProjects)
       .catch(() => {});
-  }
+  }, [filterArtistId]);
+
+  useEffect(() => {
+    api.artists
+      .list()
+      .then((a) => {
+        setArtists(a);
+        setNewArtistId((prev) => prev || (a.length > 0 ? String(a[0].id) : ''));
+      })
+      .catch(() => {});
+    loadData();
+  }, [token, loadData]);
 
   useEffect(() => {
     loadData();
-  }, [filterArtistId]);
+  }, [loadData]);
 
   function deriveSlug(name: string) {
     return name

@@ -30,6 +30,24 @@ export default function ProtectedGalleryPage({ params }: { params: Promise<{ slu
 
   const closeLightbox = useCallback(() => setSelectedImage(null), []);
 
+  const loadGallery = useCallback(
+    async (token: string) => {
+      try {
+        const data = await api.protectedGalleries.getPublic(slug, token);
+        setAccessToken(token);
+        setGalleryName(data.name);
+        setImages(data.images);
+        setUnlocked(true);
+        sessionStorage.setItem(`gallery-token-${slug}`, token);
+      } catch {
+        sessionStorage.removeItem(`gallery-token-${slug}`);
+      } finally {
+        setChecking(false);
+      }
+    },
+    [slug],
+  );
+
   useEffect(() => {
     const stored = sessionStorage.getItem(`gallery-token-${slug}`);
     if (stored) {
@@ -37,7 +55,7 @@ export default function ProtectedGalleryPage({ params }: { params: Promise<{ slu
     } else {
       setChecking(false);
     }
-  }, [slug]);
+  }, [slug, loadGallery]);
 
   useEffect(() => {
     if (!selectedImage) return;
@@ -47,21 +65,6 @@ export default function ProtectedGalleryPage({ params }: { params: Promise<{ slu
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [selectedImage, closeLightbox]);
-
-  async function loadGallery(token: string) {
-    try {
-      const data = await api.protectedGalleries.getPublic(slug, token);
-      setAccessToken(token);
-      setGalleryName(data.name);
-      setImages(data.images);
-      setUnlocked(true);
-      sessionStorage.setItem(`gallery-token-${slug}`, token);
-    } catch {
-      sessionStorage.removeItem(`gallery-token-${slug}`);
-    } finally {
-      setChecking(false);
-    }
-  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

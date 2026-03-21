@@ -2,6 +2,7 @@ export interface AdminUser {
   id: number;
   username: string;
   email: string;
+  notifyOnOrder: boolean;
   createdAt: string;
 }
 

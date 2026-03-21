@@ -6,6 +6,7 @@ import { PaymentRegistryService } from '../services/providers/payment-registry.s
 import { FulfillmentRegistryService } from '../services/providers/fulfillment-registry.service';
 import { OrderStatus, OrderItemType } from '@gallery/shared';
 import { OrderEntity } from '../orders/order.entity';
+import { AuthService } from '../auth/auth.service';
 
 @Injectable()
 export class PaymentsService {
@@ -17,6 +18,7 @@ export class PaymentsService {
     private readonly servicesService: ServicesService,
     private readonly paymentRegistry: PaymentRegistryService,
     private readonly fulfillmentRegistry: FulfillmentRegistryService,
+    private readonly authService: AuthService,
   ) {}
 
   async createPayment(orderId: number, providerName: string) {
@@ -60,6 +62,9 @@ export class PaymentsService {
       await this.ordersService.updateStatus(orderId, OrderStatus.Paid);
       const order = await this.ordersService.findOne(orderId);
       await this.fulfillPrintItems(order);
+      this.notifyAdminsOfOrder(order).catch((err) =>
+        this.logger.error('Failed to send order notification emails', err),
+      );
     }
 
     return result;
@@ -81,6 +86,9 @@ export class PaymentsService {
       await this.ordersService.updateStatus(result.orderId, OrderStatus.Paid);
       const order = await this.ordersService.findOne(result.orderId);
       await this.fulfillPrintItems(order);
+      this.notifyAdminsOfOrder(order).catch((err) =>
+        this.logger.error('Failed to send order notification emails', err),
+      );
     }
 
     return result;
@@ -153,6 +161,48 @@ export class PaymentsService {
         this.logger.log(`${providerName} order ${result.id} created for order item ${item.id}`);
       } catch (error) {
         this.logger.error(`Failed to fulfill print item ${item.id} for order ${order.id}`, error);
+      }
+    }
+  }
+
+  private escapeHtml(str: string): string {
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  private async notifyAdminsOfOrder(order: OrderEntity) {
+    const admins = await this.authService.findNotifyAdmins();
+    if (admins.length === 0) return;
+
+    const itemRows = order.items
+      .map((item) => {
+        const type =
+          item.type === OrderItemType.Print
+            ? `Print (${this.escapeHtml(item.printSku || '')})`
+            : 'Original';
+        return `<tr><td style="padding:4px 8px">#${item.imageId}</td><td style="padding:4px 8px">${type}</td><td style="padding:4px 8px">$${item.price}</td></tr>`;
+      })
+      .join('');
+
+    const html = `
+      <h2>New Order #${order.id}</h2>
+      <p><strong>Customer:</strong> ${this.escapeHtml(order.customerEmail)}</p>
+      <p><strong>Total:</strong> $${order.total}</p>
+      <p><strong>Items:</strong> ${order.items.length}</p>
+      <table border="1" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border-color:#ddd">
+        <tr style="background:#f5f5f5"><th style="padding:4px 8px">Image</th><th style="padding:4px 8px">Type</th><th style="padding:4px 8px">Price</th></tr>
+        ${itemRows}
+      </table>
+    `;
+
+    for (const admin of admins) {
+      try {
+        await this.authService.sendEmail(admin.email, `New Order #${order.id}`, html);
+      } catch (err) {
+        this.logger.error(`Failed to notify ${admin.email} about order ${order.id}`, err);
       }
     }
   }

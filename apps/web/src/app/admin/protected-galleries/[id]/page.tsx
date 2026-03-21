@@ -48,17 +48,17 @@ export default function AdminProtectedGalleryDetailPage({
     ),
   );
 
-  useEffect(() => {
-    loadGalleryImages();
-  }, [token, galleryId]);
-
-  function loadGalleryImages() {
+  const loadGalleryImages = useCallback(() => {
     if (!token) return;
     api.protectedGalleries
       .getImages(galleryId, token)
       .then(setGalleryImages)
       .catch(() => {});
-  }
+  }, [token, galleryId]);
+
+  useEffect(() => {
+    loadGalleryImages();
+  }, [loadGalleryImages]);
 
   function loadAllImages() {
     if (!token) return;

@@ -59,8 +59,8 @@ export default function UsersTable({
       onSuccess('User updated successfully');
       cancelEdit();
       onRefresh();
-    } catch (e: any) {
-      onError(e.message);
+    } catch (e: unknown) {
+      onError(e instanceof Error ? e.message : 'Operation failed');
     } finally {
       setEditLoading(false);
     }
@@ -74,8 +74,8 @@ export default function UsersTable({
       setDeleteConfirm(null);
       onSuccess('User deleted');
       onRefresh();
-    } catch (e: any) {
-      onError(e.message);
+    } catch (e: unknown) {
+      onError(e instanceof Error ? e.message : 'Operation failed');
       setDeleteConfirm(null);
     }
   }
@@ -90,6 +90,7 @@ export default function UsersTable({
               <th className="pb-2 pr-4">Username</th>
               <th className="pb-2 pr-4">Email</th>
               <th className="pb-2 pr-4">Created</th>
+              <th className="pb-2 pr-4 text-center">Email on Order</th>
               <th className="pb-2"></th>
             </tr>
           </thead>
@@ -122,6 +123,14 @@ export default function UsersTable({
                       className={inputClass}
                     />
                   </td>
+                  <td className="py-3 pr-4 text-center">
+                    <NotifyCheckbox
+                      user={u}
+                      token={token}
+                      onRefresh={onRefresh}
+                      onError={onError}
+                    />
+                  </td>
                   <td className="py-3 text-right space-x-2">
                     <button
                       onClick={handleSaveEdit}
@@ -141,6 +150,14 @@ export default function UsersTable({
                   <td className="py-3 pr-4 text-gallery-gray">{u.email || '—'}</td>
                   <td className="py-3 pr-4 text-gallery-gray">
                     {new Date(u.createdAt).toLocaleDateString()}
+                  </td>
+                  <td className="py-3 pr-4 text-center">
+                    <NotifyCheckbox
+                      user={u}
+                      token={token}
+                      onRefresh={onRefresh}
+                      onError={onError}
+                    />
                   </td>
                   <td className="py-3 text-right space-x-2">
                     {deleteConfirm === u.id ? (
@@ -182,5 +199,35 @@ export default function UsersTable({
         </table>
       </div>
     </section>
+  );
+}
+
+function NotifyCheckbox({
+  user,
+  token,
+  onRefresh,
+  onError,
+}: {
+  user: AdminUser;
+  token: string;
+  onRefresh: () => void;
+  onError: (msg: string) => void;
+}) {
+  async function toggle() {
+    try {
+      await api.auth.updateUser(token, user.id, { notifyOnOrder: !user.notifyOnOrder });
+      onRefresh();
+    } catch (e: unknown) {
+      onError(e instanceof Error ? e.message : 'Failed to update');
+    }
+  }
+
+  return (
+    <input
+      type="checkbox"
+      checked={user.notifyOnOrder}
+      onChange={toggle}
+      className="accent-gallery-accent w-4 h-4 cursor-pointer"
+    />
   );
 }

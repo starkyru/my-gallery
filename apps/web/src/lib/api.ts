@@ -393,7 +393,9 @@ export const api = {
         headers: authHeaders(token),
       }),
     listUsers: (token: string) =>
-      request<{ id: number; username: string; email: string; createdAt: string }[]>('/auth/users', {
+      request<
+        { id: number; username: string; email: string; notifyOnOrder: boolean; createdAt: string }[]
+      >('/auth/users', {
         headers: authHeaders(token),
       }),
     createUser: (token: string, username: string, email: string, password: string) =>
@@ -405,7 +407,7 @@ export const api = {
     updateUser: (
       token: string,
       userId: number,
-      data: { username?: string; email?: string; password?: string },
+      data: { username?: string; email?: string; password?: string; notifyOnOrder?: boolean },
     ) =>
       request(`/auth/users/${userId}`, {
         method: 'PUT',

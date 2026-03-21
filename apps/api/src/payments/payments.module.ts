@@ -4,9 +4,10 @@ import { PaymentsController } from './payments.controller';
 import { OrdersModule } from '../orders/orders.module';
 import { ImagesModule } from '../images/images.module';
 import { ServicesModule } from '../services/services.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [OrdersModule, ImagesModule, ServicesModule],
+  imports: [OrdersModule, ImagesModule, ServicesModule, AuthModule],
   controllers: [PaymentsController],
   providers: [PaymentsService],
 })

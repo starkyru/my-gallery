@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { useNotification } from '@/hooks/useNotification';
@@ -19,6 +19,12 @@ export default function SettingsPage() {
   const [siteUrl, setSiteUrl] = useState('');
   const [savingGallery, setSavingGallery] = useState(false);
 
+  const loadConfigs = useCallback(async () => {
+    if (!token) return;
+    const data = await api.services.list(token);
+    setConfigs(data);
+  }, [token]);
+
   useEffect(() => {
     if (token) {
       loadConfigs();
@@ -35,7 +41,7 @@ export default function SettingsPage() {
         })
         .catch(() => {});
     }
-  }, [token]);
+  }, [token, loadConfigs]);
 
   async function handleSaveGallerySettings() {
     if (!token) return;
@@ -48,12 +54,6 @@ export default function SettingsPage() {
     } finally {
       setSavingGallery(false);
     }
-  }
-
-  async function loadConfigs() {
-    if (!token) return;
-    const data = await api.services.list(token);
-    setConfigs(data);
   }
 
   async function handleToggle(provider: string, enabled: boolean) {

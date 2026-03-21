@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
@@ -26,11 +26,7 @@ export default function ProviderSettingsPage() {
   const [prices, setPrices] = useState<Record<string, { price: string; currency: string }>>({});
   const [fetchingPrices, setFetchingPrices] = useState(false);
 
-  useEffect(() => {
-    if (token && provider) loadConfig();
-  }, [token, provider]);
-
-  async function loadConfig() {
+  const loadConfig = useCallback(async () => {
     if (!token) return;
     const data = await api.services.list(token);
     const found = data.find((c: ServiceConfig) => c.provider === provider);
@@ -42,7 +38,11 @@ export default function ProviderSettingsPage() {
     setConfig(found);
     setSkus([...(found.skus || [])]);
     setSandbox(found.sandbox);
-  }
+  }, [token, provider, notify, router]);
+
+  useEffect(() => {
+    if (token && provider) loadConfig();
+  }, [token, provider, loadConfig]);
 
   async function handleSaveSkus() {
     if (!token) return;

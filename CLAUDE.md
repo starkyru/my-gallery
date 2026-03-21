@@ -15,8 +15,8 @@ Using `JwtAuthGuard` alone only verifies the user is authenticated — it does *
 After editing any file, ensure there are no lint errors or warnings. In particular:
 
 - No `@typescript-eslint/no-unused-vars` — remove any unused variables, imports, or functions.
-- No `@typescript-eslint/no-explicit-any` — use proper types instead of `any`.
-- Run `pnpm turbo lint` if unsure.
+- No `@typescript-eslint/no-explicit-any` — **never** use `any`. Use proper types, `unknown`, or generics instead.
+- Run `pnpm turbo lint` and check `tsc` output after every change.
 
 ## Code Quality: Icons
 

@@ -131,6 +131,7 @@ export class AuthService implements OnModuleInit {
       id: u.id,
       username: u.username,
       email: u.email,
+      notifyOnOrder: u.notifyOnOrder,
       createdAt: u.createdAt,
     }));
   }
@@ -145,19 +146,29 @@ export class AuthService implements OnModuleInit {
     return { id: user.id, username: user.username, email: user.email, createdAt: user.createdAt };
   }
 
-  async updateUser(userId: number, data: { username?: string; email?: string; password?: string }) {
+  async updateUser(
+    userId: number,
+    data: { username?: string; email?: string; password?: string; notifyOnOrder?: boolean },
+  ) {
     const user = await this.adminRepo.findOne({ where: { id: userId } });
     if (!user) throw new BadRequestException('User not found');
 
     if (data.username !== undefined) user.username = data.username;
     if (data.email !== undefined) user.email = data.email;
+    if (data.notifyOnOrder !== undefined) user.notifyOnOrder = data.notifyOnOrder;
     if (data.password) {
       user.passwordHash = await bcrypt.hash(data.password, 12);
       user.mustChangePassword = true;
     }
 
     await this.adminRepo.save(user);
-    return { id: user.id, username: user.username, email: user.email, createdAt: user.createdAt };
+    return {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      notifyOnOrder: user.notifyOnOrder,
+      createdAt: user.createdAt,
+    };
   }
 
   async removeUser(userId: number, requesterId: number) {
@@ -240,7 +251,12 @@ export class AuthService implements OnModuleInit {
     await this.adminRepo.save(user);
   }
 
-  private async sendEmail(to: string, subject: string, html: string) {
+  async findNotifyAdmins(): Promise<{ email: string }[]> {
+    const admins = await this.adminRepo.find({ where: { notifyOnOrder: true } });
+    return admins.filter((a) => a.email && a.email.length > 0).map((a) => ({ email: a.email }));
+  }
+
+  async sendEmail(to: string, subject: string, html: string) {
     const host = this.configService.get('SMTP_HOST');
     if (!host) {
       this.logger.warn('SMTP not configured, skipping email send');

@@ -17,6 +17,9 @@ export class AdminUserEntity {
   @Column({ name: 'must_change_password', default: true })
   mustChangePassword!: boolean;
 
+  @Column({ name: 'notify_on_order', default: true })
+  notifyOnOrder!: boolean;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 }

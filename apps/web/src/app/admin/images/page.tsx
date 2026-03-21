@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState, useRef, useMemo } from 'react';
+import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { useNotification } from '@/hooks/useNotification';
-import type { Category, Project } from '@gallery/shared';
+import type { Category, Project, GalleryImage, Artist } from '@gallery/shared';
 import { UPLOAD_URL } from '@/config';
 
 interface DroppedFile {
@@ -19,8 +19,8 @@ interface DroppedFile {
 export default function AdminImagesPage() {
   const { token } = useAuthStore();
   const notify = useNotification();
-  const [images, setImages] = useState<any[]>([]);
-  const [artists, setArtists] = useState<any[]>([]);
+  const [images, setImages] = useState<GalleryImage[]>([]);
+  const [artists, setArtists] = useState<Artist[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
 
@@ -59,17 +59,7 @@ export default function AdminImagesPage() {
     return artistIds.size === 1 ? [...artistIds][0] : null;
   }, [selectedIds, images]);
 
-  useEffect(() => {
-    loadData();
-  }, [token]);
-
-  useEffect(() => {
-    if (artists.length > 0 && !sharedArtistId) {
-      setSharedArtistId(String(artists[0].id));
-    }
-  }, [artists, sharedArtistId]);
-
-  function loadData() {
+  const loadData = useCallback(() => {
     if (!token) return;
     api.images
       .listAdmin(token)
@@ -87,7 +77,17 @@ export default function AdminImagesPage() {
       .list()
       .then(setProjects)
       .catch(() => {});
-  }
+  }, [token]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  useEffect(() => {
+    if (artists.length > 0 && !sharedArtistId) {
+      setSharedArtistId(String(artists[0].id));
+    }
+  }, [artists, sharedArtistId]);
 
   const filteredImages = useMemo(() => {
     let result = [...images];
@@ -160,7 +160,7 @@ export default function AdminImagesPage() {
     setDroppedFiles((prev) => [...prev, ...newFiles]);
   }
 
-  function updateDroppedFile(index: number, field: keyof DroppedFile, value: any) {
+  function updateDroppedFile(index: number, field: keyof DroppedFile, value: string | File) {
     setDroppedFiles((prev) => prev.map((f, i) => (i === index ? { ...f, [field]: value } : f)));
   }
 
@@ -193,7 +193,7 @@ export default function AdminImagesPage() {
     loadData();
   }
 
-  async function handleToggleArchive(image: any) {
+  async function handleToggleArchive(image: GalleryImage) {
     if (!token) return;
     try {
       await api.images.update(image.id, { isArchived: !image.isArchived }, token);
@@ -212,7 +212,7 @@ export default function AdminImagesPage() {
 
   function handleSortChange(value: string) {
     const [field, dir] = value.split(':');
-    setSortBy(field as any);
+    setSortBy(field as typeof sortBy);
     setSortDir(dir as 'asc' | 'desc');
   }
 
@@ -389,7 +389,7 @@ export default function AdminImagesPage() {
         </select>
         <select
           value={filterArchive}
-          onChange={(e) => setFilterArchive(e.target.value as any)}
+          onChange={(e) => setFilterArchive(e.target.value as typeof filterArchive)}
           className={selectClass}
         >
           <option value="all">All Status</option>
