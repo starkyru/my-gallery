@@ -118,8 +118,7 @@ export interface GalleryImage {
   title: string;
   description: string | null;
   price: number;
-  artistId: number;
-  artist?: Artist;
+  artist: Artist;
   filePath: string;
   thumbnailPath: string;
   watermarkPath: string;

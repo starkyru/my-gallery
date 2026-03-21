@@ -71,7 +71,7 @@ export function GalleryHero({ images }: GalleryHeroProps) {
                 <ImageInfoOverlay
                   title={img.title}
                   projectName={img.project?.name}
-                  artistName={img.artist?.name}
+                  artistName={img.artist.name}
                 />
               </Link>
             ))}

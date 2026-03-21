@@ -19,8 +19,7 @@ interface ImageDetailProps {
     width: number;
     height: number;
     category: string;
-    artistId?: number;
-    artist?: { id?: number; name: string; bio: string | null };
+    artist: { id: number; name: string; bio: string | null };
     allowDownloadOriginal: boolean;
     printEnabled: boolean;
     printLimit: number | null;
@@ -95,21 +94,15 @@ export function ImageDetail({ image }: ImageDetailProps) {
             {image.category.replace(/_/g, ' ')}
           </p>
           <h1 className="font-serif text-4xl md:text-5xl mb-4">{image.title}</h1>
-          {image.artist && (
-            <p className="text-gallery-gray mb-6">
-              by{' '}
-              {image.artist.id || image.artistId ? (
-                <Link
-                  href={`/artists/${image.artist.id || image.artistId}`}
-                  className="hover:text-gallery-accent transition-colors"
-                >
-                  {image.artist.name}
-                </Link>
-              ) : (
-                image.artist.name
-              )}
-            </p>
-          )}
+          <p className="text-gallery-gray mb-6">
+            by{' '}
+            <Link
+              href={`/artists/${image.artist.id}`}
+              className="hover:text-gallery-accent transition-colors"
+            >
+              {image.artist.name}
+            </Link>
+          </p>
           {image.description && (
             <p className="text-gallery-gray leading-relaxed mb-8">{image.description}</p>
           )}

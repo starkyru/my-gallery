@@ -170,7 +170,7 @@ export default function AdminProtectedGalleryDetailPage({
     ? availableImages.filter(
         (img) =>
           img.title.toLowerCase().includes(search.toLowerCase()) ||
-          img.artist?.name?.toLowerCase().includes(search.toLowerCase()),
+          img.artist.name.toLowerCase().includes(search.toLowerCase()),
       )
     : availableImages;
 

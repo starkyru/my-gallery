@@ -22,7 +22,6 @@ interface ImageData {
   description: string;
   category: string;
   price: number;
-  artistId: number;
   projectId: number | null;
   allowDownloadOriginal: boolean;
   printEnabled: boolean;
@@ -31,7 +30,7 @@ interface ImageData {
   printOptions: PrintOptionRow[];
   isArchived: boolean;
   thumbnailPath: string;
-  artist?: { name: string };
+  artist: { id: number; name: string };
 }
 
 export default function AdminImageEditPage({ params }: { params: Promise<{ id: string }> }) {
@@ -182,7 +181,7 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
   const inputClass =
     'w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded text-sm text-white focus:outline-none focus:border-gallery-accent';
 
-  const filteredProjects = projects.filter((p) => p.artistId === image.artistId);
+  const filteredProjects = projects.filter((p) => p.artistId === image.artist.id);
 
   return (
     <div className="pb-20">

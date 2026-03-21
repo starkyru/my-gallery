@@ -54,7 +54,7 @@ export default function AdminImagesPage() {
   const selectedArtistId = useMemo(() => {
     if (selectedIds.size === 0) return null;
     const artistIds = new Set(
-      images.filter((img) => selectedIds.has(img.id)).map((img) => img.artistId),
+      images.filter((img) => selectedIds.has(img.id)).map((img) => img.artist?.id),
     );
     return artistIds.size === 1 ? [...artistIds][0] : null;
   }, [selectedIds, images]);
@@ -93,7 +93,7 @@ export default function AdminImagesPage() {
     let result = [...images];
 
     if (filterArtist) {
-      result = result.filter((img) => img.artistId === Number(filterArtist));
+      result = result.filter((img) => img.artist?.id === Number(filterArtist));
     }
     if (filterCategory) {
       result = result.filter((img) => img.category === filterCategory);
