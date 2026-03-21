@@ -268,6 +268,12 @@ export const api = {
       }),
     enabledPayments: () => request<EnabledPayment[]>('/services/payment/enabled'),
     fulfillmentSkus: () => request<FulfillmentSku[]>('/services/fulfillment/skus'),
+    getQuotes: (skus: string[], countryCode: string, currencyCode: string, token: string) =>
+      request<{ sku: string; price: string; currency: string }[]>('/services/prodigi/quotes', {
+        method: 'POST',
+        body: JSON.stringify({ skus, countryCode, currencyCode }),
+        headers: authHeaders(token),
+      }),
     catalogueCategories: (token: string) =>
       request<Record<string, CatalogueCategory>>('/services/catalogue/categories', {
         headers: authHeaders(token),

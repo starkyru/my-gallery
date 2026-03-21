@@ -8,6 +8,7 @@ import { useNotification } from '@/hooks/useNotification';
 import { inputClass } from '@/components/service-card';
 import { ChevronLeftIcon } from '@/components/icons/chevron-left-icon';
 import { CatalogueBrowser } from '@/components/catalogue-browser';
+import { FULFILLMENT_COUNTRY, FULFILLMENT_CURRENCY } from '@/config';
 import type { ServiceConfig } from '@gallery/shared';
 
 export default function ProviderSettingsPage() {
@@ -22,6 +23,8 @@ export default function ProviderSettingsPage() {
   const [sandbox, setSandbox] = useState(true);
   const [saving, setSaving] = useState(false);
   const [catalogueOpen, setCatalogueOpen] = useState(false);
+  const [prices, setPrices] = useState<Record<string, { price: string; currency: string }>>({});
+  const [fetchingPrices, setFetchingPrices] = useState(false);
 
   useEffect(() => {
     if (token && provider) loadConfig();
@@ -63,6 +66,29 @@ export default function ProviderSettingsPage() {
 
   function removeSku(index: number) {
     setSkus((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  async function handleUpdatePrices() {
+    if (!token || skus.length === 0) return;
+    setFetchingPrices(true);
+    try {
+      const result = await api.services.getQuotes(
+        skus.map((s) => s.sku),
+        FULFILLMENT_COUNTRY,
+        FULFILLMENT_CURRENCY,
+        token,
+      );
+      const map: Record<string, { price: string; currency: string }> = {};
+      for (const item of result) {
+        map[item.sku] = { price: item.price, currency: item.currency };
+      }
+      setPrices(map);
+      notify.success('Prices updated');
+    } catch (e: unknown) {
+      notify.error(e instanceof Error ? e.message : 'Failed to fetch prices');
+    } finally {
+      setFetchingPrices(false);
+    }
   }
 
   function handleCatalogueSelect(selected: { sku: string; description: string }[]) {
@@ -133,6 +159,11 @@ export default function ProviderSettingsPage() {
             <div key={idx} className="flex items-center gap-2 text-sm">
               <span className="font-mono text-xs text-gallery-gray">{s.sku}</span>
               <span className="flex-1">{s.description}</span>
+              {prices[s.sku] && (
+                <span className="text-xs text-gallery-gray">
+                  {prices[s.sku].currency} {prices[s.sku].price}
+                </span>
+              )}
               <button
                 onClick={() => removeSku(idx)}
                 className="text-red-400 hover:text-red-300 text-xs px-1"
@@ -170,13 +201,24 @@ export default function ProviderSettingsPage() {
             </button>
           )}
         </div>
-        <button
-          onClick={handleSaveSkus}
-          disabled={saving}
-          className="mt-3 px-4 py-1.5 bg-gallery-accent text-gallery-black rounded text-sm font-medium hover:bg-gallery-accent-light transition-colors disabled:opacity-50"
-        >
-          {saving ? 'Saving...' : 'Save SKUs'}
-        </button>
+        <div className="flex gap-2 mt-3">
+          <button
+            onClick={handleSaveSkus}
+            disabled={saving}
+            className="px-4 py-1.5 bg-gallery-accent text-gallery-black rounded text-sm font-medium hover:bg-gallery-accent-light transition-colors disabled:opacity-50"
+          >
+            {saving ? 'Saving...' : 'Save SKUs'}
+          </button>
+          {config.configured && skus.length > 0 && (
+            <button
+              onClick={handleUpdatePrices}
+              disabled={fetchingPrices}
+              className="px-4 py-1.5 border border-white/10 text-white rounded text-sm font-medium hover:bg-white/5 transition-colors disabled:opacity-50"
+            >
+              {fetchingPrices ? 'Fetching...' : 'Update Prices'}
+            </button>
+          )}
+        </div>
         {config.configured && token && (
           <CatalogueBrowser
             open={catalogueOpen}

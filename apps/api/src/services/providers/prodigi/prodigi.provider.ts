@@ -108,6 +108,41 @@ export class ProdigiProvider implements FulfillmentProvider {
     return client.catalogue.get(slug);
   }
 
+  async getQuotes(
+    skus: string[],
+    countryCode: string,
+    currencyCode: string,
+  ): Promise<{ sku: string; price: string; currency: string }[]> {
+    const client = await this.getClient();
+    const items = skus.map((sku) => ({
+      sku,
+      copies: 1,
+      assets: [{ printArea: 'default' }],
+    }));
+
+    try {
+      const result = await client.quotes.create({
+        destinationCountryCode: countryCode,
+        currencyCode,
+        items,
+      });
+
+      const quote = result.quotes[0];
+      if (!quote) return [];
+
+      return quote.items.map((item) => ({
+        sku: item.sku,
+        price: item.unitCost.amount,
+        currency: item.unitCost.currency,
+      }));
+    } catch (error) {
+      if (error instanceof ProdigiApiError) {
+        this.logger.error(`Prodigi quotes failed: ${error.message}`, error.data);
+      }
+      throw new InternalServerErrorException('Failed to fetch quotes');
+    }
+  }
+
   async handleWebhook(payload: CallbackEvent): Promise<FulfillmentWebhookResult> {
     this.logger.log(`Prodigi webhook: ${payload.type}`);
     if (payload.type === 'order.status.update') {

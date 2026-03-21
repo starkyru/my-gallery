@@ -1,8 +1,18 @@
-import { Controller, Get, Put, Param, Body, UseGuards, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Param,
+  Body,
+  UseGuards,
+  BadRequestException,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AdminGuard } from '../auth/admin.guard';
 import { ServicesService } from './services.service';
 import { UpdateServiceDto } from './update-service.dto';
+import { GetQuotesDto } from './get-quotes.dto';
 import { FulfillmentRegistryService } from './providers/fulfillment-registry.service';
 import { ProdigiProvider } from './providers/prodigi/prodigi.provider';
 
@@ -37,6 +47,16 @@ export class ServicesController {
       throw new BadRequestException('Prodigi provider is not configured');
     }
     return (provider as ProdigiProvider).getCatalogueProduct(slug);
+  }
+
+  @Post('prodigi/quotes')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  async prodigiQuotes(@Body() body: GetQuotesDto) {
+    const provider = this.fulfillmentRegistry.get('prodigi');
+    if (!provider) {
+      throw new BadRequestException('Prodigi provider is not configured');
+    }
+    return (provider as ProdigiProvider).getQuotes(body.skus, body.countryCode, body.currencyCode);
   }
 
   @Get()
