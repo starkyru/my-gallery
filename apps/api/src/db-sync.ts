@@ -17,6 +17,8 @@ import { CategoryEntity } from './categories/category.entity';
 import { ProjectEntity } from './projects/project.entity';
 import { ProtectedGalleryEntity } from './protected-galleries/protected-gallery.entity';
 import { ProtectedGalleryImageEntity } from './protected-galleries/protected-gallery-image.entity';
+import { TagEntity } from './tags/tag.entity';
+import { ImageTagEntity } from './tags/image-tag.entity';
 
 // Use same defaults as app.module.ts TypeOrmModule config
 const ds = new DataSource({
@@ -39,6 +41,8 @@ const ds = new DataSource({
     ProjectEntity,
     ProtectedGalleryEntity,
     ProtectedGalleryImageEntity,
+    TagEntity,
+    ImageTagEntity,
   ],
   synchronize: true,
 });
@@ -49,7 +53,7 @@ ds.initialize()
     return ds.destroy();
   })
   .then(() => process.exit(0))
-  .catch(() => {
-    console.error('Schema sync failed');
+  .catch((err) => {
+    console.error('Schema sync failed:', err);
     process.exit(1);
   });
