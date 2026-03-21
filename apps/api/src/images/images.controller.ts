@@ -15,7 +15,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
-import { IsString, IsOptional, IsNumber, IsBoolean, IsArray, IsIn } from 'class-validator';
+import { IsString, IsOptional, IsNumber, IsBoolean, IsArray, IsIn, IsInt } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { Response } from 'express';
 import * as path from 'path';
@@ -115,6 +115,7 @@ class UpdateImageDto {
 
   @IsOptional()
   @IsArray()
+  @IsInt({ each: true })
   tagIds?: number[];
 }
 
@@ -150,7 +151,7 @@ export class ImagesController {
       featured: featured === undefined ? undefined : featured === 'true',
       artistId: artistId ? +artistId : undefined,
       projectId: projectId ? +projectId : undefined,
-      tags: tags ? tags.split(',').filter(Boolean) : undefined,
+      tags: tags ? tags.split(',').filter(Boolean).slice(0, 20) : undefined,
     });
   }
 

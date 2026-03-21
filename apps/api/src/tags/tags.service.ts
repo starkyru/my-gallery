@@ -37,10 +37,16 @@ export class TagsService {
     return this.repo.save(this.repo.create({ name, slug, sortOrder }));
   }
 
-  async update(id: number, data: Partial<TagEntity>) {
+  async update(id: number, data: { name?: string; slug?: string; sortOrder?: number }) {
     const tag = await this.repo.findOne({ where: { id } });
     if (!tag) throw new NotFoundException('Tag not found');
-    await this.repo.update(id, data);
+    const updateData: Record<string, unknown> = {};
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.slug !== undefined) updateData.slug = data.slug;
+    if (data.sortOrder !== undefined) updateData.sortOrder = data.sortOrder;
+    if (Object.keys(updateData).length > 0) {
+      await this.repo.update(id, updateData);
+    }
     return this.repo.findOne({ where: { id } });
   }
 

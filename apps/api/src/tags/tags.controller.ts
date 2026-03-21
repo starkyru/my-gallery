@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Put, Delete, Param, Body, UseGuards } from '@nestjs/common';
-import { IsString, IsOptional, IsNumber } from 'class-validator';
+import { IsString, IsOptional, IsNumber, MaxLength } from 'class-validator';
 import { Type } from 'class-transformer';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AdminGuard } from '../auth/admin.guard';
@@ -7,9 +7,11 @@ import { TagsService } from './tags.service';
 
 class CreateTagDto {
   @IsString()
+  @MaxLength(100)
   name!: string;
 
   @IsString()
+  @MaxLength(100)
   slug!: string;
 }
 
