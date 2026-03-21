@@ -16,6 +16,18 @@ Credentials are encrypted at rest using AES-256-GCM. The only environment variab
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
+## Environment files
+
+Each provider reads credentials from its own `.env` file located in the provider's directory. Copy the `.env.example` to `.env` and fill in your values:
+
+| Provider | `.env` location                                |
+| -------- | ---------------------------------------------- |
+| BTCPay   | `apps/api/src/services/providers/btcpay/.env`  |
+| PayPal   | `apps/api/src/services/providers/paypal/.env`  |
+| Prodigi  | `apps/api/src/services/providers/prodigi/.env` |
+
+**Important:** After building, these `.env` files must also exist in the compiled output at the corresponding path under `apps/api/dist/services/providers/<provider>/.env`. The simplest approach is to copy them into the `dist/` directory after each build, or symlink them.
+
 ## Built-in providers
 
 ### Payment providers
