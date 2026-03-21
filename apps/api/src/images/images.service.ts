@@ -8,6 +8,7 @@ import * as fs from 'fs/promises';
 import * as crypto from 'crypto';
 import { ImageEntity } from './image.entity';
 import { ImagePrintOptionEntity } from './image-print-option.entity';
+import { ImageTagEntity } from '../tags/image-tag.entity';
 
 const ALLOWED_FORMATS = ['jpeg', 'png', 'webp', 'tiff'];
 
@@ -21,9 +22,22 @@ export class ImagesService {
     private readonly repo: Repository<ImageEntity>,
     @InjectRepository(ImagePrintOptionEntity)
     private readonly printOptionRepo: Repository<ImagePrintOptionEntity>,
+    @InjectRepository(ImageTagEntity)
+    private readonly imageTagRepo: Repository<ImageTagEntity>,
     private readonly configService: ConfigService,
   ) {
     this.uploadDir = this.configService.get('UPLOAD_DIR', './uploads');
+  }
+
+  private mapTags(image: ImageEntity) {
+    const tags = (image.imageTags ?? []).map((it) => ({
+      id: it.tag.id,
+      name: it.tag.name,
+      slug: it.tag.slug,
+    }));
+    const { imageTags, ...rest } = image as ImageEntity & { imageTags?: unknown };
+    void imageTags;
+    return { ...rest, tags };
   }
 
   private getSigningKey(): string {
@@ -34,17 +48,20 @@ export class ImagesService {
     );
   }
 
-  findAll(query?: {
+  async findAll(query?: {
     category?: string;
     featured?: boolean;
     artistId?: number;
     projectId?: number;
+    tags?: string[];
   }) {
     const qb = this.repo
       .createQueryBuilder('image')
       .leftJoinAndSelect('image.artist', 'artist')
       .leftJoinAndSelect('image.printOptions', 'printOptions')
       .leftJoinAndSelect('image.project', 'project')
+      .leftJoinAndSelect('image.imageTags', 'imageTags')
+      .leftJoinAndSelect('imageTags.tag', 'tag')
       .andWhere('image.isArchived = false')
       .andWhere('artist.isActive = true')
       .andWhere('image.id NOT IN (SELECT pgi.image_id FROM protected_gallery_images pgi)')
@@ -63,19 +80,29 @@ export class ImagesService {
     if (query?.projectId !== undefined) {
       qb.andWhere('image.projectId = :projectId', { projectId: query.projectId });
     }
+    if (query?.tags && query.tags.length > 0) {
+      qb.andWhere(
+        'image.id IN (SELECT it.image_id FROM image_tags it INNER JOIN tags t ON t.id = it.tag_id WHERE t.slug IN (:...tagSlugs))',
+        { tagSlugs: query.tags },
+      );
+    }
 
-    return qb.getMany();
+    const images = await qb.getMany();
+    return images.map((img) => this.mapTags(img));
   }
 
-  findAllAdmin() {
-    return this.repo
+  async findAllAdmin() {
+    const images = await this.repo
       .createQueryBuilder('image')
       .leftJoinAndSelect('image.artist', 'artist')
       .leftJoinAndSelect('image.printOptions', 'printOptions')
       .leftJoinAndSelect('image.project', 'project')
+      .leftJoinAndSelect('image.imageTags', 'imageTags')
+      .leftJoinAndSelect('imageTags.tag', 'tag')
       .orderBy('image.sortOrder', 'ASC')
       .addOrderBy('image.createdAt', 'DESC')
       .getMany();
+    return images.map((img) => this.mapTags(img));
   }
 
   async bulkAction(ids: number[], action: string, value?: string) {
@@ -121,10 +148,10 @@ export class ImagesService {
   async findOne(id: number) {
     const image = await this.repo.findOne({
       where: { id },
-      relations: ['artist', 'printOptions'],
+      relations: ['artist', 'printOptions', 'imageTags', 'imageTags.tag'],
     });
     if (!image) throw new NotFoundException('Image not found');
-    return image;
+    return this.mapTags(image);
   }
 
   async findOnePublic(id: number) {
@@ -154,10 +181,12 @@ export class ImagesService {
       ])
       .leftJoinAndSelect('image.artist', 'artist')
       .leftJoinAndSelect('image.printOptions', 'printOptions')
+      .leftJoinAndSelect('image.imageTags', 'imageTags')
+      .leftJoinAndSelect('imageTags.tag', 'tag')
       .where('image.id = :id', { id })
       .getOne();
     if (!image) throw new NotFoundException('Image not found');
-    return image;
+    return this.mapTags(image);
   }
 
   async upload(file: Express.Multer.File, data: Partial<ImageEntity>) {
@@ -241,7 +270,7 @@ export class ImagesService {
 
   async update(id: number, data: Record<string, unknown>) {
     const existing = await this.findOne(id);
-    const { printOptions, ...imageData } = data;
+    const { printOptions, tagIds, ...imageData } = data;
     // If artist changes, clear projectId (project belongs to old artist)
     if (imageData.artistId !== undefined && imageData.artistId !== existing.artistId) {
       imageData.projectId = null;
@@ -255,6 +284,14 @@ export class ImagesService {
       if (opts.length > 0) {
         const entities = opts.map((opt) => this.printOptionRepo.create({ ...opt, imageId: id }));
         await this.printOptionRepo.save(entities);
+      }
+    }
+    if (tagIds !== undefined) {
+      await this.imageTagRepo.delete({ imageId: id });
+      const ids = tagIds as number[];
+      if (ids.length > 0) {
+        const entities = ids.map((tagId) => this.imageTagRepo.create({ imageId: id, tagId }));
+        await this.imageTagRepo.save(entities);
       }
     }
     return this.findOne(id);

@@ -25,6 +25,9 @@ import { OrderItemEntity } from './orders/order-item.entity';
 import { AdminUserEntity } from './auth/admin-user.entity';
 import { ImagePrintOptionEntity } from './images/image-print-option.entity';
 import { ServiceConfigEntity } from './services/service-config.entity';
+import { TagsModule } from './tags/tags.module';
+import { TagEntity } from './tags/tag.entity';
+import { ImageTagEntity } from './tags/image-tag.entity';
 
 @Module({
   imports: [
@@ -51,6 +54,8 @@ import { ServiceConfigEntity } from './services/service-config.entity';
           ProjectEntity,
           ProtectedGalleryEntity,
           ProtectedGalleryImageEntity,
+          TagEntity,
+          ImageTagEntity,
         ],
         synchronize: config.get('NODE_ENV') !== 'production',
       }),
@@ -67,6 +72,7 @@ import { ServiceConfigEntity } from './services/service-config.entity';
     CategoriesModule,
     ProjectsModule,
     ProtectedGalleriesModule,
+    TagsModule,
   ],
 })
 export class AppModule {}

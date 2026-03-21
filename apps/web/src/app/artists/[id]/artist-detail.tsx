@@ -23,6 +23,7 @@ interface ArtistDetailProps {
 export function ArtistDetail({ artist, images }: ArtistDetailProps) {
   const [filter, setFilter] = useState('');
   const [projectFilter, setProjectFilter] = useState('');
+  const [tagFilter, setTagFilter] = useState<string[]>([]);
   const [visible, setVisible] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const portraitRef = useRef<HTMLDivElement>(null);
@@ -32,6 +33,10 @@ export function ArtistDetail({ artist, images }: ArtistDetailProps) {
   const filtered = images.filter((img) => {
     if (filter && img.category !== filter) return false;
     if (projectFilter && img.projectId !== Number(projectFilter)) return false;
+    if (tagFilter.length > 0) {
+      const imgSlugs = (img.tags ?? []).map((t) => t.slug);
+      if (!tagFilter.some((slug) => imgSlugs.includes(slug))) return false;
+    }
     return true;
   });
 
@@ -66,6 +71,18 @@ export function ArtistDetail({ artist, images }: ArtistDetailProps) {
     },
     [projectFilter],
   );
+
+  const handleTagFilter = useCallback((values: string[]) => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setTagFilter(values);
+      return;
+    }
+    setVisible(false);
+    setTimeout(() => {
+      setTagFilter(values);
+      requestAnimationFrame(() => setVisible(true));
+    }, 300);
+  }, []);
 
   // Entrance animations
   useEffect(() => {
@@ -152,6 +169,8 @@ export function ArtistDetail({ artist, images }: ArtistDetailProps) {
             projectValue={projectFilter}
             onProjectChange={handleProjectFilter}
             artistId={artist.id}
+            tagValues={tagFilter}
+            onTagChange={handleTagFilter}
             className="mb-8"
           />
 

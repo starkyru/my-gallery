@@ -112,6 +112,10 @@ class UpdateImageDto {
   @IsOptional()
   @IsArray()
   printOptions?: { sku: string; description: string; price: number }[];
+
+  @IsOptional()
+  @IsArray()
+  tagIds?: number[];
 }
 
 class BulkActionDto {
@@ -139,12 +143,14 @@ export class ImagesController {
     @Query('featured') featured?: string,
     @Query('artistId') artistId?: string,
     @Query('projectId') projectId?: string,
+    @Query('tags') tags?: string,
   ) {
     return this.service.findAll({
       category,
       featured: featured === undefined ? undefined : featured === 'true',
       artistId: artistId ? +artistId : undefined,
       projectId: projectId ? +projectId : undefined,
+      tags: tags ? tags.split(',').filter(Boolean) : undefined,
     });
   }
 

@@ -10,6 +10,7 @@ import {
 import { ArtistEntity } from '../artists/artist.entity';
 import { ProjectEntity } from '../projects/project.entity';
 import { ImagePrintOptionEntity } from './image-print-option.entity';
+import { ImageTagEntity } from '../tags/image-tag.entity';
 
 @Entity('images')
 export class ImageEntity {
@@ -77,6 +78,9 @@ export class ImageEntity {
   @ManyToOne(() => ProjectEntity, { nullable: true })
   @JoinColumn({ name: 'project_id' })
   project!: ProjectEntity | null;
+
+  @OneToMany(() => ImageTagEntity, (it) => it.image)
+  imageTags!: ImageTagEntity[];
 
   @Column({ name: 'allow_download_original', default: false })
   allowDownloadOriginal!: boolean;

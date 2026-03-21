@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Select from 'react-select';
 import { api } from '@/lib/api';
 import { PillGroup } from './pill-group';
+import { darkSelectStyles } from '@/lib/select-styles';
 
 interface FilterToolbarProps {
   value: string;
@@ -11,6 +13,8 @@ interface FilterToolbarProps {
   projectValue?: string;
   onProjectChange?: (value: string) => void;
   artistId?: number;
+  tagValues?: string[];
+  onTagChange?: (values: string[]) => void;
 }
 
 export function FilterToolbar({
@@ -20,11 +24,14 @@ export function FilterToolbar({
   projectValue,
   onProjectChange,
   artistId,
+  tagValues,
+  onTagChange,
 }: FilterToolbarProps) {
   const [categories, setCategories] = useState<{ label: string; value: string }[]>([
     { label: 'All', value: '' },
   ]);
   const [projectOptions, setProjectOptions] = useState<{ label: string; value: string }[]>([]);
+  const [tagOptions, setTagOptions] = useState<{ label: string; value: string }[]>([]);
 
   useEffect(() => {
     api.categories
@@ -53,6 +60,20 @@ export function FilterToolbar({
       .catch(() => {});
   }, [artistId, onProjectChange]);
 
+  useEffect(() => {
+    if (!onTagChange) return;
+    api.tags
+      .list()
+      .then((tags) => {
+        setTagOptions(
+          tags
+            .filter((t) => (t.imageCount ?? 0) > 0)
+            .map((t) => ({ label: t.name, value: t.slug })),
+        );
+      })
+      .catch(() => {});
+  }, [onTagChange]);
+
   return (
     <div className={className}>
       <PillGroup options={categories} value={value} onChange={onChange} />
@@ -63,6 +84,18 @@ export function FilterToolbar({
           onChange={onProjectChange}
           className="mt-4"
         />
+      )}
+      {onTagChange && tagOptions.length > 0 && (
+        <div className="mt-4 max-w-md mx-auto">
+          <Select
+            isMulti
+            options={tagOptions}
+            value={tagOptions.filter((o) => tagValues?.includes(o.value))}
+            onChange={(opts) => onTagChange(opts.map((o) => o.value))}
+            placeholder="Filter by tags..."
+            styles={darkSelectStyles()}
+          />
+        </div>
       )}
     </div>
   );

@@ -101,6 +101,14 @@ export interface ProtectedGalleryPublic {
   images: GalleryImage[];
 }
 
+export interface Tag {
+  id: number;
+  name: string;
+  slug: string;
+  sortOrder: number;
+  imageCount?: number;
+}
+
 export interface Artist {
   id: number;
   name: string;
@@ -135,6 +143,7 @@ export interface GalleryImage {
   allowDownloadOriginal: boolean;
   isArchived: boolean;
   printOptions: ImagePrintOption[];
+  tags?: Tag[];
   createdAt: Date;
 }
 

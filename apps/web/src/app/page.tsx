@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { GalleryHero, GalleryGrid } from '@/components/gallery';
 import { useImages } from '@/hooks/useImages';
 
@@ -11,13 +12,19 @@ function pickRandom<T>(arr: T[], count: number): T[] {
 
 export default function HomePage() {
   const { images, loading } = useImages();
+  const searchParams = useSearchParams();
+
+  const initialTags = useMemo(() => {
+    const tagsParam = searchParams.get('tags');
+    return tagsParam ? tagsParam.split(',').filter(Boolean) : undefined;
+  }, [searchParams]);
 
   const heroImages = useMemo(() => pickRandom(images, 6), [images]);
 
   return (
     <>
       <GalleryHero images={heroImages} />
-      <GalleryGrid images={images} loading={loading} />
+      <GalleryGrid images={images} loading={loading} initialTags={initialTags} />
     </>
   );
 }

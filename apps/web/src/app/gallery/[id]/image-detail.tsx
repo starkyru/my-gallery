@@ -25,6 +25,7 @@ interface ImageDetailProps {
     printLimit: number | null;
     printsSold: number;
     printOptions: ImagePrintOption[];
+    tags?: { id: number; name: string; slug: string }[];
   };
 }
 
@@ -94,6 +95,19 @@ export function ImageDetail({ image }: ImageDetailProps) {
             {image.category.replace(/_/g, ' ')}
           </p>
           <h1 className="font-serif text-4xl md:text-5xl mb-4">{image.title}</h1>
+          {image.tags && image.tags.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              {image.tags.map((tag) => (
+                <Link
+                  key={tag.id}
+                  href={`/?tags=${tag.slug}`}
+                  className="px-3 py-1 text-xs rounded-full border border-white/10 text-gallery-gray hover:border-gallery-accent hover:text-gallery-accent transition-colors"
+                >
+                  {tag.name}
+                </Link>
+              ))}
+            </div>
+          )}
           <p className="text-gallery-gray mb-6">
             by{' '}
             <Link

@@ -10,6 +10,7 @@ import type {
   ProtectedGalleryPublic,
   Order,
   Artist,
+  Tag,
 } from '@gallery/shared';
 
 interface CatalogueProductSummary {
@@ -147,6 +148,23 @@ export const api = {
       }),
     delete: (id: number, token: string) =>
       request(`/projects/${id}`, { method: 'DELETE', headers: authHeaders(token) }),
+  },
+  tags: {
+    list: () => request<Tag[]>('/tags'),
+    create: (data: { name: string; slug: string }, token: string) =>
+      request<Tag>('/tags', {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: authHeaders(token),
+      }),
+    update: (id: number, data: Partial<Tag>, token: string) =>
+      request<Tag>(`/tags/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+        headers: authHeaders(token),
+      }),
+    delete: (id: number, token: string) =>
+      request(`/tags/${id}`, { method: 'DELETE', headers: authHeaders(token) }),
   },
   images: {
     list: (params?: string) => request<GalleryImage[]>(`/images${params ? `?${params}` : ''}`),

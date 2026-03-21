@@ -7,8 +7,10 @@ import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { useNotification } from '@/hooks/useNotification';
-import type { Category, Project } from '@gallery/shared';
+import type { Category, Project, Tag } from '@gallery/shared';
 import { UPLOAD_URL } from '@/config';
+import CreatableSelect from 'react-select/creatable';
+import { darkSelectStyles } from '@/lib/select-styles';
 
 interface PrintOptionRow {
   sku: string;
@@ -31,6 +33,7 @@ interface ImageData {
   isArchived: boolean;
   thumbnailPath: string;
   artist: { id: number; name: string };
+  tags?: { id: number; name: string; slug: string }[];
 }
 
 export default function AdminImageEditPage({ params }: { params: Promise<{ id: string }> }) {
@@ -66,6 +69,8 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
   const [availableSkus, setAvailableSkus] = useState<
     { provider: string; sku: string; description: string }[]
   >([]);
+  const [allTags, setAllTags] = useState<Tag[]>([]);
+  const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
   const [aiLoading, setAiLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -91,10 +96,12 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
           price: Number(o.price),
         })),
       );
+      setSelectedTagIds((data.tags || []).map((t) => t.id));
     });
     api.categories.list().then(setCategories);
     api.projects.list().then(setProjects);
     api.services.fulfillmentSkus().then(setAvailableSkus);
+    api.tags.list().then(setAllTags);
   }, [token, imageId]);
 
   async function handleSave() {
@@ -103,7 +110,7 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
     try {
       await api.images.update(
         imageId,
-        { ...editData, printOptions } as Record<string, unknown>,
+        { ...editData, printOptions, tagIds: selectedTagIds } as Record<string, unknown>,
         token,
       );
       notify.success('Image updated');
@@ -291,6 +298,37 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
                 </option>
               ))}
             </select>
+          </div>
+
+          {/* Tags */}
+          <div>
+            <label className="block text-xs text-gallery-gray mb-1">Tags</label>
+            <CreatableSelect
+              isMulti
+              options={allTags.map((t) => ({ value: t.id, label: t.name }))}
+              value={selectedTagIds.map((id) => {
+                const tag = allTags.find((t) => t.id === id);
+                return { value: id, label: tag?.name ?? String(id) };
+              })}
+              onChange={(opts) => setSelectedTagIds(opts.map((o) => o.value))}
+              onCreateOption={async (name) => {
+                if (!token) return;
+                const slug = name
+                  .toLowerCase()
+                  .trim()
+                  .replace(/[^a-z0-9]+/g, '_')
+                  .replace(/^_|_$/g, '');
+                try {
+                  const newTag = await api.tags.create({ name, slug }, token);
+                  setAllTags((prev) => [...prev, newTag]);
+                  setSelectedTagIds((prev) => [...prev, newTag.id]);
+                } catch {
+                  /* tag may already exist */
+                }
+              }}
+              placeholder="Select or create tags..."
+              styles={darkSelectStyles<{ value: number; label: string }>()}
+            />
           </div>
 
           {/* Checkboxes */}

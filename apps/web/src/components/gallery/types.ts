@@ -11,4 +11,5 @@ export interface GalleryImage {
   project?: { id: number; name: string; slug: string };
   blurHash?: string | null;
   artist: { id: number; name: string };
+  tags?: { id: number; name: string; slug: string }[];
 }

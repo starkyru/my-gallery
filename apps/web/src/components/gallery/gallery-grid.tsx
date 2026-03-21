@@ -10,13 +10,29 @@ import type { GalleryImage } from './types';
 
 gsap.registerPlugin(ScrollTrigger);
 
-export function GalleryGrid({ images, loading }: { images: GalleryImage[]; loading?: boolean }) {
+export function GalleryGrid({
+  images,
+  loading,
+  initialTags,
+}: {
+  images: GalleryImage[];
+  loading?: boolean;
+  initialTags?: string[];
+}) {
   const [filter, setFilter] = useState('');
+  const [tagFilter, setTagFilter] = useState<string[]>(initialTags ?? []);
   const [visible, setVisible] = useState(true);
   const gridRef = useRef<HTMLDivElement>(null);
   const prevFilter = useRef('');
 
-  const filtered = filter ? images.filter((img) => img.category === filter) : images;
+  const filtered = images.filter((img) => {
+    if (filter && img.category !== filter) return false;
+    if (tagFilter.length > 0) {
+      const imgSlugs = (img.tags ?? []).map((t) => t.slug);
+      if (!tagFilter.some((slug) => imgSlugs.includes(slug))) return false;
+    }
+    return true;
+  });
 
   const handleFilter = useCallback(
     (value: string) => {
@@ -36,6 +52,26 @@ export function GalleryGrid({ images, loading }: { images: GalleryImage[]; loadi
     },
     [filter],
   );
+
+  const handleTagFilter = useCallback((values: string[]) => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setTagFilter(values);
+    } else {
+      setVisible(false);
+      setTimeout(() => {
+        setTagFilter(values);
+        requestAnimationFrame(() => setVisible(true));
+      }, 300);
+    }
+    // Update URL without navigation
+    const url = new URL(window.location.href);
+    if (values.length > 0) {
+      url.searchParams.set('tags', values.join(','));
+    } else {
+      url.searchParams.delete('tags');
+    }
+    window.history.replaceState({}, '', url.toString());
+  }, []);
 
   // GSAP scroll-triggered entrance
   useEffect(() => {
@@ -80,8 +116,14 @@ export function GalleryGrid({ images, loading }: { images: GalleryImage[]; loadi
 
   return (
     <section id="works" className="mx-auto max-w-7xl px-6 py-24">
-      {/* Category filter */}
-      <FilterToolbar value={filter} onChange={handleFilter} className="mb-12 justify-center" />
+      {/* Category + tag filters */}
+      <FilterToolbar
+        value={filter}
+        onChange={handleFilter}
+        className="mb-12 justify-center"
+        tagValues={tagFilter}
+        onTagChange={handleTagFilter}
+      />
 
       {/* Image count */}
       <p className="text-center text-gallery-gray text-sm mb-8 transition-opacity duration-300">
