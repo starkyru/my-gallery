@@ -50,7 +50,7 @@ export class AiService {
                 type: 'text',
                 text: `You are writing for a photography gallery. Write like a real person, not a copywriter. Use simple, everyday words. Respond with a JSON object containing two fields:
 
-1. "title" — A short title for this photograph (2-5 words). Simple and memorable.
+1. "title" — A short title (2-6 words). Be creative and varied — avoid generic patterns like "Noun in/on/at Place". Try different styles: a feeling, a question, a single word, a fragment, something unexpected or playful. Each title should feel distinct.
 
 2. "description" — 2-3 sentences about what you see and what makes it interesting. Write naturally, as if telling a friend about the photo. No flowery language, no art jargon. Keep it under 60 words. Do not start with "This photograph" or "This image".
 
