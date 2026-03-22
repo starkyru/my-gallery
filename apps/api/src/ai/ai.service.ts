@@ -54,6 +54,8 @@ export class AiService {
 
 2. "description" — 2-3 sentences about what you see and what makes it interesting. Write naturally, as if telling a friend about the photo. No flowery language, no art jargon. Keep it under 60 words. Do not start with "This photograph" or "This image".
 
+${image.title || image.description ? `The current title is "${image.title || ''}"${image.description ? ` and the current description is "${image.description}"` : ''}. Use these as a starting point — improve them while keeping any relevant details.` : ''}
+
 Respond ONLY with valid JSON, no markdown formatting.`,
               },
             ],
