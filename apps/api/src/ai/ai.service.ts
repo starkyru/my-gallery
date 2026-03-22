@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
@@ -33,31 +33,39 @@ export class AiService {
     const imageBuffer = await fs.readFile(filePath);
     const base64 = imageBuffer.toString('base64');
 
-    const response = await this.client.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 400,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'image',
-              source: { type: 'base64', media_type: 'image/webp', data: base64 },
-            },
-            {
-              type: 'text',
-              text: `You are writing for a fine art photography gallery listing. Respond with a JSON object containing two fields:
+    let response: Anthropic.Message;
+    try {
+      response = await this.client.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 400,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'image',
+                source: { type: 'base64', media_type: 'image/webp', data: base64 },
+              },
+              {
+                type: 'text',
+                text: `You are writing for a fine art photography gallery listing. Respond with a JSON object containing two fields:
 
 1. "title" — A short, evocative title for this photograph (2-6 words). Creative, poetic, gallery-appropriate. No quotes around the title text.
 
 2. "description" — A compelling description that would appeal to art collectors and photography enthusiasts. Include observations about the mood, atmosphere, composition, and what makes this image striking. Keep it under 150 words. Refined, gallery-appropriate tone. Do not start with "This photograph".
 
 Respond ONLY with valid JSON, no markdown formatting.`,
-            },
-          ],
-        },
-      ],
-    });
+              },
+            ],
+          },
+        ],
+      });
+    } catch (err: unknown) {
+      if (err instanceof Anthropic.APIError) {
+        throw new InternalServerErrorException(err.message);
+      }
+      throw new InternalServerErrorException('AI service unavailable');
+    }
 
     const text = response.content[0].type === 'text' ? response.content[0].text : '';
     let parsed: unknown;
