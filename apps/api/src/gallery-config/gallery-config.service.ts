@@ -5,7 +5,12 @@ import { GalleryConfigEntity } from './gallery-config.entity';
 import type { UpdateGalleryConfigDto } from './update-gallery-config.dto';
 import type { GalleryConfig } from '@gallery/shared';
 
-const DEFAULT_SETTINGS: GalleryConfig = { galleryName: 'Gallery', subtitle: '', siteUrl: '' };
+const DEFAULT_SETTINGS: GalleryConfig = {
+  galleryName: 'Gallery',
+  subtitle: '',
+  siteUrl: '',
+  aboutText: '',
+};
 
 @Injectable()
 export class GalleryConfigService implements OnModuleInit {

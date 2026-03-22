@@ -17,6 +17,7 @@ export default function SettingsPage() {
   const [galleryName, setGalleryName] = useState('');
   const [subtitle, setSubtitle] = useState('');
   const [siteUrl, setSiteUrl] = useState('');
+  const [aboutText, setAboutText] = useState('');
   const [savingGallery, setSavingGallery] = useState(false);
 
   const loadConfigs = useCallback(async () => {
@@ -38,6 +39,7 @@ export default function SettingsPage() {
           setGalleryName(c.galleryName || 'Gallery');
           setSubtitle(c.subtitle || '');
           setSiteUrl(c.siteUrl || '');
+          setAboutText(c.aboutText || '');
         })
         .catch(() => {});
     }
@@ -47,7 +49,7 @@ export default function SettingsPage() {
     if (!token) return;
     setSavingGallery(true);
     try {
-      await api.galleryConfig.update({ galleryName, subtitle, siteUrl }, token);
+      await api.galleryConfig.update({ galleryName, subtitle, siteUrl, aboutText }, token);
       notify.success('Gallery settings saved');
     } catch (e: unknown) {
       notify.error(e instanceof Error ? e.message : 'Failed to save gallery settings');
@@ -100,6 +102,16 @@ export default function SettingsPage() {
               value={siteUrl}
               onChange={(e) => setSiteUrl(e.target.value)}
               placeholder="e.g. https://gallery.example.com"
+              className="w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded text-sm text-white focus:outline-none focus:border-gallery-accent"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gallery-gray mb-1">About Page Text</label>
+            <textarea
+              value={aboutText}
+              onChange={(e) => setAboutText(e.target.value)}
+              placeholder="Tell visitors about your gallery..."
+              rows={4}
               className="w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded text-sm text-white focus:outline-none focus:border-gallery-accent"
             />
           </div>

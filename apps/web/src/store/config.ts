@@ -14,6 +14,7 @@ const DEFAULT_CONFIG: GalleryConfig = {
   galleryName: 'Gallery',
   subtitle: '',
   siteUrl: '',
+  aboutText: '',
 };
 
 export const useConfigStore = create<ConfigState>()((set, get) => ({

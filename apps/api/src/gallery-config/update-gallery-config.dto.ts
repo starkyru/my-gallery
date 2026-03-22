@@ -14,4 +14,8 @@ export class UpdateGalleryConfigDto {
   @IsUrl({}, { message: 'siteUrl must be a valid URL' })
   @IsString()
   siteUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  aboutText?: string;
 }

@@ -67,6 +67,7 @@ export interface GalleryConfig {
   galleryName: string;
   subtitle: string;
   siteUrl: string;
+  aboutText: string;
 }
 
 export interface Category {
