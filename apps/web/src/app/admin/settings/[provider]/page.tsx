@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
@@ -26,23 +26,21 @@ export default function ProviderSettingsPage() {
   const [prices, setPrices] = useState<Record<string, { price: string; currency: string }>>({});
   const [fetchingPrices, setFetchingPrices] = useState(false);
 
-  const loadConfig = useCallback(async () => {
-    if (!token) return;
-    const data = await api.services.list(token);
-    const found = data.find((c: ServiceConfig) => c.provider === provider);
-    if (!found) {
-      notify.error(`Provider "${provider}" not found`);
-      router.push('/admin/settings');
-      return;
-    }
-    setConfig(found);
-    setSkus([...(found.skus || [])]);
-    setSandbox(found.sandbox);
-  }, [token, provider, notify, router]);
-
   useEffect(() => {
-    if (token && provider) loadConfig();
-  }, [token, provider, loadConfig]);
+    if (!token || !provider) return;
+    api.services.list(token).then((data) => {
+      const found = data.find((c: ServiceConfig) => c.provider === provider);
+      if (!found) {
+        notify.error(`Provider "${provider}" not found`);
+        router.push('/admin/settings');
+        return;
+      }
+      setConfig(found);
+      setSkus([...(found.skus || [])]);
+      setSandbox(found.sandbox);
+    });
+    // notify and router are stable module-level refs, not needed as deps
+  }, [token, provider]);
 
   async function handleSaveSkus() {
     if (!token) return;
@@ -92,12 +90,21 @@ export default function ProviderSettingsPage() {
     }
   }
 
-  function handleCatalogueSelect(selected: { sku: string; description: string }[]) {
-    setSkus((prev) => {
-      const existingCodes = new Set(prev.map((s) => s.sku));
-      const newItems = selected.filter((s) => !existingCodes.has(s.sku));
-      return [...prev, ...newItems];
-    });
+  async function handleCatalogueSelect(selected: { sku: string; description: string }[]) {
+    if (!token) return;
+    const existingCodes = new Set(skus.map((s) => s.sku));
+    const newItems = selected.filter((s) => !existingCodes.has(s.sku));
+    if (newItems.length === 0) return;
+    const merged = [...skus, ...newItems];
+    setSkus(merged);
+    try {
+      const updated = await api.services.update(provider, { skus: merged }, token);
+      setConfig(updated);
+      setSkus([...(updated.skus || [])]);
+      notify.success(`${newItems.length} item(s) added`);
+    } catch (e: unknown) {
+      notify.error(e instanceof Error ? e.message : 'Failed to save');
+    }
   }
 
   if (!config) {
