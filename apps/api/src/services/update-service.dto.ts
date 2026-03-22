@@ -7,6 +7,10 @@ class SkuDto {
 
   @IsString()
   description!: string;
+
+  @IsOptional()
+  @IsString()
+  price?: string;
 }
 
 export class UpdateServiceDto {

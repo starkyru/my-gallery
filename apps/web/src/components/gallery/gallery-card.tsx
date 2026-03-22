@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import type { GalleryImage } from './types';
@@ -13,6 +14,7 @@ gsap.registerPlugin(ScrollTrigger);
 export function GalleryCard({ image, index }: { image: GalleryImage; index: number }) {
   const [loaded, setLoaded] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -64,13 +66,18 @@ export function GalleryCard({ image, index }: { image: GalleryImage; index: numb
         <div className="absolute bottom-0 left-0 right-0 p-5 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 ease-out">
           <h3 className="font-serif text-lg leading-tight">{image.title}</h3>
           <p className="text-gallery-gray text-sm mt-1">
-            <a
-              href={`/artists/${image.artist.id}`}
-              onClick={(e) => e.stopPropagation()}
-              className="hover:text-gallery-accent transition-colors"
+            <span
+              role="link"
+              tabIndex={0}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                router.push(`/artists/${image.artist.id}`);
+              }}
+              className="hover:text-gallery-accent transition-colors cursor-pointer"
             >
               {image.artist.name}
-            </a>{' '}
+            </span>{' '}
             &middot; ${image.price}
           </p>
         </div>

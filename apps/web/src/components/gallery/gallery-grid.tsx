@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { FilterToolbar } from '../filter-toolbar';
@@ -25,14 +25,18 @@ export function GalleryGrid({
   const gridRef = useRef<HTMLDivElement>(null);
   const prevFilter = useRef('');
 
-  const filtered = images.filter((img) => {
-    if (filter && img.category !== filter) return false;
-    if (tagFilter.length > 0) {
-      const imgSlugs = (img.tags ?? []).map((t) => t.slug);
-      if (!tagFilter.some((slug) => imgSlugs.includes(slug))) return false;
-    }
-    return true;
-  });
+  const filtered = useMemo(
+    () =>
+      images.filter((img) => {
+        if (filter && img.category !== filter) return false;
+        if (tagFilter.length > 0) {
+          const imgSlugs = (img.tags ?? []).map((t) => t.slug);
+          if (!tagFilter.some((slug) => imgSlugs.includes(slug))) return false;
+        }
+        return true;
+      }),
+    [images, filter, tagFilter],
+  );
 
   const handleFilter = useCallback(
     (value: string) => {
@@ -78,12 +82,14 @@ export function GalleryGrid({
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     if (!gridRef.current) return;
 
+    let ctx: gsap.Context | undefined;
+
     // Small delay so DOM is ready after filter change
     const timeout = setTimeout(() => {
       const cards = gridRef.current?.querySelectorAll('.gallery-card');
       if (!cards) return;
 
-      const ctx = gsap.context(() => {
+      ctx = gsap.context(() => {
         cards.forEach((card, i) => {
           gsap.from(card, {
             scrollTrigger: {
@@ -99,11 +105,12 @@ export function GalleryGrid({
           });
         });
       }, gridRef);
-
-      return () => ctx.revert();
     }, 50);
 
-    return () => clearTimeout(timeout);
+    return () => {
+      clearTimeout(timeout);
+      ctx?.revert();
+    };
   }, [filtered]);
 
   if (loading) {

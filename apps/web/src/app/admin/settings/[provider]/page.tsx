@@ -97,9 +97,17 @@ export default function ProviderSettingsPage() {
     const existingCodes = new Set(skus.map((s) => s.sku));
     const newItems = selected.filter((s) => !existingCodes.has(s.sku));
     if (newItems.length === 0) return;
-    const merged = [...skus, ...newItems];
-    setSkus(merged);
     try {
+      const quotes = await api.services.getQuotes(
+        newItems.map((s) => s.sku),
+        FULFILLMENT_COUNTRY,
+        FULFILLMENT_CURRENCY,
+        token,
+      );
+      const priceMap = new Map(quotes.map((q) => [q.sku, q.price]));
+      const withPrices = newItems.map((s) => ({ ...s, price: priceMap.get(s.sku) }));
+      const merged = [...skus, ...withPrices];
+      setSkus(merged);
       const updated = await api.services.update(provider, { skus: merged }, token);
       setConfig(updated);
       setSkus([...(updated.skus || [])]);

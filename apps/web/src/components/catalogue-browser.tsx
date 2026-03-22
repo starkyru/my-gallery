@@ -66,14 +66,7 @@ export function CatalogueBrowser({ open, onClose, onSelectSkus, token }: Catalog
     if (!product) return;
     const selected = product.variants.rows
       .filter((_, i) => selectedSkus.has(i))
-      .map((r) => ({
-        sku: r.sku,
-        description: r.description,
-        price:
-          typeof r.price === 'object' && r.price !== null
-            ? (r.price as unknown as { value: string }).value
-            : r.price || undefined,
-      }));
+      .map((r) => ({ sku: r.sku, description: r.description }));
     onSelectSkus(selected);
     setProduct(null);
     setSelectedSkus(new Set());
