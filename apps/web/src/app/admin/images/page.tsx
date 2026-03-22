@@ -410,9 +410,21 @@ export default function AdminImagesPage() {
           <option value="printsSold:desc">Sales (most)</option>
           <option value="printsSold:asc">Sales (least)</option>
         </select>
-        <span className="text-xs text-gallery-gray ml-auto">
+        <label className="flex items-center gap-1.5 ml-auto cursor-pointer text-xs text-gallery-gray">
+          <input
+            type="checkbox"
+            checked={filteredImages.length > 0 && selectedIds.size === filteredImages.length}
+            onChange={() => {
+              if (selectedIds.size === filteredImages.length) {
+                deselectAll();
+              } else {
+                selectAll();
+              }
+            }}
+            className="accent-gallery-accent"
+          />
           {filteredImages.length} image{filteredImages.length !== 1 ? 's' : ''}
-        </span>
+        </label>
         <select
           value={colsPerRow}
           onChange={(e) => setColsPerRow(Number(e.target.value))}

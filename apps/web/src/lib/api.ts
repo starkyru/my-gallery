@@ -130,6 +130,14 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 async function uploadRequest<T>(path: string, formData: FormData, token: string): Promise<T> {
+  // Invalidate cached GET responses for this resource
+  const basePath = path.split('?')[0];
+  for (const key of cache.keys()) {
+    if (key.startsWith(basePath) || key.startsWith(basePath.replace(/\/[^/]+$/, ''))) {
+      cache.delete(key);
+    }
+  }
+
   const res = await fetch(`${API_URL}/api${path}`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
