@@ -127,7 +127,7 @@ export function GalleryGrid({
       <FilterToolbar
         value={filter}
         onChange={handleFilter}
-        className="mb-12 justify-center"
+        className="mt-8 mb-12 justify-center"
         tagValues={tagFilter}
         onTagChange={handleTagFilter}
       />
