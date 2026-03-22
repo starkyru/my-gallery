@@ -274,7 +274,7 @@ export const api = {
       provider: string,
       data: {
         enabled?: boolean;
-        skus?: { sku: string; description: string }[];
+        skus?: { sku: string; description: string; price?: string }[];
         sandbox?: boolean;
       },
       token: string,

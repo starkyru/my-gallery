@@ -58,6 +58,7 @@ export interface FulfillmentSku {
   provider: string;
   sku: string;
   description: string;
+  price?: string;
 }
 
 export type UserRole = 'admin' | 'artist';

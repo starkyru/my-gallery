@@ -7,7 +7,7 @@ import type { CatalogueCategory, CatalogueProductDetail } from '@/lib/api';
 interface CatalogueBrowserProps {
   open: boolean;
   onClose: () => void;
-  onSelectSkus: (skus: { sku: string; description: string }[]) => void;
+  onSelectSkus: (skus: { sku: string; description: string; price?: string }[]) => void;
   token: string;
 }
 
@@ -66,7 +66,14 @@ export function CatalogueBrowser({ open, onClose, onSelectSkus, token }: Catalog
     if (!product) return;
     const selected = product.variants.rows
       .filter((_, i) => selectedSkus.has(i))
-      .map((r) => ({ sku: r.sku, description: r.description }));
+      .map((r) => ({
+        sku: r.sku,
+        description: r.description,
+        price:
+          typeof r.price === 'object' && r.price !== null
+            ? (r.price as unknown as { value: string }).value
+            : r.price || undefined,
+      }));
     onSelectSkus(selected);
     setProduct(null);
     setSelectedSkus(new Set());

@@ -18,12 +18,11 @@ export default function ProviderSettingsPage() {
   const notify = useNotification();
 
   const [config, setConfig] = useState<ServiceConfig | null>(null);
-  const [skus, setSkus] = useState<{ sku: string; description: string }[]>([]);
+  const [skus, setSkus] = useState<{ sku: string; description: string; price?: string }[]>([]);
   const [newSku, setNewSku] = useState({ sku: '', description: '' });
   const [sandbox, setSandbox] = useState(true);
   const [saving, setSaving] = useState(false);
   const [catalogueOpen, setCatalogueOpen] = useState(false);
-  const [prices, setPrices] = useState<Record<string, { price: string; currency: string }>>({});
   const [fetchingPrices, setFetchingPrices] = useState(false);
 
   useEffect(() => {
@@ -77,12 +76,15 @@ export default function ProviderSettingsPage() {
         FULFILLMENT_CURRENCY,
         token,
       );
-      const map: Record<string, { price: string; currency: string }> = {};
-      for (const item of result) {
-        map[item.sku] = { price: item.price, currency: item.currency };
-      }
-      setPrices(map);
-      notify.success('Prices updated');
+      const priceMap = new Map(result.map((r) => [r.sku, r.price]));
+      const updatedSkus = skus.map((s) => ({
+        ...s,
+        price: priceMap.get(s.sku) ?? s.price,
+      }));
+      const updated = await api.services.update(provider, { skus: updatedSkus }, token);
+      setConfig(updated);
+      setSkus([...(updated.skus || [])]);
+      notify.success('Prices updated and saved');
     } catch (e: unknown) {
       notify.error(e instanceof Error ? e.message : 'Failed to fetch prices');
     } finally {
@@ -167,11 +169,7 @@ export default function ProviderSettingsPage() {
             <div key={idx} className="flex items-center gap-2 text-sm">
               <span className="font-mono text-xs text-gallery-gray">{s.sku}</span>
               <span className="flex-1">{s.description}</span>
-              {prices[s.sku] && (
-                <span className="text-xs text-gallery-gray">
-                  {prices[s.sku].currency} {prices[s.sku].price}
-                </span>
-              )}
+              {s.price && <span className="text-xs text-gallery-gray">${s.price}</span>}
               <button
                 onClick={() => removeSku(idx)}
                 className="text-red-400 hover:text-red-300 text-xs px-1"
