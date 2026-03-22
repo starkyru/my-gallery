@@ -112,7 +112,8 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
       throw err;
     }
 
-    const data = await res.json();
+    const text = await res.text();
+    const data = text ? JSON.parse(text) : null;
 
     if (isGet && cacheKey) {
       cache.set(cacheKey, { data, expiresAt: Date.now() + CACHE_TTL });
