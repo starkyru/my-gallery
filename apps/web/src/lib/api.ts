@@ -99,6 +99,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const promise = (async () => {
     const res = await fetch(`${API_URL}/api${path}`, {
       ...options,
+      cache: 'no-store',
       headers: {
         'Content-Type': 'application/json',
         ...options?.headers,
