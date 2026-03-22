@@ -16,7 +16,8 @@ After editing any file, ensure there are no lint errors or warnings. In particul
 
 - No `@typescript-eslint/no-unused-vars` — remove any unused variables, imports, or functions.
 - No `@typescript-eslint/no-explicit-any` — **never** use `any`. Use proper types, `unknown`, or generics instead.
-- Run `pnpm turbo lint` and check `tsc` output after every change.
+- Run `pnpm turbo lint` after every change.
+- Run `pnpm --filter @gallery/web exec tsc --noEmit` after completing a feature to catch type errors that lint misses (e.g., mismatched API return types).
 
 ## Code Quality: Icons
 

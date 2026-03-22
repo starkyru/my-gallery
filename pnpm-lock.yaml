@@ -112,6 +112,9 @@ importers:
       typeorm:
         specifier: ^0.3.20
         version: 0.3.28(babel-plugin-macros@3.1.0)(pg@8.20.0)
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
     devDependencies:
       '@nestjs/cli':
         specifier: ^11.0.0
@@ -7129,6 +7132,12 @@ packages:
       }
     engines: { node: '>= 14' }
 
+  zod@4.3.6:
+    resolution:
+      {
+        integrity: sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg==,
+      }
+
   zustand@5.0.12:
     resolution:
       {
@@ -11554,6 +11563,8 @@ snapshots:
       archiver-utils: 5.0.2
       compress-commons: 6.0.2
       readable-stream: 4.7.0
+
+  zod@4.3.6: {}
 
   zustand@5.0.12(@types/react@19.2.14)(react@19.2.4):
     optionalDependencies:

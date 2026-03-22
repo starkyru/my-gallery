@@ -134,9 +134,13 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
     if (!token) return;
     setAiLoading(true);
     try {
-      const { description } = await api.ai.describe(imageId, token);
-      setEditData((prev) => ({ ...prev, description }));
-      notify.success('Description generated');
+      const result = await api.ai.describe(imageId, token);
+      setEditData((prev) => ({
+        ...prev,
+        description: result.description,
+        ...(result.title ? { title: result.title } : {}),
+      }));
+      notify.success('Title and description generated');
     } catch (e: unknown) {
       notify.error(e instanceof Error ? e.message : 'Failed to generate description');
     } finally {

@@ -357,7 +357,7 @@ export const api = {
   },
   ai: {
     describe: (imageId: number, token: string) =>
-      request<{ description: string }>(`/ai/describe/${imageId}`, {
+      request<{ title: string; description: string }>(`/ai/describe/${imageId}`, {
         method: 'POST',
         headers: authHeaders(token),
       }),
