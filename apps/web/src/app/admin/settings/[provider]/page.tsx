@@ -48,9 +48,10 @@ export default function ProviderSettingsPage() {
     if (!token) return;
     setSaving(true);
     try {
-      await api.services.update(provider, { skus }, token);
+      const updated = await api.services.update(provider, { skus }, token);
+      setConfig(updated);
+      setSkus([...(updated.skus || [])]);
       notify.success('SKUs saved');
-      loadConfig();
     } catch (e: unknown) {
       notify.error(e instanceof Error ? e.message : 'Failed to save SKUs');
     } finally {
@@ -140,9 +141,9 @@ export default function ProviderSettingsPage() {
               }
               setSandbox(checked);
               try {
-                await api.services.update(provider, { sandbox: checked }, token);
+                const updated = await api.services.update(provider, { sandbox: checked }, token);
+                setConfig(updated);
                 notify.success('Sandbox mode updated');
-                loadConfig();
               } catch (err: unknown) {
                 notify.error(err instanceof Error ? err.message : 'Failed to update sandbox mode');
               }
