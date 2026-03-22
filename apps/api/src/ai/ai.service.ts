@@ -48,11 +48,11 @@ export class AiService {
               },
               {
                 type: 'text',
-                text: `You are writing for a fine art photography gallery listing. Respond with a JSON object containing two fields:
+                text: `You are writing for a photography gallery. Write like a real person, not a copywriter. Use simple, everyday words. Respond with a JSON object containing two fields:
 
-1. "title" — A short, evocative title for this photograph (2-6 words). Creative, poetic, gallery-appropriate. No quotes around the title text.
+1. "title" — A short title for this photograph (2-5 words). Simple and memorable.
 
-2. "description" — A compelling description that would appeal to art collectors and photography enthusiasts. Include observations about the mood, atmosphere, composition, and what makes this image striking. Keep it under 150 words. Refined, gallery-appropriate tone. Do not start with "This photograph".
+2. "description" — 2-3 sentences about what you see and what makes it interesting. Write naturally, as if telling a friend about the photo. No flowery language, no art jargon. Keep it under 60 words. Do not start with "This photograph" or "This image".
 
 Respond ONLY with valid JSON, no markdown formatting.`,
               },
