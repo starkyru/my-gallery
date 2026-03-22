@@ -143,10 +143,23 @@ export function GalleryGrid({
         onTagChange={handleTagFilter}
       />
 
-      {/* Image count */}
-      <p className="text-center text-gallery-gray text-sm mb-8 transition-opacity duration-300">
+      {/* Image count + reset */}
+      <div className="text-center text-gallery-gray text-sm mb-8 transition-opacity duration-300">
         {filtered.length} {filtered.length === 1 ? 'work' : 'works'}
-      </p>
+        {(filter || artistFilter || projectFilter || tagFilter.length > 0) && (
+          <button
+            onClick={() => {
+              setFilter('');
+              setArtistFilter('');
+              setProjectFilter('');
+              handleTagFilter([]);
+            }}
+            className="ml-3 text-gallery-accent hover:text-gallery-accent-light transition-colors"
+          >
+            Reset filters
+          </button>
+        )}
+      </div>
 
       {/* Grid with fade transition */}
       <div

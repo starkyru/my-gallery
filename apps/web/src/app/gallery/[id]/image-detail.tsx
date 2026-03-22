@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useCartStore } from '@/store/cart';
 import gsap from 'gsap';
-import type { ImagePrintOption } from '@gallery/shared';
+import type { ImagePrintOption, OrderItemType } from '@gallery/shared';
 import { UPLOAD_URL } from '@/config';
 
 interface ImageDetailProps {
@@ -19,7 +19,7 @@ interface ImageDetailProps {
     width: number;
     height: number;
     category: string;
-    artist: { id: number; name: string; bio: string | null };
+    artist: { id: number; name: string; slug: string; bio: string | null };
     allowDownloadOriginal: boolean;
     printEnabled: boolean;
     printLimit: number | null;
@@ -111,7 +111,7 @@ export function ImageDetail({ image }: ImageDetailProps) {
           <p className="text-gallery-gray mb-6">
             by{' '}
             <Link
-              href={`/artists/${image.artist.id}`}
+              href={`/artists/${image.artist.slug}`}
               className="hover:text-gallery-accent transition-colors"
             >
               {image.artist.name}
@@ -138,7 +138,7 @@ export function ImageDetail({ image }: ImageDetailProps) {
                     title: image.title,
                     price: image.price,
                     thumbnailPath: image.thumbnailPath,
-                    type: 'original' as any,
+                    type: 'original' as OrderItemType,
                     printSku: null,
                     printDescription: null,
                   })
@@ -192,7 +192,7 @@ export function ImageDetail({ image }: ImageDetailProps) {
                         title: image.title,
                         price: selectedPrintOption.price,
                         thumbnailPath: image.thumbnailPath,
-                        type: 'print' as any,
+                        type: 'print' as OrderItemType,
                         printSku: selectedPrintOption.sku,
                         printDescription: selectedPrintOption.description,
                       });

@@ -75,9 +75,9 @@ export class ArtistsController {
     return this.service.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.service.findOne(+id);
+  @Get(':idOrSlug')
+  findOne(@Param('idOrSlug') idOrSlug: string) {
+    return this.service.findByIdOrSlug(idOrSlug);
   }
 
   @Post()

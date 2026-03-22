@@ -72,7 +72,7 @@ export function GalleryCard({ image, index }: { image: GalleryImage; index: numb
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                router.push(`/artists/${image.artist.id}`);
+                router.push(`/artists/${image.artist.slug}`);
               }}
               className="hover:text-gallery-accent transition-colors cursor-pointer"
             >

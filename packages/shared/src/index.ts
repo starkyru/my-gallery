@@ -113,6 +113,7 @@ export interface Tag {
 export interface Artist {
   id: number;
   name: string;
+  slug: string;
   bio: string | null;
   avatarUrl: string | null;
   portraitPath: string | null;

@@ -2,72 +2,65 @@
 
 import { useState } from 'react';
 import { api } from '@/lib/api';
+import { useNotification } from '@/hooks/useNotification';
 import { inputClass, btnClass } from './styles';
 
 interface AddUserFormProps {
   token: string;
-  onSuccess: (msg: string) => void;
-  onError: (msg: string) => void;
-  onRefresh: () => void;
+  onDone: () => void;
 }
 
-export default function AddUserForm({ token, onSuccess, onError, onRefresh }: AddUserFormProps) {
-  const [newUsername, setNewUsername] = useState('');
-  const [newEmail, setNewEmail] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [addLoading, setAddLoading] = useState(false);
+export default function AddUserForm({ token, onDone }: AddUserFormProps) {
+  const notify = useNotification();
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  async function handleAddUser(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setAddLoading(true);
-    onError('');
-    onSuccess('');
+    setLoading(true);
     try {
-      await api.auth.createUser(token, newUsername, newEmail, newPassword);
-      setNewUsername('');
-      setNewEmail('');
-      setNewPassword('');
-      onSuccess('User created successfully');
-      onRefresh();
-    } catch (e: any) {
-      onError(e.message);
+      await api.auth.createUser(token, username, email, password);
+      notify.success('User created');
+      onDone();
+    } catch (e: unknown) {
+      notify.error(e instanceof Error ? e.message : 'Failed to create user');
     } finally {
-      setAddLoading(false);
+      setLoading(false);
     }
   }
 
   return (
-    <section>
-      <h2 className="text-xl font-medium mb-4">Add User</h2>
-      <form onSubmit={handleAddUser} className="space-y-3 max-w-md">
-        <input
-          type="text"
-          value={newUsername}
-          onChange={(e) => setNewUsername(e.target.value)}
-          placeholder="Username"
-          required
-          className={inputClass}
-        />
-        <input
-          type="email"
-          value={newEmail}
-          onChange={(e) => setNewEmail(e.target.value)}
-          placeholder="Email"
-          required
-          className={inputClass}
-        />
-        <input
-          type="password"
-          value={newPassword}
-          onChange={(e) => setNewPassword(e.target.value)}
-          placeholder="Password"
-          required
-          className={inputClass}
-        />
-        <button type="submit" disabled={addLoading} className={btnClass}>
-          {addLoading ? 'Adding...' : 'Add User'}
-        </button>
-      </form>
-    </section>
+    <form onSubmit={handleSubmit} className="space-y-3">
+      <input
+        type="text"
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+        placeholder="Username"
+        required
+        className={inputClass}
+      />
+      <input
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="Email"
+        required
+        className={inputClass}
+      />
+      <input
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        placeholder="Password (min 8 characters)"
+        required
+        minLength={8}
+        className={inputClass}
+      />
+      <button type="submit" disabled={loading} className={btnClass}>
+        {loading ? 'Creating...' : 'Create User'}
+      </button>
+    </form>
   );
 }

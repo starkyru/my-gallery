@@ -10,6 +10,9 @@ export class ArtistEntity {
   @Column()
   name!: string;
 
+  @Column({ type: 'varchar', unique: true, nullable: true })
+  slug!: string;
+
   @Column({ type: 'text', nullable: true })
   bio!: string | null;
 

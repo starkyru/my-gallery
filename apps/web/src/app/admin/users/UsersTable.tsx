@@ -2,162 +2,58 @@
 
 import { useState } from 'react';
 import { api } from '@/lib/api';
-import { AdminUser, inputClass } from './styles';
+import { useNotification } from '@/hooks/useNotification';
+import { Modal } from '@/components/modal';
+import { AdminUser, inputClass, btnClass } from './styles';
 
 interface UsersTableProps {
   users: AdminUser[];
   token: string;
-  onSuccess: (msg: string) => void;
-  onError: (msg: string) => void;
   onRefresh: () => void;
 }
 
-export default function UsersTable({
-  users,
-  token,
-  onSuccess,
-  onError,
-  onRefresh,
-}: UsersTableProps) {
+export default function UsersTable({ users, token, onRefresh }: UsersTableProps) {
+  const notify = useNotification();
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [editUsername, setEditUsername] = useState('');
-  const [editEmail, setEditEmail] = useState('');
-  const [editPassword, setEditPassword] = useState('');
-  const [editLoading, setEditLoading] = useState(false);
-
-  function startEdit(user: AdminUser) {
-    setEditingId(user.id);
-    setEditUsername(user.username);
-    setEditEmail(user.email || '');
-    setEditPassword('');
-    setDeleteConfirm(null);
-  }
-
-  function cancelEdit() {
-    setEditingId(null);
-    setEditPassword('');
-  }
-
-  async function handleSaveEdit() {
-    setEditLoading(true);
-    onError('');
-    onSuccess('');
-    try {
-      const data: { username?: string; email?: string; password?: string } = {};
-      const original = users.find((u) => u.id === editingId);
-      if (editUsername !== original?.username) data.username = editUsername;
-      if (editEmail !== (original?.email || '')) data.email = editEmail;
-      if (editPassword) data.password = editPassword;
-
-      if (Object.keys(data).length === 0) {
-        cancelEdit();
-        return;
-      }
-
-      await api.auth.updateUser(token, editingId!, data);
-      onSuccess('User updated successfully');
-      cancelEdit();
-      onRefresh();
-    } catch (e: unknown) {
-      onError(e instanceof Error ? e.message : 'Operation failed');
-    } finally {
-      setEditLoading(false);
-    }
-  }
+  const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
 
   async function handleDeleteUser(id: number) {
-    onError('');
-    onSuccess('');
     try {
       await api.auth.deleteUser(token, id);
       setDeleteConfirm(null);
-      onSuccess('User deleted');
+      notify.success('User deleted');
       onRefresh();
     } catch (e: unknown) {
-      onError(e instanceof Error ? e.message : 'Operation failed');
+      notify.error(e instanceof Error ? e.message : 'Failed to delete user');
       setDeleteConfirm(null);
     }
   }
 
   return (
-    <section>
-      <h2 className="text-xl font-medium mb-4">Admin Users</h2>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-white/10 text-left text-gallery-gray">
-              <th className="pb-2 pr-4">Username</th>
-              <th className="pb-2 pr-4">Email</th>
-              <th className="pb-2 pr-4">Created</th>
-              <th className="pb-2 pr-4 text-center">Email on Order</th>
-              <th className="pb-2"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((u) =>
-              editingId === u.id ? (
-                <tr key={u.id} className="border-b border-white/5">
-                  <td className="py-3 pr-4">
-                    <input
-                      type="text"
-                      value={editUsername}
-                      onChange={(e) => setEditUsername(e.target.value)}
-                      className={inputClass}
-                    />
-                  </td>
-                  <td className="py-3 pr-4">
-                    <input
-                      type="email"
-                      value={editEmail}
-                      onChange={(e) => setEditEmail(e.target.value)}
-                      className={inputClass}
-                    />
-                  </td>
-                  <td className="py-3 pr-4">
-                    <input
-                      type="password"
-                      value={editPassword}
-                      onChange={(e) => setEditPassword(e.target.value)}
-                      placeholder="New password (optional)"
-                      className={inputClass}
-                    />
-                  </td>
-                  <td className="py-3 pr-4 text-center">
-                    <NotifyCheckbox
-                      user={u}
-                      token={token}
-                      onRefresh={onRefresh}
-                      onError={onError}
-                    />
-                  </td>
-                  <td className="py-3 text-right space-x-2">
-                    <button
-                      onClick={handleSaveEdit}
-                      disabled={editLoading}
-                      className="text-green-400 hover:text-green-300"
-                    >
-                      {editLoading ? 'Saving...' : 'Save'}
-                    </button>
-                    <button onClick={cancelEdit} className="text-gallery-gray hover:text-white">
-                      Cancel
-                    </button>
-                  </td>
-                </tr>
-              ) : (
+    <>
+      <section>
+        <h2 className="text-xl font-medium mb-4">Admin Users</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-white/10 text-left text-gallery-gray">
+                <th className="pb-2 pr-4">Username</th>
+                <th className="pb-2 pr-4">Email</th>
+                <th className="pb-2 pr-4">Created</th>
+                <th className="pb-2 pr-4 text-center">Email on Order</th>
+                <th className="pb-2"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((u) => (
                 <tr key={u.id} className="border-b border-white/5">
                   <td className="py-3 pr-4">{u.username}</td>
-                  <td className="py-3 pr-4 text-gallery-gray">{u.email || '—'}</td>
+                  <td className="py-3 pr-4 text-gallery-gray">{u.email || '\u2014'}</td>
                   <td className="py-3 pr-4 text-gallery-gray">
                     {new Date(u.createdAt).toLocaleDateString()}
                   </td>
                   <td className="py-3 pr-4 text-center">
-                    <NotifyCheckbox
-                      user={u}
-                      token={token}
-                      onRefresh={onRefresh}
-                      onError={onError}
-                    />
+                    <NotifyCheckbox user={u} token={token} onRefresh={onRefresh} />
                   </td>
                   <td className="py-3 text-right space-x-2">
                     {deleteConfirm === u.id ? (
@@ -178,27 +74,119 @@ export default function UsersTable({
                     ) : (
                       <>
                         <button
-                          onClick={() => startEdit(u)}
+                          onClick={() => setEditingUser(u)}
                           className="text-gallery-gray hover:text-gallery-accent transition-colors"
                         >
                           Edit
                         </button>
-                        <button
-                          onClick={() => setDeleteConfirm(u.id)}
-                          className="text-gallery-gray hover:text-red-400 transition-colors"
-                        >
-                          Delete
-                        </button>
+                        {users.length > 1 && (
+                          <button
+                            onClick={() => setDeleteConfirm(u.id)}
+                            className="text-gallery-gray hover:text-red-400 transition-colors"
+                          >
+                            Delete
+                          </button>
+                        )}
                       </>
                     )}
                   </td>
                 </tr>
-              ),
-            )}
-          </tbody>
-        </table>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <Modal open={editingUser !== null} onClose={() => setEditingUser(null)} title="Edit User">
+        {editingUser && (
+          <EditUserForm
+            user={editingUser}
+            token={token}
+            onDone={() => {
+              setEditingUser(null);
+              onRefresh();
+            }}
+          />
+        )}
+      </Modal>
+    </>
+  );
+}
+
+function EditUserForm({
+  user,
+  token,
+  onDone,
+}: {
+  user: AdminUser;
+  token: string;
+  onDone: () => void;
+}) {
+  const notify = useNotification();
+  const [username, setUsername] = useState(user.username);
+  const [email, setEmail] = useState(user.email || '');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const data: { username?: string; email?: string; password?: string } = {};
+      if (username !== user.username) data.username = username;
+      if (email !== (user.email || '')) data.email = email;
+      if (password) data.password = password;
+
+      if (Object.keys(data).length === 0) {
+        onDone();
+        return;
+      }
+
+      await api.auth.updateUser(token, user.id, data);
+      notify.success('User updated');
+      onDone();
+    } catch (e: unknown) {
+      notify.error(e instanceof Error ? e.message : 'Failed to update user');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-3">
+      <div>
+        <label className="block text-xs text-gallery-gray mb-1">Username</label>
+        <input
+          type="text"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          required
+          className={inputClass}
+        />
       </div>
-    </section>
+      <div>
+        <label className="block text-xs text-gallery-gray mb-1">Email</label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className={inputClass}
+        />
+      </div>
+      <div>
+        <label className="block text-xs text-gallery-gray mb-1">New Password (optional)</label>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Leave empty to keep current"
+          className={inputClass}
+        />
+      </div>
+      <button type="submit" disabled={loading} className={btnClass}>
+        {loading ? 'Saving...' : 'Save'}
+      </button>
+    </form>
   );
 }
 
@@ -206,19 +194,19 @@ function NotifyCheckbox({
   user,
   token,
   onRefresh,
-  onError,
 }: {
   user: AdminUser;
   token: string;
   onRefresh: () => void;
-  onError: (msg: string) => void;
 }) {
+  const notify = useNotification();
+
   async function toggle() {
     try {
       await api.auth.updateUser(token, user.id, { notifyOnOrder: !user.notifyOnOrder });
       onRefresh();
     } catch (e: unknown) {
-      onError(e instanceof Error ? e.message : 'Failed to update');
+      notify.error(e instanceof Error ? e.message : 'Failed to update');
     }
   }
 

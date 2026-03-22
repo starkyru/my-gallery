@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
@@ -12,6 +12,7 @@ const ALLOWED_FORMATS = ['jpeg', 'png', 'webp', 'tiff'];
 const SELECT_FIELDS: (keyof ArtistEntity)[] = [
   'id',
   'name',
+  'slug',
   'bio',
   'avatarUrl',
   'portraitPath',
@@ -22,7 +23,7 @@ const SELECT_FIELDS: (keyof ArtistEntity)[] = [
 ];
 
 @Injectable()
-export class ArtistsService {
+export class ArtistsService implements OnModuleInit {
   private readonly uploadDir: string;
 
   constructor(
@@ -31,6 +32,17 @@ export class ArtistsService {
     private readonly configService: ConfigService,
   ) {
     this.uploadDir = this.configService.get('UPLOAD_DIR', './uploads');
+  }
+
+  async onModuleInit() {
+    const artists = await this.repo
+      .createQueryBuilder('a')
+      .where('a.slug IS NULL OR a.slug = :empty', { empty: '' })
+      .getMany();
+    for (const artist of artists) {
+      artist.slug = await this.uniqueSlug(this.generateSlug(artist.name || 'artist'));
+      await this.repo.save(artist);
+    }
   }
 
   async findAll() {
@@ -57,12 +69,49 @@ export class ArtistsService {
     return artist;
   }
 
-  create(data: Partial<ArtistEntity>) {
-    return this.repo.save(this.repo.create(data));
+  async findBySlug(slug: string) {
+    const artist = await this.repo.findOne({
+      where: { slug },
+      select: SELECT_FIELDS,
+    });
+    if (!artist) throw new NotFoundException('Artist not found');
+    return artist;
+  }
+
+  async findByIdOrSlug(idOrSlug: string) {
+    const id = Number(idOrSlug);
+    if (!isNaN(id)) return this.findOne(id);
+    return this.findBySlug(idOrSlug);
+  }
+
+  private generateSlug(name: string): string {
+    return name
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+  }
+
+  private async uniqueSlug(base: string, excludeId?: number): Promise<string> {
+    let slug = base;
+    let suffix = 1;
+    while (true) {
+      const existing = await this.repo.findOne({ where: { slug } });
+      if (!existing || existing.id === excludeId) return slug;
+      slug = `${base}-${++suffix}`;
+    }
+  }
+
+  async create(data: Partial<ArtistEntity>) {
+    const slug = await this.uniqueSlug(this.generateSlug(data.name || 'artist'));
+    return this.repo.save(this.repo.create({ ...data, slug }));
   }
 
   async update(id: number, data: Partial<ArtistEntity>) {
     await this.findOne(id);
+    if (data.name) {
+      data.slug = await this.uniqueSlug(this.generateSlug(data.name), id);
+    }
     await this.repo.update(id, data);
     return this.findOne(id);
   }

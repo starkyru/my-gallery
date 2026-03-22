@@ -243,7 +243,7 @@ export const api = {
   },
   artists: {
     list: () => request<Artist[]>('/artists'),
-    get: (id: number) => request<Artist>(`/artists/${id}`),
+    get: (idOrSlug: number | string) => request<Artist>(`/artists/${idOrSlug}`),
     create: (data: Record<string, unknown>, token: string) =>
       request('/artists', {
         method: 'POST',

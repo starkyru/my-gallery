@@ -10,6 +10,6 @@ export interface GalleryImage {
   projectId?: number | null;
   project?: { id: number; name: string; slug: string };
   blurHash?: string | null;
-  artist: { id: number; name: string };
+  artist: { id: number; name: string; slug: string };
   tags?: { id: number; name: string; slug: string }[];
 }

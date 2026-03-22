@@ -9,15 +9,15 @@ import { api } from '@/lib/api';
 
 const ADMIN_NAV = [
   { href: '/admin', label: 'Dashboard' },
+  { href: '/admin/artists', label: 'Artists' },
   { href: '/admin/images', label: 'Images' },
   { href: '/admin/orders', label: 'Orders' },
-  { href: '/admin/artists', label: 'Artists' },
   { href: '/admin/categories', label: 'Categories' },
   { href: '/admin/tags', label: 'Tags' },
   { href: '/admin/projects', label: 'Projects' },
   { href: '/admin/protected-galleries', label: 'Galleries' },
-  { href: '/admin/settings', label: 'Settings' },
   { href: '/admin/users', label: 'Users' },
+  { href: '/admin/settings', label: 'Settings' },
 ];
 
 const ARTIST_NAV = [
