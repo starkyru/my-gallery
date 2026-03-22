@@ -107,7 +107,7 @@ export function FilterToolbar({
           <Select
             options={artistOptions}
             value={artistOptions.find((o) => o.value === (artistValue ?? '')) ?? artistOptions[0]}
-            onChange={(opt) => onArtistChange(opt?.value ?? '')}
+            onChange={(opt) => onArtistChange((opt as { value: string } | null)?.value ?? '')}
             placeholder="All Artists"
             styles={darkSelectStyles<{ label: string; value: string }, false>()}
           />
@@ -120,7 +120,7 @@ export function FilterToolbar({
             value={
               projectOptions.find((o) => o.value === (projectValue ?? '')) ?? projectOptions[0]
             }
-            onChange={(opt) => onProjectChange(opt?.value ?? '')}
+            onChange={(opt) => onProjectChange((opt as { value: string } | null)?.value ?? '')}
             placeholder="All Projects"
             styles={darkSelectStyles<{ label: string; value: string }, false>()}
           />

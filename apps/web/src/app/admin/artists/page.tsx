@@ -3,13 +3,14 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
+import type { Artist } from '@gallery/shared';
 import { useNotification } from '@/hooks/useNotification';
 import { UPLOAD_URL } from '@/config';
 
 export default function AdminArtistsPage() {
   const { token } = useAuthStore();
   const notify = useNotification();
-  const [artists, setArtists] = useState<any[]>([]);
+  const [artists, setArtists] = useState<Artist[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState({ name: '', bio: '', instagramUrl: '' });
@@ -36,10 +37,11 @@ export default function AdminArtistsPage() {
         await api.artists.create(form, token);
       }
       notify.success(editingId ? 'Artist updated' : 'Artist created');
-      setForm({ name: '', bio: '', instagramUrl: '' });
       setShowForm(false);
       setEditingId(null);
-      loadData();
+      setForm({ name: '', bio: '', instagramUrl: '' });
+      const data = await api.artists.list();
+      setArtists(data);
     } catch {
       notify.error(editingId ? 'Failed to update artist' : 'Failed to create artist');
     }
@@ -48,7 +50,8 @@ export default function AdminArtistsPage() {
   async function handleDelete(id: number) {
     if (!token || !confirm('Delete this artist?')) return;
     await api.artists.delete(id, token);
-    loadData();
+    const data = await api.artists.list();
+    setArtists(data);
   }
 
   async function handleToggleActive(id: number, isActive: boolean) {
@@ -56,7 +59,8 @@ export default function AdminArtistsPage() {
     try {
       await api.artists.update(id, { isActive }, token);
       notify.success('Artist updated');
-      loadData();
+      const data = await api.artists.list();
+      setArtists(data);
     } catch {
       notify.error('Failed to update artist');
     }
@@ -67,7 +71,8 @@ export default function AdminArtistsPage() {
     try {
       await api.auth.toggleArtistLogin(token, id, enabled);
       notify.success('Login setting updated');
-      loadData();
+      const data = await api.artists.list();
+      setArtists(data);
     } catch {
       notify.error('Failed to update login setting');
     }
@@ -93,7 +98,8 @@ export default function AdminArtistsPage() {
       formData.append('file', file);
       await api.artists.uploadPortrait(id, formData, token);
       notify.success('Portrait uploaded');
-      loadData();
+      const data = await api.artists.list();
+      setArtists(data);
     } catch {
       notify.error('Failed to upload portrait');
     }

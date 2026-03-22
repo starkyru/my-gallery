@@ -19,12 +19,13 @@ export default function HomePage() {
     return tagsParam ? tagsParam.split(',').filter(Boolean) : undefined;
   }, [searchParams]);
 
-  const heroImages = useMemo(() => pickRandom(images, 6), [images]);
+  const shuffled = useMemo(() => pickRandom(images, images.length), [images]);
+  const heroImages = useMemo(() => shuffled.slice(0, 6), [shuffled]);
 
   return (
     <>
       <GalleryHero images={heroImages} />
-      <GalleryGrid images={images} loading={loading} initialTags={initialTags} />
+      <GalleryGrid images={shuffled} loading={loading} initialTags={initialTags} />
     </>
   );
 }
