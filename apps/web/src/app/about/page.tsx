@@ -3,6 +3,8 @@ import type { Artist, GalleryConfig } from '@gallery/shared';
 import { InstagramLink } from '@/components/instagram-link';
 import { Avatar } from '@/components/avatar';
 
+export const dynamic = 'force-dynamic';
+
 const API_URL = process.env.API_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || '';
 
 async function getConfig(): Promise<GalleryConfig> {

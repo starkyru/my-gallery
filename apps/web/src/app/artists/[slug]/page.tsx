@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation';
 import { ArtistDetail } from './artist-detail';
 
+export const dynamic = 'force-dynamic';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 async function getArtist(slug: string) {
