@@ -243,9 +243,13 @@ export class ImagesService {
 
   private async createWatermarked(buffer: Buffer, outputPath: string) {
     const targetWidth = 1200;
+    const resized = sharp(buffer).resize(targetWidth);
+    const { height: imgHeight } = await resized.metadata();
+    const actualHeight = imgHeight ?? targetWidth;
+
     const fontSize = Math.max(16, Math.round(targetWidth * 0.03));
     const svgWidth = fontSize * 2;
-    const svgHeight = targetWidth;
+    const svgHeight = actualHeight;
     const cx = svgWidth / 2;
     const cy = svgHeight / 2;
     const svg = Buffer.from(
@@ -258,8 +262,8 @@ export class ImagesService {
       </svg>`,
     );
 
-    await sharp(buffer)
-      .resize(targetWidth)
+    await resized
+      .clone()
       .composite([
         { input: svg, gravity: 'west' },
         { input: svg, gravity: 'east' },
