@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
@@ -25,7 +25,7 @@ export default function ProviderSettingsPage() {
   const [catalogueOpen, setCatalogueOpen] = useState(false);
   const [fetchingPrices, setFetchingPrices] = useState(false);
 
-  useEffect(() => {
+  const loadConfig = useCallback(() => {
     if (!token || !provider) return;
     api.services.list(token).then((data) => {
       const found = data.find((c: ServiceConfig) => c.provider === provider);
@@ -38,8 +38,11 @@ export default function ProviderSettingsPage() {
       setSkus([...(found.skus || [])]);
       setSandbox(found.sandbox);
     });
-    // notify and router are stable module-level refs, not needed as deps
-  }, [token, provider]);
+  }, [token, provider, notify, router]);
+
+  useEffect(() => {
+    loadConfig();
+  }, [loadConfig]);
 
   async function handleSaveSkus() {
     if (!token) return;

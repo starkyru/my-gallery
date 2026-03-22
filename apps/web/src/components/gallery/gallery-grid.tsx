@@ -20,6 +20,8 @@ export function GalleryGrid({
   initialTags?: string[];
 }) {
   const [filter, setFilter] = useState('');
+  const [artistFilter, setArtistFilter] = useState('');
+  const [projectFilter, setProjectFilter] = useState('');
   const [tagFilter, setTagFilter] = useState<string[]>(initialTags ?? []);
   const [visible, setVisible] = useState(true);
   const gridRef = useRef<HTMLDivElement>(null);
@@ -29,13 +31,15 @@ export function GalleryGrid({
     () =>
       images.filter((img) => {
         if (filter && img.category !== filter) return false;
+        if (artistFilter && img.artist.id !== Number(artistFilter)) return false;
+        if (projectFilter && img.projectId !== Number(projectFilter)) return false;
         if (tagFilter.length > 0) {
           const imgSlugs = (img.tags ?? []).map((t) => t.slug);
           if (!tagFilter.some((slug) => imgSlugs.includes(slug))) return false;
         }
         return true;
       }),
-    [images, filter, tagFilter],
+    [images, filter, artistFilter, projectFilter, tagFilter],
   );
 
   const handleFilter = useCallback(
@@ -128,6 +132,13 @@ export function GalleryGrid({
         value={filter}
         onChange={handleFilter}
         className="mt-8 mb-12 justify-center"
+        artistValue={artistFilter}
+        onArtistChange={(v) => {
+          setArtistFilter(v);
+          setProjectFilter('');
+        }}
+        projectValue={projectFilter}
+        onProjectChange={setProjectFilter}
         tagValues={tagFilter}
         onTagChange={handleTagFilter}
       />

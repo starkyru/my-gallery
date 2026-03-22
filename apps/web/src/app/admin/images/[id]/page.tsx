@@ -114,9 +114,15 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
         token,
       );
       notify.success('Image updated');
-      // Refresh image data
-      const img = (await api.images.getAdmin(imageId, token)) as unknown as ImageData;
-      setImage(img);
+      // Refresh image data and tags list
+      const [img, tags] = await Promise.all([
+        api.images.getAdmin(imageId, token) as Promise<unknown>,
+        api.tags.list(),
+      ]);
+      const refreshed = img as ImageData;
+      setImage(refreshed);
+      setSelectedTagIds((refreshed.tags || []).map((t) => t.id));
+      setAllTags(tags);
     } catch {
       notify.error('Failed to update image');
     } finally {

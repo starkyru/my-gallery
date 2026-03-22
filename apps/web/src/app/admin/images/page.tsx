@@ -456,13 +456,14 @@ export default function AdminImagesPage() {
               </span>
             )}
 
-            <Image
-              src={`${UPLOAD_URL}/${image.thumbnailPath}`}
-              alt={image.title}
-              width={400}
-              height={300}
-              className={`w-full h-auto ${image.isArchived ? 'opacity-50' : ''}`}
-            />
+            <Link href={`/admin/images/${image.id}`} className="block relative aspect-4/3">
+              <Image
+                src={`${UPLOAD_URL}/${image.thumbnailPath}`}
+                alt={image.title}
+                fill
+                className={`object-contain ${image.isArchived ? 'opacity-50' : ''}`}
+              />
+            </Link>
             <div className="p-4">
               <h3 className="font-serif text-lg">{image.title}</h3>
               <p className="text-gallery-gray text-sm truncate">

@@ -64,23 +64,69 @@ export type { CatalogueCategory, CatalogueProductDetail, CatalogueProductSummary
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
 
-async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_URL}/api${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
-  });
+const pendingRequests = new Map<string, Promise<unknown>>();
+const CACHE_TTL = 30_000; // 30 seconds
+const cache = new Map<string, { data: unknown; expiresAt: number }>();
 
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ message: res.statusText }));
-    const err = new Error(error.message || 'API error') as Error & { status: number };
-    err.status = res.status;
-    throw err;
+async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const method = options?.method?.toUpperCase() ?? 'GET';
+  const isGet = method === 'GET';
+  const cacheKey = isGet
+    ? `${path}|${options?.headers ? JSON.stringify(options.headers) : ''}`
+    : '';
+
+  // Return cached data for GET requests
+  if (isGet && cacheKey) {
+    const cached = cache.get(cacheKey);
+    if (cached && cached.expiresAt > Date.now()) {
+      return cached.data as T;
+    }
+    // Deduplicate in-flight requests
+    const pending = pendingRequests.get(cacheKey);
+    if (pending) return pending as Promise<T>;
   }
 
-  return res.json();
+  // Mutations invalidate cached GET responses for the same resource
+  if (!isGet) {
+    const basePath = path.split('?')[0];
+    for (const key of cache.keys()) {
+      if (key.startsWith(basePath) || key.startsWith(basePath.replace(/\/[^/]+$/, ''))) {
+        cache.delete(key);
+      }
+    }
+  }
+
+  const promise = (async () => {
+    const res = await fetch(`${API_URL}/api${path}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers,
+      },
+    });
+
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ message: res.statusText }));
+      const err = new Error(error.message || 'API error') as Error & { status: number };
+      err.status = res.status;
+      throw err;
+    }
+
+    const data = await res.json();
+
+    if (isGet && cacheKey) {
+      cache.set(cacheKey, { data, expiresAt: Date.now() + CACHE_TTL });
+    }
+
+    return data as T;
+  })();
+
+  if (isGet && cacheKey) {
+    pendingRequests.set(cacheKey, promise);
+    promise.finally(() => pendingRequests.delete(cacheKey));
+  }
+
+  return promise;
 }
 
 async function uploadRequest<T>(path: string, formData: FormData, token: string): Promise<T> {
