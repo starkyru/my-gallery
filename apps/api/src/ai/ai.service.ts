@@ -62,7 +62,9 @@ Respond ONLY with valid JSON, no markdown formatting.`,
       });
     } catch (err: unknown) {
       if (err instanceof Anthropic.APIError) {
-        throw new InternalServerErrorException(err.message);
+        const body = err.error as { error?: { message?: string } } | undefined;
+        const msg = body?.error?.message || err.message;
+        throw new InternalServerErrorException(msg);
       }
       throw new InternalServerErrorException('AI service unavailable');
     }
