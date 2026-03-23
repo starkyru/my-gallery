@@ -94,7 +94,7 @@ export default function AdminContactsPage() {
                 </p>
                 <div className="flex gap-3 mt-3 pt-3 border-t border-white/5">
                   <a
-                    href={`mailto:${inq.email}?subject=Re: Your inquiry`}
+                    href={`mailto:${encodeURIComponent(inq.email)}?subject=${encodeURIComponent('Re: Your inquiry')}`}
                     className="text-gallery-accent text-xs hover:text-gallery-accent-light"
                   >
                     Reply via email

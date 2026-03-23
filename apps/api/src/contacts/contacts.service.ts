@@ -51,9 +51,10 @@ export class ContactsService {
       <p style="white-space:pre-line">${escapeHtml(inquiry.message)}</p>
     `;
 
+    const safeName = inquiry.name.replace(/[\r\n]/g, ' ');
     for (const admin of admins) {
       try {
-        await this.authService.sendEmail(admin.email, `Contact: ${inquiry.name}`, html);
+        await this.authService.sendEmail(admin.email, `Contact: ${safeName}`, html);
       } catch (err) {
         this.logger.error(`Failed to notify ${admin.email}`, err);
       }
