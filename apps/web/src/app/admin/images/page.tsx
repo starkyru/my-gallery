@@ -485,7 +485,8 @@ export default function AdminImagesPage() {
                 <p className="text-yellow-500/70 text-xs truncate mt-0.5">{image.adminNote}</p>
               )}
               <p className="text-sm mt-1">
-                ${image.price} &middot; {image.artist?.name}
+                ${image.price} &middot; {image.artist?.name} &middot;{' '}
+                <span className="text-gallery-gray">{image.category.replace(/_/g, ' ')}</span>
               </p>
               {image.printEnabled && (
                 <p className="text-gallery-accent text-xs mt-1">
