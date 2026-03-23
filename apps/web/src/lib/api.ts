@@ -11,6 +11,7 @@ import type {
   Order,
   Artist,
   Tag,
+  ContactInquiry,
 } from '@gallery/shared';
 
 interface CatalogueProductSummary {
@@ -204,6 +205,16 @@ export const api = {
       }),
     delete: (id: number, token: string) =>
       request(`/projects/${id}`, { method: 'DELETE', headers: authHeaders(token) }),
+  },
+  contacts: {
+    create: (data: { name: string; email: string; message: string }) =>
+      request<ContactInquiry>('/contacts', { method: 'POST', body: JSON.stringify(data) }),
+    list: (token: string) =>
+      request<ContactInquiry[]>('/contacts', { headers: authHeaders(token) }),
+    markRead: (id: number, token: string) =>
+      request(`/contacts/${id}/read`, { method: 'PUT', headers: authHeaders(token) }),
+    delete: (id: number, token: string) =>
+      request(`/contacts/${id}`, { method: 'DELETE', headers: authHeaders(token) }),
   },
   tags: {
     list: () => request<Tag[]>('/tags'),

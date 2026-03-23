@@ -103,6 +103,15 @@ export interface ProtectedGalleryPublic {
   images: GalleryImage[];
 }
 
+export interface ContactInquiry {
+  id: number;
+  name: string;
+  email: string;
+  message: string;
+  read: boolean;
+  createdAt: Date;
+}
+
 export interface Tag {
   id: number;
   name: string;

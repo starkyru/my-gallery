@@ -1,8 +1,7 @@
 'use client';
 
-import { useEffect, useState, use } from 'react';
+import { useEffect, useState, useRef, useCallback, use } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
@@ -81,6 +80,13 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
   const [aiLoading, setAiLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const initialState = useRef<string>('');
+
+  const isDirty = useCallback(() => {
+    if (!initialState.current) return false;
+    const current = JSON.stringify({ editData, tagIds: selectedTagIds });
+    return current !== initialState.current;
+  }, [editData, selectedTagIds]);
 
   useEffect(() => {
     if (!token) return;
@@ -105,13 +111,40 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
           price: Number(o.price),
         })),
       );
-      setSelectedTagIds((data.tags || []).map((t) => t.id));
+      const tagIds = (data.tags || []).map((t) => t.id);
+      setSelectedTagIds(tagIds);
+      // Snapshot initial state for dirty checking
+      initialState.current = JSON.stringify({
+        editData: {
+          title: data.title,
+          description: data.description ?? '',
+          category: data.category ?? '',
+          price: data.price,
+          projectId: data.projectId,
+          allowDownloadOriginal: data.allowDownloadOriginal ?? false,
+          printEnabled: data.printEnabled ?? false,
+          printLimit: data.printLimit,
+          adminNote: data.adminNote ?? '',
+        },
+        tagIds,
+      });
     });
     api.categories.list().then(setCategories);
     api.projects.list().then(setProjects);
     api.services.fulfillmentSkus().then(setAvailableSkus);
     api.tags.list().then(setAllTags);
   }, [token, imageId]);
+
+  // Warn on browser back/refresh with unsaved changes
+  useEffect(() => {
+    function onBeforeUnload(e: BeforeUnloadEvent) {
+      if (isDirty()) {
+        e.preventDefault();
+      }
+    }
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [isDirty]);
 
   async function handleSave() {
     if (!token || !image) return;
@@ -130,8 +163,11 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
       ]);
       const refreshed = img as ImageData;
       setImage(refreshed);
-      setSelectedTagIds((refreshed.tags || []).map((t) => t.id));
+      const newTagIds = (refreshed.tags || []).map((t) => t.id);
+      setSelectedTagIds(newTagIds);
       setAllTags(tags);
+      // Reset dirty tracking
+      initialState.current = JSON.stringify({ editData, tagIds: newTagIds });
     } catch {
       notify.error('Failed to update image');
     } finally {
@@ -212,9 +248,15 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
   return (
     <div className="pb-20">
       <div className="flex items-center gap-4 mb-8">
-        <Link href="/admin/images" className="text-gallery-gray hover:text-white text-sm">
+        <button
+          onClick={() => {
+            if (isDirty() && !confirm('You have unsaved changes. Leave anyway?')) return;
+            router.push('/admin/images');
+          }}
+          className="text-gallery-gray hover:text-white text-sm"
+        >
           &larr; Back
-        </Link>
+        </button>
         <h1 className="font-serif text-3xl">Edit Image</h1>
         {image.isArchived && (
           <span className="px-2 py-0.5 bg-gray-600/80 text-white text-xs rounded-full">

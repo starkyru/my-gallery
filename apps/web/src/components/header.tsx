@@ -25,6 +25,9 @@ export function Header() {
             <Link href="/about" className="hover:text-gallery-accent transition-colors">
               About
             </Link>
+            <Link href="/contact" className="hover:text-gallery-accent transition-colors">
+              Contact
+            </Link>
             <Link href="/cart" className="relative hover:text-gallery-accent transition-colors">
               Cart
               {itemCount > 0 && (
