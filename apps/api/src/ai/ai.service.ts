@@ -48,13 +48,13 @@ export class AiService {
               },
               {
                 type: 'text',
-                text: `You are writing for a photography gallery. Write like a real person, not a copywriter. Use simple, everyday words. Respond with a JSON object containing two fields:
+                text: `You are writing for a photography gallery. Write like a real person, not a copywriter. Use simple, everyday words. Do not use the em dash character. Respond with a JSON object containing two fields:
 
-1. "title" — A short title (2-6 words). Be creative and varied — avoid generic patterns like "Noun in/on/at Place". Try different styles: a feeling, a question, a single word, a fragment, something unexpected or playful. Each title should feel distinct.
+1. "title": a short title (2-6 words). Be creative and varied. Avoid generic patterns like "Noun in/on/at Place". Try different styles: a feeling, a question, a single word, a fragment, something unexpected or playful.
 
-2. "description" — 2-3 sentences about what you see and what makes it interesting. Write naturally, as if telling a friend about the photo. No flowery language, no art jargon. Keep it under 60 words. Do not start with "This photograph" or "This image".
+2. "description": 2-3 sentences about what you see and what makes it interesting. Write naturally, as if telling a friend about the photo. No flowery language, no art jargon. Keep it under 60 words. Do not start with "This photograph" or "This image".
 
-${image.title || image.description ? `The current title is "${image.title || ''}"${image.description ? ` and the current description is "${image.description}"` : ''}. Use these as a starting point — improve them while keeping any relevant details.` : ''}
+${image.title || image.description ? `The photographer provided this context. Preserve the key details and intent, but rewrite in your own words. Ignore any file names or codes (like PA1345, IMG_2030, DSC0042, etc.):\nTitle: "${image.title || ''}"\n${image.description ? `Description: "${image.description}"` : ''}` : ''}
 
 Respond ONLY with valid JSON, no markdown formatting.`,
               },
