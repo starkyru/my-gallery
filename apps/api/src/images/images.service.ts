@@ -29,15 +29,19 @@ export class ImagesService {
     this.uploadDir = this.configService.get('UPLOAD_DIR', './uploads');
   }
 
-  private mapTags(image: ImageEntity) {
+  private mapTags(image: ImageEntity, stripAdmin = true) {
     const tags = (image.imageTags ?? []).map((it) => ({
       id: it.tag.id,
       name: it.tag.name,
       slug: it.tag.slug,
     }));
-    const { imageTags, ...rest } = image as ImageEntity & { imageTags?: unknown };
+    const { imageTags, adminNote, ...rest } = image as ImageEntity & { imageTags?: unknown };
     void imageTags;
-    return { ...rest, tags };
+    if (stripAdmin) {
+      void adminNote;
+      return { ...rest, tags };
+    }
+    return { ...rest, adminNote, tags };
   }
 
   private getSigningKey(): string {
@@ -102,7 +106,7 @@ export class ImagesService {
       .orderBy('image.sortOrder', 'ASC')
       .addOrderBy('image.createdAt', 'DESC')
       .getMany();
-    return images.map((img) => this.mapTags(img));
+    return images.map((img) => this.mapTags(img, false));
   }
 
   async bulkAction(ids: number[], action: string, value?: string) {
@@ -151,7 +155,7 @@ export class ImagesService {
       relations: ['artist', 'printOptions', 'imageTags', 'imageTags.tag'],
     });
     if (!image) throw new NotFoundException('Image not found');
-    return this.mapTags(image);
+    return this.mapTags(image, false);
   }
 
   async findOnePublic(id: number) {

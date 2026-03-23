@@ -147,6 +147,7 @@ export interface GalleryImage {
   isArchived: boolean;
   printOptions: ImagePrintOption[];
   tags?: Tag[];
+  adminNote?: string | null;
   createdAt: Date;
 }
 

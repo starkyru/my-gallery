@@ -32,8 +32,11 @@ interface ImageData {
   printOptions: PrintOptionRow[];
   isArchived: boolean;
   thumbnailPath: string;
+  width: number;
+  height: number;
   artist: { id: number; name: string };
   tags?: { id: number; name: string; slug: string }[];
+  adminNote?: string | null;
 }
 
 export default function AdminImageEditPage({ params }: { params: Promise<{ id: string }> }) {
@@ -53,6 +56,7 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
     allowDownloadOriginal: boolean;
     printEnabled: boolean;
     printLimit: number | null;
+    adminNote: string;
   }>({
     title: '',
     description: '',
@@ -62,6 +66,7 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
     allowDownloadOriginal: false,
     printEnabled: false,
     printLimit: null,
+    adminNote: '',
   });
   const [printOptions, setPrintOptions] = useState<PrintOptionRow[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -88,6 +93,7 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
         allowDownloadOriginal: data.allowDownloadOriginal ?? false,
         printEnabled: data.printEnabled ?? false,
         printLimit: data.printLimit,
+        adminNote: data.adminNote ?? '',
       });
       setPrintOptions(
         (data.printOptions || []).map((o) => ({
@@ -225,7 +231,7 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
             className="w-full h-auto rounded-lg"
           />
           <p className="text-xs text-gallery-gray mt-2">
-            {image.artist?.name} &middot; ID: {image.id}
+            {image.artist?.name} &middot; {image.width}&times;{image.height} &middot; ID: {image.id}
           </p>
         </div>
 
@@ -257,6 +263,20 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
             >
               {aiLoading ? 'Generating...' : 'AI Describe'}
             </button>
+          </div>
+
+          {/* Admin Note */}
+          <div>
+            <label className="block text-xs text-gallery-gray mb-1">
+              Admin Note (internal only)
+            </label>
+            <textarea
+              value={editData.adminNote}
+              onChange={(e) => setEditData({ ...editData, adminNote: e.target.value })}
+              rows={2}
+              placeholder="Internal note, not visible to visitors"
+              className={inputClass}
+            />
           </div>
 
           {/* Category */}

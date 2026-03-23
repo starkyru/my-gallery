@@ -481,6 +481,9 @@ export default function AdminImagesPage() {
               <p className="text-gallery-gray text-sm truncate">
                 {image.description || 'No description'}
               </p>
+              {image.adminNote && (
+                <p className="text-yellow-500/70 text-xs truncate mt-0.5">{image.adminNote}</p>
+              )}
               <p className="text-sm mt-1">
                 ${image.price} &middot; {image.artist?.name}
               </p>

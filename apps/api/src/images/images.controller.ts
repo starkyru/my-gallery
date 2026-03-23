@@ -117,6 +117,10 @@ class UpdateImageDto {
   @IsArray()
   @IsInt({ each: true })
   tagIds?: number[];
+
+  @IsOptional()
+  @IsString()
+  adminNote?: string | null;
 }
 
 class BulkActionDto {

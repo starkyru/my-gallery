@@ -82,6 +82,9 @@ export class ImageEntity {
   @OneToMany(() => ImageTagEntity, (it) => it.image)
   imageTags!: ImageTagEntity[];
 
+  @Column({ name: 'admin_note', type: 'text', nullable: true })
+  adminNote!: string | null;
+
   @Column({ name: 'allow_download_original', default: false })
   allowDownloadOriginal!: boolean;
 
