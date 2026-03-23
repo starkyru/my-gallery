@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import gsap from 'gsap';
 import { FilterToolbar } from '@/components/filter-toolbar';
 import { GalleryCard } from '@/components/gallery';
@@ -30,7 +30,9 @@ export function ArtistDetail({ artist, images }: ArtistDetailProps) {
   const infoRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
 
-  const filtered = images.filter((img) => {
+  const shuffled = useMemo(() => [...images].sort(() => Math.random() - 0.5), [images]);
+
+  const filtered = shuffled.filter((img) => {
     if (filter && img.category !== filter) return false;
     if (projectFilter && img.projectId !== Number(projectFilter)) return false;
     if (tagFilter.length > 0) {
