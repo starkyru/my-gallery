@@ -32,6 +32,8 @@ interface ImageData {
   printOptions: PrintOptionRow[];
   isArchived: boolean;
   thumbnailPath: string;
+  watermarkPath: string;
+  filePath: string;
   width: number;
   height: number;
   artist: { id: number; name: string };
@@ -74,6 +76,7 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
   const [availableSkus, setAvailableSkus] = useState<
     { provider: string; sku: string; description: string }[]
   >([]);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const [allTags, setAllTags] = useState<Tag[]>([]);
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
   const [aiLoading, setAiLoading] = useState(false);
@@ -223,13 +226,15 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
       <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-8">
         {/* Left: Image preview */}
         <div>
-          <Image
-            src={`${UPLOAD_URL}/${image.thumbnailPath}`}
-            alt={image.title}
-            width={360}
-            height={360}
-            className="w-full h-auto rounded-lg"
-          />
+          <button onClick={() => setLightboxOpen(true)} className="w-full text-left">
+            <Image
+              src={`${UPLOAD_URL}/${image.thumbnailPath}`}
+              alt={image.title}
+              width={360}
+              height={360}
+              className="w-full h-auto rounded-lg cursor-zoom-in hover:opacity-90 transition-opacity"
+            />
+          </button>
           <p className="text-xs text-gallery-gray mt-2">
             {image.artist?.name} &middot; {image.width}&times;{image.height} &middot; ID: {image.id}
           </p>
@@ -474,6 +479,20 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
           </div>
         </div>
       </div>
+
+      {/* Fullscreen lightbox */}
+      {lightboxOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 cursor-zoom-out"
+          onClick={() => setLightboxOpen(false)}
+        >
+          <img
+            src={`${UPLOAD_URL}/${image.filePath}`}
+            alt={image.title}
+            className="max-w-[95vw] max-h-[95vh] object-contain"
+          />
+        </div>
+      )}
     </div>
   );
 }
