@@ -71,7 +71,11 @@ Respond ONLY with valid JSON, no markdown formatting.`,
       throw new InternalServerErrorException('AI service unavailable');
     }
 
-    const text = response.content[0].type === 'text' ? response.content[0].text : '';
+    const raw = response.content[0].type === 'text' ? response.content[0].text : '';
+    const text = raw
+      .replace(/^```(?:json)?\s*\n?/i, '')
+      .replace(/\n?\s*```$/g, '')
+      .trim();
     let parsed: unknown;
     try {
       parsed = JSON.parse(text);
