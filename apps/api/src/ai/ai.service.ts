@@ -97,7 +97,7 @@ Respond ONLY with valid JSON, no markdown formatting.`,
     let writingResponse: Anthropic.Message;
     try {
       writingResponse = await this.client.messages.create({
-        model: 'claude-sonnet-4-5-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 400,
         messages: [
           {
