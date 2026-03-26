@@ -18,11 +18,19 @@ import {
 import { loadProviderEnv } from '../load-env';
 import { ServiceConfigEntity } from '../../service-config.entity';
 
+interface CacheEntry<T> {
+  data: T;
+  expiresAt: number;
+}
+
 @Injectable()
 export class ProdigiProvider implements FulfillmentProvider {
   private readonly logger = new Logger(ProdigiProvider.name);
   private readonly apiKey: string;
   private readonly clientCache = new Map<Environment, ProdigiClient>();
+  private readonly CACHE_TTL = 60 * 60 * 1000; // 1 hour
+  private categoriesCache: CacheEntry<CatalogueListResponse> | null = null;
+  private productCache = new Map<string, CacheEntry<CatalogueProductDetail>>();
 
   readonly name = 'prodigi';
 
@@ -99,13 +107,24 @@ export class ProdigiProvider implements FulfillmentProvider {
   }
 
   async getCatalogueCategories(): Promise<CatalogueListResponse> {
+    if (this.categoriesCache && Date.now() < this.categoriesCache.expiresAt) {
+      return this.categoriesCache.data;
+    }
     const client = await this.getClient();
-    return client.catalogue.list();
+    const data = await client.catalogue.list();
+    this.categoriesCache = { data, expiresAt: Date.now() + this.CACHE_TTL };
+    return data;
   }
 
   async getCatalogueProduct(slug: string): Promise<CatalogueProductDetail> {
+    const cached = this.productCache.get(slug);
+    if (cached && Date.now() < cached.expiresAt) {
+      return cached.data;
+    }
     const client = await this.getClient();
-    return client.catalogue.get(slug);
+    const data = await client.catalogue.get(slug);
+    this.productCache.set(slug, { data, expiresAt: Date.now() + this.CACHE_TTL });
+    return data;
   }
 
   async getQuotes(
