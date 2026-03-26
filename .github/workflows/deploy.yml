@@ -34,7 +34,7 @@ jobs:
           script: |
             set -e
 
-            cd /var/www/gallery
+            cd ~/apps/gallery
 
             # Pull latest code (reset any local changes like lockfile diffs)
             git checkout -- .
@@ -50,10 +50,7 @@ jobs:
             (cd apps/api && pnpm db:sync)
 
             # Restart services
-            pm2 stop ecosystem.config.cjs || true
-            pm2 delete gallery-api gallery-web 2>/dev/null || true
-            sleep 1
-            pm2 start ecosystem.config.cjs
+            pm2 restart ecosystem.config.cjs
 
             # Wait for services to start, then verify health
             sleep 8
