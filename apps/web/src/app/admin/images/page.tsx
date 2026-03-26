@@ -452,7 +452,7 @@ export default function AdminImagesPage() {
             }`}
           >
             {/* Selection checkbox */}
-            <label className="absolute top-2 left-2 z-10" onClick={(e) => e.stopPropagation()}>
+            <label className="absolute top-2 right-2 z-10" onClick={(e) => e.stopPropagation()}>
               <input
                 type="checkbox"
                 checked={selectedIds.has(image.id)}
@@ -463,7 +463,7 @@ export default function AdminImagesPage() {
 
             {/* Archived badge */}
             {image.isArchived && (
-              <span className="absolute top-2 right-2 z-10 px-2 py-0.5 bg-gray-600/80 text-white text-xs rounded-full">
+              <span className="absolute top-2 left-2 z-10 px-2 py-0.5 bg-gray-600/80 text-white text-xs rounded-full">
                 Archived
               </span>
             )}
