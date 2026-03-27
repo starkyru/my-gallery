@@ -38,6 +38,7 @@ interface ImageData {
   artist: { id: number; name: string };
   tags?: { id: number; name: string; slug: string }[];
   adminNote?: string | null;
+  aiDescription?: string | null;
 }
 
 export default function AdminImageEditPage({ params }: { params: Promise<{ id: string }> }) {
@@ -311,6 +312,18 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
               {aiLoading ? 'Generating...' : 'AI Describe'}
             </button>
           </div>
+
+          {/* AI Description (read-only, used by chat search) */}
+          {image.aiDescription && (
+            <div>
+              <label className="block text-xs text-gallery-gray mb-1">
+                AI Description (auto-generated, used by chat search)
+              </label>
+              <p className="px-3 py-1.5 bg-white/5 border border-white/5 rounded text-sm text-white/60 whitespace-pre-wrap">
+                {image.aiDescription}
+              </p>
+            </div>
+          )}
 
           {/* Admin Note */}
           <div>
