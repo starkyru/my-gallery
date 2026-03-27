@@ -93,8 +93,8 @@ export class ImagesService {
     }
     if (query?.search) {
       qb.andWhere(
-        '(image.aiDescription ILIKE :search OR image.title ILIKE :search OR image.description ILIKE :search)',
-        { search: `%${query.search}%` },
+        '(image.ai_description ~* :search OR image.title ~* :search OR image.description ~* :search)',
+        { search: `\\m${query.search}\\M` },
       );
     }
 
