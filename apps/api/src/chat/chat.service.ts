@@ -79,7 +79,7 @@ When the user describes what they are looking for, respond with a JSON object:
     "category": "optional category slug from above",
     "tags": ["optional", "tag", "slugs"],
     "keywords": "optional keyword to search image descriptions (e.g. 'sunset', 'bridge', 'rain')",
-    "featured": true
+    "featured": false
   }
 }
 
@@ -88,6 +88,7 @@ If the user is just chatting or asking something completely unrelated to images 
 
 Rules:
 - ALWAYS include a "search" object when the user mentions any subject, object, scene, mood, or style — even single words like "hat", "sunset", "dog". Never ask for clarification when you can search instead.
+- Only set "featured" to true if the user explicitly asks for featured, popular, or best images. Otherwise omit it.
 - Pick at most 1 category and up to 5 tags
 - Only use slugs from the lists above
 - Use keywords to search image descriptions when the user asks for something specific (e.g. a subject, object, or scene detail) that may not match a category or tag. For short queries, always use the query as a keyword.
