@@ -14,8 +14,9 @@ export class AiController {
   @Post('describe/:imageId')
   @UseGuards(JwtAuthGuard, AdminGuard)
   async describe(@Param('imageId') imageId: string, @Query('apply') apply?: string) {
-    const result = await this.service.describeImage(+imageId);
-    if (apply === 'true') {
+    const runSonnet = apply === 'true';
+    const result = await this.service.describeImage(+imageId, { runSonnet });
+    if (runSonnet) {
       await this.imagesService.update(+imageId, {
         title: result.title,
         description: result.description,

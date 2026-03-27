@@ -36,7 +36,7 @@ export function ImageDetail({ image }: ImageDetailProps) {
   const { addItem, items } = useCartStore();
   const [selectedSku, setSelectedSku] = useState<string>('');
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [infoOpen, setInfoOpen] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(true);
   const [buyOpen, setBuyOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -142,14 +142,24 @@ export function ImageDetail({ image }: ImageDetailProps) {
             <button
               type="button"
               onClick={() => setInfoOpen((v) => !v)}
-              className="flex items-center gap-2 group text-left"
+              className="flex items-center gap-2 group text-left min-w-0"
             >
-              <div>
-                <span className="block text-lg font-semibold text-white">{image.title}</span>
-                <span className="block text-sm text-white/70">by {image.artist.name}</span>
-              </div>
+              {infoOpen ? (
+                <div>
+                  <span className="block text-lg font-semibold text-white">{image.title}</span>
+                  <span className="block text-sm text-white/70">by {image.artist.name}</span>
+                </div>
+              ) : (
+                <span className="text-sm text-white/80 truncate">
+                  <span className="font-semibold">{image.title}</span>
+                  {image.description && (
+                    <span className="text-white/60"> &mdash; {image.description}</span>
+                  )}
+                  <span className="text-white/50"> &middot; {image.artist.name}</span>
+                </span>
+              )}
               <ChevronDownIcon
-                className={`w-5 h-5 text-white/70 transition-transform duration-300 group-hover:text-white ${
+                className={`w-5 h-5 shrink-0 text-white/70 transition-transform duration-300 group-hover:text-white ${
                   infoOpen ? 'rotate-180' : ''
                 }`}
               />

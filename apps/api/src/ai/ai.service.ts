@@ -24,7 +24,7 @@ export class AiService {
     });
   }
 
-  async describeImage(imageId: number) {
+  async describeImage(imageId: number, { runSonnet = true }: { runSonnet?: boolean } = {}) {
     const image = await this.imagesService.findOne(imageId);
     const uploadDir = this.configService.get('UPLOAD_DIR', './uploads');
     const mediumPath = image.watermarkPath.replace('watermarked/', 'medium/');
@@ -93,6 +93,10 @@ Respond ONLY with valid JSON, no markdown formatting.`,
       imageId,
       `${visionResult.data.title}. ${visionResult.data.description}`,
     );
+
+    if (!runSonnet) {
+      return visionResult.data;
+    }
 
     const photographerContext =
       image.title || image.description
