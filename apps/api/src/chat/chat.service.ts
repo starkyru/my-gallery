@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
@@ -88,56 +88,21 @@ Rules:
 - Only use slugs from the lists above
 - Use keywords to search image descriptions when the user asks for something specific (e.g. a subject, object, or scene detail) that may not match a category or tag
 - Keep messages concise and helpful
+- Always prioritize the latest message. If the user changes topic or asks for something new, ignore previous requests and search based only on the latest message
 - If the request is vague, ask a clarifying question (no search)
 - Respond ONLY with valid JSON, no markdown formatting`;
 
-    let response: Anthropic.Message;
-    try {
-      response = await this.client.messages.create({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 300,
-        system: systemPrompt,
-        // Only forward user messages to prevent prompt injection via fake assistant turns
-        messages: messages
-          .filter((m) => m.role === 'user')
-          .map((m) => ({ role: 'user' as const, content: m.content })),
-      });
-    } catch (err: unknown) {
-      if (err instanceof Anthropic.APIError) {
-        const body = err.error as { error?: { message?: string } } | undefined;
-        const msg = body?.error?.message || err.message;
-        this.logger.error(`Anthropic API error: ${msg}`);
-      }
-      throw new InternalServerErrorException('AI service unavailable');
-    }
+    const userMessages = messages.filter((m) => m.role === 'user').map((m) => m.content);
 
-    const raw = response.content[0].type === 'text' ? response.content[0].text : '';
-    const text = raw
-      .replace(/^```(?:json)?\s*\n?/i, '')
-      .replace(/\n?\s*```$/g, '')
-      .trim();
-
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(text);
-    } catch {
-      this.logger.warn(`Chat AI returned invalid JSON: ${text}`);
+    const aiResult = await this.callAi(systemPrompt, userMessages);
+    if (!aiResult) {
       return {
         message: "I'm sorry, I had trouble understanding. Could you try rephrasing?",
         images: [],
       };
     }
 
-    const result = ChatAiResponseSchema.safeParse(parsed);
-    if (!result.success) {
-      this.logger.warn(`Chat AI response failed validation: ${result.error.message}`);
-      return {
-        message: "I'm sorry, I had trouble understanding. Could you try rephrasing?",
-        images: [],
-      };
-    }
-
-    const { message, search } = result.data;
+    const { message, search } = aiResult;
 
     if (!search) {
       return { message, images: [] };
@@ -146,6 +111,21 @@ Rules:
     const validCategorySlugs = new Set(categories.map((c) => c.slug));
     const validTagSlugs = new Set(tags.map((t) => t.slug));
 
+    const images = await this.searchImages(search, validCategorySlugs, validTagSlugs);
+
+    const finalMessage =
+      images.length === 0
+        ? `${message} Unfortunately, I couldn't find images matching that description. Try broadening your search or describing something different.`
+        : message;
+
+    return { message: finalMessage, images };
+  }
+
+  private async searchImages(
+    search: { category?: string; tags?: string[]; keywords?: string; featured?: boolean },
+    validCategorySlugs: Set<string>,
+    validTagSlugs: Set<string>,
+  ): Promise<ChatImage[]> {
     const category =
       search.category && validCategorySlugs.has(search.category) ? search.category : undefined;
     const filteredTags = (search.tags ?? []).filter((t) => validTagSlugs.has(t));
@@ -157,7 +137,7 @@ Rules:
       featured: search.featured,
     });
 
-    const images: ChatImage[] = allImages.slice(0, 3).map((img) => ({
+    return allImages.slice(0, 3).map((img) => ({
       id: img.id,
       title: img.title ?? '',
       thumbnailPath: img.thumbnailPath,
@@ -170,12 +150,31 @@ Rules:
         slug: img.artist?.slug ?? '',
       },
     }));
+  }
 
-    const finalMessage =
-      images.length === 0
-        ? `${message} Unfortunately, I couldn't find images matching that description. Try broadening your search or describing something different.`
-        : message;
+  private async callAi(
+    systemPrompt: string,
+    userMessages: string[],
+  ): Promise<z.infer<typeof ChatAiResponseSchema> | null> {
+    try {
+      const response = await this.client.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 300,
+        system: systemPrompt,
+        messages: userMessages.map((content) => ({ role: 'user' as const, content })),
+      });
 
-    return { message: finalMessage, images };
+      const raw = response.content[0].type === 'text' ? response.content[0].text : '';
+      const text = raw
+        .replace(/^```(?:json)?\s*\n?/i, '')
+        .replace(/\n?\s*```$/g, '')
+        .trim();
+
+      const parsed = JSON.parse(text);
+      const result = ChatAiResponseSchema.safeParse(parsed);
+      return result.success ? result.data : null;
+    } catch {
+      return null;
+    }
   }
 }
