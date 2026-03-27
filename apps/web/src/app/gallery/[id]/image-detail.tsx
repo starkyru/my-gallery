@@ -93,7 +93,7 @@ export function ImageDetail({ image }: ImageDetailProps) {
         {/* Bottom overlay — info accordion + buy button */}
         <div
           ref={overlayRef}
-          className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/80 via-black/50 to-transparent"
+          className="absolute bottom-0 left-0 right-0 z-10 bg-linear-to-t from-black/80 via-black/50 to-transparent"
           style={{ textShadow: '0 1px 4px rgba(0,0,0,0.6)' }}
         >
           <div className="px-4 pb-6 pt-16 sm:px-6">
@@ -119,11 +119,8 @@ export function ImageDetail({ image }: ImageDetailProps) {
                     </span>
                   </div>
                 ) : (
-                  <span className="text-sm text-white/80 truncate">
+                  <span className="text-sm text-white/80">
                     <span className="font-semibold">{image.title}</span>
-                    {image.description && (
-                      <span className="text-white/60"> &mdash; {image.description}</span>
-                    )}
                     <span className="text-white/50"> &middot; {image.artist.name}</span>
                   </span>
                 )}
