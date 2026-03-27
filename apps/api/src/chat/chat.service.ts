@@ -32,6 +32,9 @@ export interface ChatImage {
 export interface ChatResponse {
   message: string;
   images: ChatImage[];
+  debug?: {
+    search?: { category?: string; tags?: string[]; keywords?: string; featured?: boolean };
+  };
 }
 
 @Injectable()
@@ -105,7 +108,7 @@ Rules:
     const { message, search } = aiResult;
 
     if (!search) {
-      return { message, images: [] };
+      return { message, images: [], debug: {} };
     }
 
     const validCategorySlugs = new Set(categories.map((c) => c.slug));
@@ -118,7 +121,7 @@ Rules:
         ? `${message} Unfortunately, I couldn't find images matching that description. Try broadening your search or describing something different.`
         : message;
 
-    return { message: finalMessage, images };
+    return { message: finalMessage, images, debug: { search } };
   }
 
   private async searchImages(

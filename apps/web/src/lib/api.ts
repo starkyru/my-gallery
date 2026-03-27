@@ -382,6 +382,14 @@ export const api = {
           price: number;
           artist: { name: string; slug: string };
         }[];
+        debug?: {
+          search?: {
+            category?: string;
+            tags?: string[];
+            keywords?: string;
+            featured?: boolean;
+          };
+        };
       }>('/chat', {
         method: 'POST',
         body: JSON.stringify({ messages }),

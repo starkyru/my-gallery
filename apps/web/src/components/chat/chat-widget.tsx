@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { UPLOAD_URL } from '@/config';
+import { useAuthStore } from '@/store/auth';
 import { ChatIcon } from '@/components/icons/chat-icon';
 import { SendIcon } from '@/components/icons/send-icon';
 import { CloseIcon } from '@/components/icons/close-icon';
@@ -29,11 +30,13 @@ interface Message {
 const THROTTLE_MS = 5000;
 
 export function ChatWidget() {
+  const { isAdmin } = useAuthStore();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [lastSentAt, setLastSentAt] = useState(0);
+  const [debugMode, setDebugMode] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -70,6 +73,9 @@ export function ChatWidget() {
     try {
       const apiMessages = updatedMessages.map((m) => ({ role: m.role, content: m.content }));
       const response = await api.chat.send(apiMessages);
+      if (debugMode && response.debug) {
+        console.log('[Chat Debug] AI result:', response.debug);
+      }
       setMessages((prev) => [
         ...prev,
         { role: 'assistant', content: response.message, images: response.images },
@@ -84,7 +90,7 @@ export function ChatWidget() {
     } finally {
       setIsLoading(false);
     }
-  }, [input, isLoading, lastSentAt, messages]);
+  }, [input, isLoading, lastSentAt, messages, debugMode]);
 
   return (
     <>
@@ -104,7 +110,20 @@ export function ChatWidget() {
         <div className="fixed bottom-6 right-6 z-40 flex w-[360px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-white/10 bg-gallery-black shadow-2xl sm:w-[380px]">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
-            <span className="text-sm font-medium text-gallery-white">Gallery Assistant</span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-gallery-white">Gallery Assistant</span>
+              {isAdmin() && (
+                <label className="flex items-center gap-1 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={debugMode}
+                    onChange={(e) => setDebugMode(e.target.checked)}
+                    className="accent-gallery-accent w-3 h-3"
+                  />
+                  <span className="text-[10px] text-gallery-gray">debug</span>
+                </label>
+              )}
+            </div>
             <button
               onClick={() => setIsOpen(false)}
               aria-label="Close chat"
