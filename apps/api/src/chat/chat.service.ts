@@ -14,6 +14,7 @@ const ChatAiResponseSchema = z.object({
       tags: z.array(z.string()).optional(),
       keywords: z.string().optional(),
       featured: z.boolean().optional(),
+      condition: z.enum(['AND', 'OR']).optional(),
     })
     .optional(),
 });
@@ -79,7 +80,8 @@ When the user describes what they are looking for, respond with a JSON object:
     "category": "optional category slug from above",
     "tags": ["optional", "tag", "slugs"],
     "keywords": "optional keyword to search image descriptions (e.g. 'sunset', 'bridge', 'rain')",
-    "featured": false
+    "featured": false,
+    "condition": "AND or OR — use AND when the user wants all criteria combined (e.g. 'dog in a hat'), use OR when criteria are alternatives (e.g. 'sunset or beach'). Default: AND"
   }
 }
 
@@ -116,7 +118,13 @@ Rules:
     const validCategorySlugs = new Set(categories.map((c) => c.slug));
     const validTagSlugs = new Set(tags.map((t) => t.slug));
 
-    const images = await this.searchImages(search, validCategorySlugs, validTagSlugs);
+    const condition = search.condition ?? 'AND';
+    let images = await this.searchImages(search, validCategorySlugs, validTagSlugs, condition);
+
+    // Fallback: if AND returned nothing, retry with OR for broader results
+    if (images.length === 0 && condition === 'AND') {
+      images = await this.searchImages(search, validCategorySlugs, validTagSlugs, 'OR');
+    }
 
     const finalMessage =
       images.length === 0
@@ -130,6 +138,7 @@ Rules:
     search: { category?: string; tags?: string[]; keywords?: string; featured?: boolean },
     validCategorySlugs: Set<string>,
     validTagSlugs: Set<string>,
+    condition: 'AND' | 'OR',
   ): Promise<ChatImage[]> {
     const category =
       search.category && validCategorySlugs.has(search.category) ? search.category : undefined;
@@ -140,6 +149,7 @@ Rules:
       tags: filteredTags.length > 0 ? filteredTags : undefined,
       search: search.keywords || undefined,
       featured: search.featured,
+      condition,
     });
 
     return allImages.slice(0, 3).map((img) => ({

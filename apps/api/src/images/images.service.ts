@@ -59,6 +59,7 @@ export class ImagesService {
     projectId?: number;
     tags?: string[];
     search?: string;
+    condition?: 'AND' | 'OR';
   }) {
     const qb = this.repo
       .createQueryBuilder('image')
@@ -87,14 +88,18 @@ export class ImagesService {
     }
     const hasTagFilter = query?.tags && query.tags.length > 0;
     const hasSearch = !!query?.search;
+    const useOr = query?.condition === 'OR';
 
     if (hasTagFilter && hasSearch) {
-      // OR: match tags OR keyword search (broader results)
-      qb.andWhere(
-        `(image.id IN (SELECT it.image_id FROM image_tags it INNER JOIN tags t ON t.id = it.tag_id WHERE t.slug IN (:...tagSlugs))
-          OR image.ai_description ~* :search OR image.title ~* :search OR image.description ~* :search)`,
-        { tagSlugs: query.tags, search: `\\m${query.search}\\M` },
-      );
+      const tagSql =
+        'image.id IN (SELECT it.image_id FROM image_tags it INNER JOIN tags t ON t.id = it.tag_id WHERE t.slug IN (:...tagSlugs))';
+      const searchSql =
+        '(image.ai_description ~* :search OR image.title ~* :search OR image.description ~* :search)';
+      const joiner = useOr ? 'OR' : 'AND';
+      qb.andWhere(`(${tagSql} ${joiner} ${searchSql})`, {
+        tagSlugs: query.tags,
+        search: `\\m${query.search}\\M`,
+      });
     } else if (hasTagFilter) {
       qb.andWhere(
         'image.id IN (SELECT it.image_id FROM image_tags it INNER JOIN tags t ON t.id = it.tag_id WHERE t.slug IN (:...tagSlugs))',
