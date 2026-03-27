@@ -152,6 +152,13 @@ Rules:
       condition,
     });
 
+    if (allImages.length > 3) {
+      for (let i = allImages.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [allImages[i], allImages[j]] = [allImages[j], allImages[i]];
+      }
+    }
+
     return allImages.slice(0, 3).map((img) => ({
       id: img.id,
       title: img.title ?? '',

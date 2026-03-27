@@ -113,7 +113,7 @@ export function ChatWidget() {
         <div
           className={`fixed z-40 flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-gallery-black shadow-2xl transition-all duration-300 ${
             isExpanded
-              ? 'bottom-6 right-6 top-6 w-[360px] max-w-[calc(100vw-2rem)] sm:w-[380px]'
+              ? 'bottom-6 right-6 top-20 w-[360px] max-w-[calc(100vw-2rem)] sm:w-[380px]'
               : 'bottom-6 right-6 w-[360px] max-w-[calc(100vw-2rem)] sm:w-[380px]'
           }`}
         >
