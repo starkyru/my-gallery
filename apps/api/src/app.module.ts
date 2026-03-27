@@ -27,6 +27,7 @@ import { ImagePrintOptionEntity } from './images/image-print-option.entity';
 import { ServiceConfigEntity } from './services/service-config.entity';
 import { TagsModule } from './tags/tags.module';
 import { ContactsModule } from './contacts/contacts.module';
+import { ChatModule } from './chat/chat.module';
 import { ContactInquiryEntity } from './contacts/contact-inquiry.entity';
 import { TagEntity } from './tags/tag.entity';
 import { ImageTagEntity } from './tags/image-tag.entity';
@@ -77,6 +78,7 @@ import { ImageTagEntity } from './tags/image-tag.entity';
     ProtectedGalleriesModule,
     TagsModule,
     ContactsModule,
+    ChatModule,
   ],
 })
 export class AppModule {}

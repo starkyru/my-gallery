@@ -368,6 +368,25 @@ export const api = {
         headers: authHeaders(token),
       }),
   },
+  chat: {
+    send: (messages: { role: string; content: string }[]) =>
+      request<{
+        message: string;
+        images: {
+          id: number;
+          title: string;
+          thumbnailPath: string;
+          watermarkPath: string;
+          width: number;
+          height: number;
+          price: number;
+          artist: { name: string; slug: string };
+        }[];
+      }>('/chat', {
+        method: 'POST',
+        body: JSON.stringify({ messages }),
+      }),
+  },
   ai: {
     describe: (imageId: number, token: string) =>
       request<{ title: string; description: string }>(`/ai/describe/${imageId}`, {
