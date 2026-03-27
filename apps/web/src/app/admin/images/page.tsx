@@ -50,6 +50,8 @@ export default function AdminImagesPage() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [bulkCategory, setBulkCategory] = useState('');
   const [bulkProject, setBulkProject] = useState('');
+  const [aiApplyTitleDesc, setAiApplyTitleDesc] = useState(false);
+  const [aiProgress, setAiProgress] = useState<{ done: number; total: number } | null>(null);
 
   const selectedArtistId = useMemo(() => {
     if (selectedIds.size === 0) return null;
@@ -244,6 +246,28 @@ export default function AdminImagesPage() {
     } catch {
       notify.error('Failed to apply bulk action');
     }
+  }
+
+  async function handleBulkAiDescribe() {
+    if (!token || selectedIds.size === 0) return;
+    const ids = Array.from(selectedIds);
+    setAiProgress({ done: 0, total: ids.length });
+    let failed = 0;
+    for (let i = 0; i < ids.length; i++) {
+      try {
+        await api.ai.describe(ids[i], token, aiApplyTitleDesc);
+      } catch {
+        failed++;
+      }
+      setAiProgress({ done: i + 1, total: ids.length });
+    }
+    setAiProgress(null);
+    if (failed > 0) {
+      notify.error(`AI describe failed for ${failed} image(s)`);
+    } else {
+      notify.success('AI descriptions generated');
+    }
+    if (aiApplyTitleDesc) loadData();
   }
 
   const gridOptions = [
@@ -683,6 +707,23 @@ export default function AdminImagesPage() {
                 Apply
               </button>
             )}
+            <div className="border-l border-white/10 h-6" />
+            <button
+              onClick={handleBulkAiDescribe}
+              disabled={aiProgress !== null}
+              className="px-3 py-1.5 border border-white/10 rounded text-xs hover:border-white/30 disabled:opacity-50"
+            >
+              {aiProgress ? `AI ${aiProgress.done}/${aiProgress.total}...` : 'AI Describe'}
+            </button>
+            <label className="flex items-center gap-1.5 text-xs text-gallery-gray cursor-pointer">
+              <input
+                type="checkbox"
+                checked={aiApplyTitleDesc}
+                onChange={(e) => setAiApplyTitleDesc(e.target.checked)}
+                className="accent-gallery-accent"
+              />
+              Update title &amp; description
+            </label>
           </div>
         </div>
       )}

@@ -88,6 +88,12 @@ Respond ONLY with valid JSON, no markdown formatting.`,
       );
     }
 
+    // Save Haiku's vision output to help chatbot search
+    await this.imagesService.updateAiDescription(
+      imageId,
+      `${visionResult.data.title}. ${visionResult.data.description}`,
+    );
+
     const photographerContext =
       image.title || image.description
         ? `The photographer provided this context. Preserve the key details and intent, but rewrite in your own words. Ignore any file names or codes (like PA1345, IMG_2030, DSC0042, etc.):\nTitle: "${image.title || ''}"\n${image.description ? `Description: "${image.description}"` : ''}`

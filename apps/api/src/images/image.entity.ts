@@ -82,6 +82,9 @@ export class ImageEntity {
   @OneToMany(() => ImageTagEntity, (it) => it.image)
   imageTags!: ImageTagEntity[];
 
+  @Column({ name: 'ai_description', type: 'text', nullable: true })
+  aiDescription!: string | null;
+
   @Column({ name: 'admin_note', type: 'text', nullable: true })
   adminNote!: string | null;
 

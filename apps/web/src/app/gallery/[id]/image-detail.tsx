@@ -7,6 +7,9 @@ import { useCartStore } from '@/store/cart';
 import gsap from 'gsap';
 import type { ImagePrintOption, OrderItemType } from '@gallery/shared';
 import { UPLOAD_URL } from '@/config';
+import { Modal } from '@/components/modal';
+import { ShoppingBagIcon } from '@/components/icons/shopping-bag-icon';
+import { ChevronDownIcon } from '@/components/icons/chevron-down-icon';
 
 interface ImageDetailProps {
   image: {
@@ -33,9 +36,10 @@ export function ImageDetail({ image }: ImageDetailProps) {
   const { addItem, items } = useCartStore();
   const [selectedSku, setSelectedSku] = useState<string>('');
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
+  const [buyOpen, setBuyOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const imageRef = useRef<HTMLDivElement>(null);
-  const detailsRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
 
   const originalInCart = items.some((i) => i.imageId === image.id && i.type === 'original');
 
@@ -47,22 +51,18 @@ export function ImageDetail({ image }: ImageDetailProps) {
   const remaining = image.printLimit !== null ? image.printLimit - image.printsSold : null;
   const soldOut = remaining !== null && remaining <= 0;
 
+  const hasBuyOptions =
+    image.allowDownloadOriginal || (image.printEnabled && image.printOptions?.length > 0);
+
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
     const ctx = gsap.context(() => {
-      gsap.from(imageRef.current, {
-        x: -40,
+      gsap.from(overlayRef.current, {
+        y: 30,
         opacity: 0,
-        duration: 1,
-        ease: 'power3.out',
-      });
-
-      gsap.from(detailsRef.current, {
-        x: 40,
-        opacity: 0,
-        duration: 1,
-        delay: 0.15,
+        duration: 0.8,
+        delay: 0.4,
         ease: 'power3.out',
       });
     }, containerRef);
@@ -71,59 +71,110 @@ export function ImageDetail({ image }: ImageDetailProps) {
   }, []);
 
   return (
-    <div ref={containerRef} className="mx-auto max-w-6xl px-6 pt-28 pb-24">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        <div ref={imageRef} className="relative overflow-hidden rounded-lg bg-white/5">
+    <>
+      <div ref={containerRef} className="relative h-screen w-full bg-black">
+        {/* Full-screen image */}
+        <div
+          className={`absolute inset-0 flex items-center justify-center transition-all duration-1000 ease-out ${
+            imageLoaded ? 'blur-0 scale-100 opacity-100' : 'blur-md scale-[1.02] opacity-0'
+          }`}
+        >
+          <Image
+            src={`${UPLOAD_URL}/${image.watermarkPath}`}
+            alt={image.title}
+            width={image.width}
+            height={image.height}
+            className="h-full w-full object-contain"
+            priority
+            onLoad={() => setImageLoaded(true)}
+          />
+        </div>
+
+        {/* Bottom overlay — info accordion + buy button */}
+        <div
+          ref={overlayRef}
+          className="absolute bottom-0 left-0 right-0 z-10"
+          style={{ textShadow: '0 1px 4px rgba(0,0,0,0.6)' }}
+        >
+          {/* Accordion content */}
           <div
-            className={`transition-all duration-1000 ease-out ${
-              imageLoaded ? 'blur-0 scale-100' : 'blur-md scale-[1.03]'
+            className={`overflow-hidden transition-all duration-500 ease-out ${
+              infoOpen ? 'max-h-[60vh] opacity-100' : 'max-h-0 opacity-0'
             }`}
           >
-            <Image
-              src={`${UPLOAD_URL}/${image.watermarkPath}`}
-              alt={image.title}
-              width={image.width}
-              height={image.height}
-              className="w-full h-auto"
-              priority
-              onLoad={() => setImageLoaded(true)}
-            />
+            <div className="mx-4 mb-2 rounded-lg bg-black/70 p-5 backdrop-blur-md sm:mx-6">
+              <p className="text-gallery-accent text-xs uppercase tracking-widest mb-1.5">
+                {image.category.replace(/_/g, ' ')}
+              </p>
+
+              <p className="text-gallery-gray text-sm mb-3">
+                by{' '}
+                <Link
+                  href={`/artists/${image.artist.slug}`}
+                  className="hover:text-gallery-accent transition-colors"
+                >
+                  {image.artist.name}
+                </Link>
+              </p>
+
+              {image.description && (
+                <p className="text-white/80 text-sm leading-relaxed mb-3">{image.description}</p>
+              )}
+
+              {image.tags && image.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {image.tags.map((tag) => (
+                    <Link
+                      key={tag.id}
+                      href={`/?tags=${tag.slug}`}
+                      className="px-2.5 py-0.5 text-xs rounded-full border border-white/20 text-white/70 hover:border-gallery-accent hover:text-gallery-accent transition-colors"
+                    >
+                      {tag.name}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Bottom bar with title, accordion toggle, and buy button */}
+          <div className="flex items-end justify-between px-4 pb-6 pt-2 sm:px-6 bg-gradient-to-t from-black/70 to-transparent">
+            <button
+              type="button"
+              onClick={() => setInfoOpen((v) => !v)}
+              className="flex items-center gap-2 group text-left"
+            >
+              <div>
+                <span className="block text-lg font-semibold text-white">{image.title}</span>
+                <span className="block text-sm text-white/70">by {image.artist.name}</span>
+              </div>
+              <ChevronDownIcon
+                className={`w-5 h-5 text-white/70 transition-transform duration-300 group-hover:text-white ${
+                  infoOpen ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+
+            {hasBuyOptions && (
+              <button
+                type="button"
+                onClick={() => setBuyOpen(true)}
+                className="rounded-full bg-white/15 p-3 text-white backdrop-blur-sm hover:bg-gallery-accent hover:text-gallery-black transition-colors duration-300"
+                aria-label="Buy options"
+              >
+                <ShoppingBagIcon className="w-5 h-5" />
+              </button>
+            )}
           </div>
         </div>
-        <div ref={detailsRef} className="flex flex-col justify-center">
-          <p className="text-gallery-accent text-sm uppercase tracking-widest mb-2">
-            {image.category.replace(/_/g, ' ')}
-          </p>
-          <h1 className="font-serif text-4xl md:text-5xl mb-4">{image.title}</h1>
-          {image.tags && image.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-4">
-              {image.tags.map((tag) => (
-                <Link
-                  key={tag.id}
-                  href={`/?tags=${tag.slug}`}
-                  className="px-3 py-1 text-xs rounded-full border border-white/10 text-gallery-gray hover:border-gallery-accent hover:text-gallery-accent transition-colors"
-                >
-                  {tag.name}
-                </Link>
-              ))}
-            </div>
-          )}
-          <p className="text-gallery-gray mb-6">
-            by{' '}
-            <Link
-              href={`/artists/${image.artist.slug}`}
-              className="hover:text-gallery-accent transition-colors"
-            >
-              {image.artist.name}
-            </Link>
-          </p>
-          {image.description && (
-            <p className="text-gallery-gray leading-relaxed mb-8">{image.description}</p>
-          )}
+      </div>
 
+      {/* Buy modal */}
+      <Modal open={buyOpen} onClose={() => setBuyOpen(false)} title="Purchase Options">
+        <div className="flex flex-col gap-4">
           {/* Digital Original */}
           {image.allowDownloadOriginal && (
-            <div className="mb-6 p-4 border border-white/10 rounded-lg hover:border-white/20 transition-colors duration-300">
+            <div className="p-4 border border-white/10 rounded-lg">
               <div className="flex items-center justify-between mb-3">
                 <div>
                   <p className="font-medium">Digital Original</p>
@@ -153,7 +204,7 @@ export function ImageDetail({ image }: ImageDetailProps) {
 
           {/* Print Options */}
           {image.printEnabled && image.printOptions?.length > 0 && (
-            <div className="p-4 border border-white/10 rounded-lg hover:border-white/20 transition-colors duration-300">
+            <div className="p-4 border border-white/10 rounded-lg">
               <div className="flex items-center justify-between mb-3">
                 <div>
                   <p className="font-medium">Buy Print</p>
@@ -207,7 +258,7 @@ export function ImageDetail({ image }: ImageDetailProps) {
             </div>
           )}
         </div>
-      </div>
-    </div>
+      </Modal>
+    </>
   );
 }

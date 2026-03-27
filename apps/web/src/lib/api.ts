@@ -388,11 +388,14 @@ export const api = {
       }),
   },
   ai: {
-    describe: (imageId: number, token: string) =>
-      request<{ title: string; description: string }>(`/ai/describe/${imageId}`, {
-        method: 'POST',
-        headers: authHeaders(token),
-      }),
+    describe: (imageId: number, token: string, apply?: boolean) =>
+      request<{ title: string; description: string }>(
+        `/ai/describe/${imageId}${apply ? '?apply=true' : ''}`,
+        {
+          method: 'POST',
+          headers: authHeaders(token),
+        },
+      ),
   },
   protectedGalleries: {
     listAdmin: (token: string) =>

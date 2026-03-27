@@ -12,6 +12,7 @@ const ChatAiResponseSchema = z.object({
     .object({
       category: z.string().optional(),
       tags: z.array(z.string()).optional(),
+      keywords: z.string().optional(),
       featured: z.boolean().optional(),
     })
     .optional(),
@@ -74,6 +75,7 @@ When the user describes what they are looking for, respond with a JSON object:
   "search": {
     "category": "optional category slug from above",
     "tags": ["optional", "tag", "slugs"],
+    "keywords": "optional keyword to search image descriptions (e.g. 'sunset', 'bridge', 'rain')",
     "featured": true
   }
 }
@@ -84,6 +86,7 @@ If the user is just chatting or asking something unrelated to finding images, re
 Rules:
 - Pick at most 1 category and up to 5 tags
 - Only use slugs from the lists above
+- Use keywords to search image descriptions when the user asks for something specific (e.g. a subject, object, or scene detail) that may not match a category or tag
 - Keep messages concise and helpful
 - If the request is vague, ask a clarifying question (no search)
 - Respond ONLY with valid JSON, no markdown formatting`;
@@ -150,6 +153,7 @@ Rules:
     const allImages = await this.imagesService.findAll({
       category,
       tags: filteredTags.length > 0 ? filteredTags : undefined,
+      search: search.keywords || undefined,
       featured: search.featured,
     });
 

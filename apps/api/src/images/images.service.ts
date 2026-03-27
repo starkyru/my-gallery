@@ -58,6 +58,7 @@ export class ImagesService {
     artistId?: number;
     projectId?: number;
     tags?: string[];
+    search?: string;
   }) {
     const qb = this.repo
       .createQueryBuilder('image')
@@ -88,6 +89,12 @@ export class ImagesService {
       qb.andWhere(
         'image.id IN (SELECT it.image_id FROM image_tags it INNER JOIN tags t ON t.id = it.tag_id WHERE t.slug IN (:...tagSlugs))',
         { tagSlugs: query.tags },
+      );
+    }
+    if (query?.search) {
+      qb.andWhere(
+        '(image.aiDescription ILIKE :search OR image.title ILIKE :search OR image.description ILIKE :search)',
+        { search: `%${query.search}%` },
       );
     }
 
@@ -304,6 +311,10 @@ export class ImagesService {
       }
     }
     return this.findOne(id);
+  }
+
+  async updateAiDescription(id: number, aiDescription: string) {
+    await this.repo.update(id, { aiDescription });
   }
 
   async updateSortOrder(updates: { id: number; sortOrder: number }[]) {
