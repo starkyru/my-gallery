@@ -90,26 +90,33 @@ export class ImagesService {
     const hasSearch = !!query?.search;
     const useOr = query?.condition === 'OR';
 
+    // Build keyword search clauses — one per word, all must match
+    const searchWords = hasSearch ? query.search!.split(/\s+/).filter((w) => w.length > 0) : [];
+    const buildSearchSql = (words: string[], params: Record<string, unknown>) => {
+      const clauses = words.map((word, i) => {
+        const key = `sw${i}`;
+        params[key] = `\\m${word}\\M`;
+        return `(image.ai_description ~* :${key} OR image.title ~* :${key} OR image.description ~* :${key})`;
+      });
+      return clauses.join(' AND ');
+    };
+
     if (hasTagFilter && hasSearch) {
       const tagSql =
         'image.id IN (SELECT it.image_id FROM image_tags it INNER JOIN tags t ON t.id = it.tag_id WHERE t.slug IN (:...tagSlugs))';
-      const searchSql =
-        '(image.ai_description ~* :search OR image.title ~* :search OR image.description ~* :search)';
+      const params: Record<string, unknown> = { tagSlugs: query.tags };
+      const searchSql = buildSearchSql(searchWords, params);
       const joiner = useOr ? 'OR' : 'AND';
-      qb.andWhere(`(${tagSql} ${joiner} ${searchSql})`, {
-        tagSlugs: query.tags,
-        search: `\\m${query.search}\\M`,
-      });
+      qb.andWhere(`(${tagSql} ${joiner} (${searchSql}))`, params);
     } else if (hasTagFilter) {
       qb.andWhere(
         'image.id IN (SELECT it.image_id FROM image_tags it INNER JOIN tags t ON t.id = it.tag_id WHERE t.slug IN (:...tagSlugs))',
         { tagSlugs: query.tags },
       );
     } else if (hasSearch) {
-      qb.andWhere(
-        '(image.ai_description ~* :search OR image.title ~* :search OR image.description ~* :search)',
-        { search: `\\m${query.search}\\M` },
-      );
+      const params: Record<string, unknown> = {};
+      const searchSql = buildSearchSql(searchWords, params);
+      qb.andWhere(searchSql, params);
     }
 
     const images = await qb.getMany();
