@@ -9,6 +9,8 @@ import { useAuthStore } from '@/store/auth';
 import { ChatIcon } from '@/components/icons/chat-icon';
 import { SendIcon } from '@/components/icons/send-icon';
 import { CloseIcon } from '@/components/icons/close-icon';
+import { ExpandIcon } from '@/components/icons/expand-icon';
+import { CollapseIcon } from '@/components/icons/collapse-icon';
 
 interface ChatImage {
   id: number;
@@ -37,6 +39,7 @@ export function ChatWidget() {
   const [isLoading, setIsLoading] = useState(false);
   const [lastSentAt, setLastSentAt] = useState(0);
   const [debugMode, setDebugMode] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -107,7 +110,13 @@ export function ChatWidget() {
 
       {/* Chat panel */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 z-40 flex w-[360px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-white/10 bg-gallery-black shadow-2xl sm:w-[380px]">
+        <div
+          className={`fixed z-40 flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-gallery-black shadow-2xl transition-all duration-300 ${
+            isExpanded
+              ? 'bottom-6 right-6 top-6 w-[360px] max-w-[calc(100vw-2rem)] sm:w-[380px]'
+              : 'bottom-6 right-6 w-[360px] max-w-[calc(100vw-2rem)] sm:w-[380px]'
+          }`}
+        >
           {/* Header */}
           <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
             <div className="flex items-center gap-2">
@@ -124,17 +133,30 @@ export function ChatWidget() {
                 </label>
               )}
             </div>
-            <button
-              onClick={() => setIsOpen(false)}
-              aria-label="Close chat"
-              className="text-gallery-gray transition-colors hover:text-gallery-white"
-            >
-              <CloseIcon size={18} />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setIsExpanded(!isExpanded)}
+                aria-label={isExpanded ? 'Collapse chat' : 'Expand chat'}
+                className="text-gallery-gray transition-colors hover:text-gallery-white"
+              >
+                {isExpanded ? <CollapseIcon size={16} /> : <ExpandIcon size={16} />}
+              </button>
+              <button
+                onClick={() => setIsOpen(false)}
+                aria-label="Close chat"
+                className="text-gallery-gray transition-colors hover:text-gallery-white"
+              >
+                <CloseIcon size={18} />
+              </button>
+            </div>
           </div>
 
           {/* Messages */}
-          <div className="flex max-h-[400px] min-h-[200px] flex-col gap-3 overflow-y-auto p-4">
+          <div
+            className={`flex flex-col gap-3 overflow-y-auto p-4 ${
+              isExpanded ? 'flex-1' : 'max-h-[400px] min-h-[200px]'
+            }`}
+          >
             {messages.length === 0 && (
               <p className="text-center text-sm text-gallery-gray">
                 Describe what kind of image you&apos;re looking for and I&apos;ll help you find it.

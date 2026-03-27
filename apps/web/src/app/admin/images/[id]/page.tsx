@@ -10,6 +10,7 @@ import type { Category, Project, Tag } from '@gallery/shared';
 import { UPLOAD_URL } from '@/config';
 import CreatableSelect from 'react-select/creatable';
 import { darkSelectStyles } from '@/lib/select-styles';
+import { ChevronRightIcon } from '@/components/icons/chevron-right-icon';
 
 interface PrintOptionRow {
   sku: string;
@@ -315,14 +316,15 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
 
           {/* AI Description (read-only, used by chat search) */}
           {image.aiDescription && (
-            <div>
-              <label className="block text-xs text-gallery-gray mb-1">
+            <details className="group">
+              <summary className="flex items-center gap-1 text-xs text-gallery-gray cursor-pointer select-none list-none">
+                <ChevronRightIcon className="w-3.5 h-3.5 transition-transform group-open:rotate-90" />
                 AI Description (auto-generated, used by chat search)
-              </label>
-              <p className="px-3 py-1.5 bg-white/5 border border-white/5 rounded text-sm text-white/60 whitespace-pre-wrap">
+              </summary>
+              <p className="mt-1 px-3 py-1.5 bg-white/5 border border-white/5 rounded text-sm text-white/60 whitespace-pre-wrap">
                 {image.aiDescription}
               </p>
-            </div>
+            </details>
           )}
 
           {/* Admin Note */}
