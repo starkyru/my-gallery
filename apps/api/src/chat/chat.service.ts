@@ -83,16 +83,17 @@ When the user describes what they are looking for, respond with a JSON object:
   }
 }
 
-If the user is just chatting or asking something unrelated to finding images, respond with only:
+If the user is just chatting or asking something completely unrelated to images (e.g. "hello", "what time is it"), respond with only:
 { "message": "Your friendly response" }
 
 Rules:
+- ALWAYS include a "search" object when the user mentions any subject, object, scene, mood, or style — even single words like "hat", "sunset", "dog". Never ask for clarification when you can search instead.
 - Pick at most 1 category and up to 5 tags
 - Only use slugs from the lists above
-- Use keywords to search image descriptions when the user asks for something specific (e.g. a subject, object, or scene detail) that may not match a category or tag
+- Use keywords to search image descriptions when the user asks for something specific (e.g. a subject, object, or scene detail) that may not match a category or tag. For short queries, always use the query as a keyword.
 - Keep messages concise and helpful
 - Always prioritize the latest message. If the user changes topic or asks for something new, ignore previous requests and search based only on the latest message
-- If the request is vague, ask a clarifying question (no search)
+- If you're not able to generate keywords, tags or categories, ask a clarifying question (no search)
 - Respond ONLY with valid JSON, no markdown formatting`;
 
     const userMessages = messages.filter((m) => m.role === 'user').map((m) => m.content);
