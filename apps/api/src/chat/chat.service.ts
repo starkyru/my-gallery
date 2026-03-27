@@ -94,7 +94,10 @@ Rules:
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 300,
         system: systemPrompt,
-        messages: messages.map((m) => ({ role: m.role, content: m.content })),
+        // Only forward user messages to prevent prompt injection via fake assistant turns
+        messages: messages
+          .filter((m) => m.role === 'user')
+          .map((m) => ({ role: 'user' as const, content: m.content })),
       });
     } catch (err: unknown) {
       if (err instanceof Anthropic.APIError) {
