@@ -93,33 +93,72 @@ export function ImageDetail({ image }: ImageDetailProps) {
         {/* Bottom overlay — info accordion + buy button */}
         <div
           ref={overlayRef}
-          className="absolute bottom-0 left-0 right-0 z-10"
+          className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/80 via-black/50 to-transparent"
           style={{ textShadow: '0 1px 4px rgba(0,0,0,0.6)' }}
         >
-          {/* Accordion content */}
-          <div
-            className={`overflow-hidden transition-all duration-500 ease-out ${
-              infoOpen ? 'max-h-[60vh] opacity-100' : 'max-h-0 opacity-0'
-            }`}
-          >
-            <div className="mx-4 mb-2 rounded-lg bg-black/70 p-5 backdrop-blur-md sm:mx-6">
-              <p className="text-gallery-accent text-xs uppercase tracking-widest mb-1.5">
-                {image.category.replace(/_/g, ' ')}
-              </p>
+          <div className="px-4 pb-6 pt-16 sm:px-6">
+            {/* Title row — always visible */}
+            <div className="flex items-end justify-between mb-2">
+              <button
+                type="button"
+                onClick={() => setInfoOpen((v) => !v)}
+                className="flex items-center gap-2 group text-left min-w-0"
+              >
+                {infoOpen ? (
+                  <div>
+                    <span className="block text-lg font-semibold text-white">{image.title}</span>
+                    <span className="block text-sm text-white/70">
+                      by{' '}
+                      <Link
+                        href={`/artists/${image.artist.slug}`}
+                        className="hover:text-gallery-accent transition-colors"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {image.artist.name}
+                      </Link>
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-sm text-white/80 truncate">
+                    <span className="font-semibold">{image.title}</span>
+                    {image.description && (
+                      <span className="text-white/60"> &mdash; {image.description}</span>
+                    )}
+                    <span className="text-white/50"> &middot; {image.artist.name}</span>
+                  </span>
+                )}
+                <ChevronDownIcon
+                  className={`w-5 h-5 shrink-0 text-white/70 transition-transform duration-300 group-hover:text-white ${
+                    infoOpen ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
 
-              <p className="text-gallery-gray text-sm mb-3">
-                by{' '}
-                <Link
-                  href={`/artists/${image.artist.slug}`}
-                  className="hover:text-gallery-accent transition-colors"
+              {hasBuyOptions && (
+                <button
+                  type="button"
+                  onClick={() => setBuyOpen(true)}
+                  className="shrink-0 rounded-full bg-white/15 p-3 text-white backdrop-blur-sm hover:bg-gallery-accent hover:text-gallery-black transition-colors duration-300"
+                  aria-label="Buy options"
                 >
-                  {image.artist.name}
-                </Link>
-              </p>
-
-              {image.description && (
-                <p className="text-white/80 text-sm leading-relaxed mb-3">{image.description}</p>
+                  <ShoppingBagIcon className="w-5 h-5" />
+                </button>
               )}
+            </div>
+
+            {/* Accordion content */}
+            <div
+              className={`overflow-hidden transition-all duration-500 ease-out max-w-xl ${
+                infoOpen ? 'max-h-[60vh] opacity-100' : 'max-h-0 opacity-0'
+              }`}
+            >
+              {image.description && (
+                <p className="text-white/80 text-sm leading-relaxed mb-2">{image.description}</p>
+              )}
+
+              <p className="text-gallery-gray text-xs mb-2">
+                Category: {image.category.replace(/_/g, ' ')}
+              </p>
 
               {image.tags && image.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
@@ -135,46 +174,6 @@ export function ImageDetail({ image }: ImageDetailProps) {
                 </div>
               )}
             </div>
-          </div>
-
-          {/* Bottom bar with title, accordion toggle, and buy button */}
-          <div className="flex items-end justify-between px-4 pb-6 pt-2 sm:px-6 bg-gradient-to-t from-black/70 to-transparent">
-            <button
-              type="button"
-              onClick={() => setInfoOpen((v) => !v)}
-              className="flex items-center gap-2 group text-left min-w-0"
-            >
-              {infoOpen ? (
-                <div>
-                  <span className="block text-lg font-semibold text-white">{image.title}</span>
-                  <span className="block text-sm text-white/70">by {image.artist.name}</span>
-                </div>
-              ) : (
-                <span className="text-sm text-white/80 truncate">
-                  <span className="font-semibold">{image.title}</span>
-                  {image.description && (
-                    <span className="text-white/60"> &mdash; {image.description}</span>
-                  )}
-                  <span className="text-white/50"> &middot; {image.artist.name}</span>
-                </span>
-              )}
-              <ChevronDownIcon
-                className={`w-5 h-5 shrink-0 text-white/70 transition-transform duration-300 group-hover:text-white ${
-                  infoOpen ? 'rotate-180' : ''
-                }`}
-              />
-            </button>
-
-            {hasBuyOptions && (
-              <button
-                type="button"
-                onClick={() => setBuyOpen(true)}
-                className="rounded-full bg-white/15 p-3 text-white backdrop-blur-sm hover:bg-gallery-accent hover:text-gallery-black transition-colors duration-300"
-                aria-label="Buy options"
-              >
-                <ShoppingBagIcon className="w-5 h-5" />
-              </button>
-            )}
           </div>
         </div>
       </div>
