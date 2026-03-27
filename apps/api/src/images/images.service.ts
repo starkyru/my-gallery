@@ -85,13 +85,22 @@ export class ImagesService {
     if (query?.projectId !== undefined) {
       qb.andWhere('image.projectId = :projectId', { projectId: query.projectId });
     }
-    if (query?.tags && query.tags.length > 0) {
+    const hasTagFilter = query?.tags && query.tags.length > 0;
+    const hasSearch = !!query?.search;
+
+    if (hasTagFilter && hasSearch) {
+      // OR: match tags OR keyword search (broader results)
+      qb.andWhere(
+        `(image.id IN (SELECT it.image_id FROM image_tags it INNER JOIN tags t ON t.id = it.tag_id WHERE t.slug IN (:...tagSlugs))
+          OR image.ai_description ~* :search OR image.title ~* :search OR image.description ~* :search)`,
+        { tagSlugs: query.tags, search: `\\m${query.search}\\M` },
+      );
+    } else if (hasTagFilter) {
       qb.andWhere(
         'image.id IN (SELECT it.image_id FROM image_tags it INNER JOIN tags t ON t.id = it.tag_id WHERE t.slug IN (:...tagSlugs))',
         { tagSlugs: query.tags },
       );
-    }
-    if (query?.search) {
+    } else if (hasSearch) {
       qb.andWhere(
         '(image.ai_description ~* :search OR image.title ~* :search OR image.description ~* :search)',
         { search: `\\m${query.search}\\M` },
