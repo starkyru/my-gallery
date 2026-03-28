@@ -132,6 +132,32 @@ Rules:
       images = await this.searchImages(withoutCategory, validCategorySlugs, validTagSlugs, 'OR');
     }
 
+    // Fallback 3: if still nothing and multi-turn, retry with only the last message
+    // (user may have changed topic and AI mixed old + new concepts)
+    if (images.length === 0 && userMessages.length > 1) {
+      const retryResult = await this.callAi(systemPrompt, [userMessages[userMessages.length - 1]]);
+      if (retryResult?.search) {
+        images = await this.searchImages(
+          retryResult.search,
+          validCategorySlugs,
+          validTagSlugs,
+          retryResult.search.condition ?? 'AND',
+        );
+        if (images.length === 0) {
+          // Also try OR + no category on the retried search
+          images = await this.searchImages(
+            { ...retryResult.search, category: undefined },
+            validCategorySlugs,
+            validTagSlugs,
+            'OR',
+          );
+        }
+        if (images.length > 0) {
+          return { message: retryResult.message, images, debug: { search: retryResult.search } };
+        }
+      }
+    }
+
     const finalMessage =
       images.length === 0
         ? `${message} Unfortunately, I couldn't find images matching that description. Try broadening your search or describing something different.`
