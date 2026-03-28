@@ -51,6 +51,13 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${playfair.variable}`} suppressHydrationWarning>
+      <head>
+        <script
+          defer
+          src="https://stats.ilia.to/script.js"
+          data-website-id="2ff8284a-49fa-47f5-ad4e-9ae40a9dc464"
+        />
+      </head>
       <body
         className="bg-gallery-black text-gallery-white font-sans antialiased"
         suppressHydrationWarning
