@@ -58,7 +58,7 @@ export class ImagesService {
     artistId?: number;
     projectId?: number;
     tags?: string[];
-    search?: string;
+    search?: string[][];
     condition?: 'AND' | 'OR';
   }) {
     const qb = this.repo
@@ -90,22 +90,26 @@ export class ImagesService {
     const hasSearch = !!query?.search;
     const useOr = query?.condition === 'OR';
 
-    // Build keyword search clauses — one per word, all must match
-    const searchWords = hasSearch ? query.search!.split(/\s+/).filter((w) => w.length > 0) : [];
-    const buildSearchSql = (words: string[], params: Record<string, unknown>) => {
-      const clauses = words.map((word, i) => {
-        const key = `sw${i}`;
-        params[key] = `\\m${word}\\M`;
-        return `(image.ai_description ~* :${key} OR image.title ~* :${key} OR image.description ~* :${key})`;
+    // Build keyword search — each group is OR (synonyms), groups are ANDed (concepts)
+    // e.g. [["dog","puppy"],["hat","cap"]] => (dog OR puppy) AND (hat OR cap)
+    const searchGroups = hasSearch ? query.search! : [];
+    const buildSearchSql = (groups: string[][], params: Record<string, unknown>) => {
+      const groupClauses = groups.map((synonyms, gi) => {
+        const synClauses = synonyms.map((word, si) => {
+          const key = `sw${gi}_${si}`;
+          params[key] = `\\m${word}\\M`;
+          return `(image.ai_description ~* :${key} OR image.title ~* :${key} OR image.description ~* :${key})`;
+        });
+        return `(${synClauses.join(' OR ')})`;
       });
-      return clauses.join(' AND ');
+      return groupClauses.join(' AND ');
     };
 
     if (hasTagFilter && hasSearch) {
       const tagSql =
         'image.id IN (SELECT it.image_id FROM image_tags it INNER JOIN tags t ON t.id = it.tag_id WHERE t.slug IN (:...tagSlugs))';
       const params: Record<string, unknown> = { tagSlugs: query.tags };
-      const searchSql = buildSearchSql(searchWords, params);
+      const searchSql = buildSearchSql(searchGroups, params);
       const joiner = useOr ? 'OR' : 'AND';
       qb.andWhere(`(${tagSql} ${joiner} (${searchSql}))`, params);
     } else if (hasTagFilter) {
@@ -115,7 +119,7 @@ export class ImagesService {
       );
     } else if (hasSearch) {
       const params: Record<string, unknown> = {};
-      const searchSql = buildSearchSql(searchWords, params);
+      const searchSql = buildSearchSql(searchGroups, params);
       qb.andWhere(searchSql, params);
     }
 

@@ -386,7 +386,7 @@ export const api = {
           search?: {
             category?: string;
             tags?: string[];
-            keywords?: string;
+            keywords?: string[][];
             featured?: boolean;
           };
         };

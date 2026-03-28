@@ -12,7 +12,7 @@ const ChatAiResponseSchema = z.object({
     .object({
       category: z.string().optional(),
       tags: z.array(z.string()).optional(),
-      keywords: z.string().optional(),
+      keywords: z.array(z.array(z.string())).optional(),
       featured: z.boolean().optional(),
       condition: z.enum(['AND', 'OR']).optional(),
     })
@@ -34,7 +34,7 @@ export interface ChatResponse {
   message: string;
   images: ChatImage[];
   debug?: {
-    search?: { category?: string; tags?: string[]; keywords?: string; featured?: boolean };
+    search?: { category?: string; tags?: string[]; keywords?: string[][]; featured?: boolean };
   };
 }
 
@@ -79,7 +79,7 @@ When the user describes what they are looking for, respond with a JSON object:
   "search": {
     "category": "optional category slug from above",
     "tags": ["optional", "tag", "slugs"],
-    "keywords": "optional keyword to search image descriptions (e.g. 'sunset', 'bridge', 'rain')",
+    "keywords": [["dog", "puppy", "canine"], ["hat", "cap", "headwear"]],
     "featured": false,
     "condition": "AND or OR — use AND when the user wants all criteria combined (e.g. 'dog in a hat'), use OR when criteria are alternatives (e.g. 'sunset or beach'). Default: AND"
   }
@@ -93,7 +93,7 @@ Rules:
 - Only set "featured" to true if the user explicitly asks for featured, popular, or best images. Otherwise omit it.
 - Pick at most 1 category and up to 5 tags
 - Only use slugs from the lists above
-- Use keywords to search image descriptions when the user asks for something specific (e.g. a subject, object, or scene detail) that may not match a category or tag. For short queries, always use the query as a keyword.
+- Use keywords to search image descriptions. Each inner array is one concept with the original word plus up to 3 synonyms (e.g. "dog" -> ["dog", "puppy", "canine", "hound"]). Multiple concepts are ANDed together (e.g. "dog in hat" -> [["dog","puppy","canine"],["hat","cap","headwear"]]). For short queries, always include keywords.
 - Keep messages concise and helpful
 - Always prioritize the latest message. If the user changes topic or asks for something new, ignore previous requests and search based only on the latest message
 - If you're not able to generate keywords, tags or categories, ask a clarifying question (no search)
@@ -135,7 +135,12 @@ Rules:
   }
 
   private async searchImages(
-    search: { category?: string; tags?: string[]; keywords?: string; featured?: boolean },
+    search: {
+      category?: string;
+      tags?: string[];
+      keywords?: string[][];
+      featured?: boolean;
+    },
     validCategorySlugs: Set<string>,
     validTagSlugs: Set<string>,
     condition: 'AND' | 'OR',
@@ -143,11 +148,12 @@ Rules:
     const category =
       search.category && validCategorySlugs.has(search.category) ? search.category : undefined;
     const filteredTags = (search.tags ?? []).filter((t) => validTagSlugs.has(t));
+    const keywords = search.keywords && search.keywords.length > 0 ? search.keywords : undefined;
 
     const allImages = await this.imagesService.findAll({
       category,
       tags: filteredTags.length > 0 ? filteredTags : undefined,
-      search: search.keywords || undefined,
+      search: keywords,
       featured: search.featured,
       condition,
     });
