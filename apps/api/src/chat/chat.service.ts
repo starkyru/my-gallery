@@ -121,9 +121,15 @@ Rules:
     const condition = search.condition ?? 'AND';
     let images = await this.searchImages(search, validCategorySlugs, validTagSlugs, condition);
 
-    // Fallback: if AND returned nothing, retry with OR for broader results
+    // Fallback 1: switch AND to OR between tags and keywords
     if (images.length === 0 && condition === 'AND') {
       images = await this.searchImages(search, validCategorySlugs, validTagSlugs, 'OR');
+    }
+
+    // Fallback 2: drop category filter entirely
+    if (images.length === 0 && search.category) {
+      const withoutCategory = { ...search, category: undefined };
+      images = await this.searchImages(withoutCategory, validCategorySlugs, validTagSlugs, 'OR');
     }
 
     const finalMessage =
