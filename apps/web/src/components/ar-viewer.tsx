@@ -137,27 +137,30 @@ function WebXrViewer({
           }
         ).requestHitTestSource({ space: viewerSpace });
 
-        let placed = false;
-
-        // Tap to place
+        // Tap to place (or re-place)
         session.addEventListener('select', () => {
-          if (!placed && reticle.visible) {
-            artworkMesh.position.setFromMatrixPosition(reticle.matrix);
-            artworkMesh.quaternion.setFromRotationMatrix(reticle.matrix);
-            // Stand the artwork upright on the surface
-            artworkMesh.rotateX(-Math.PI / 2);
-            artworkMesh.position.y += planeHeight / 2;
+          if (reticle.visible) {
+            // Get surface hit position
+            const pos = new THREE.Vector3();
+            pos.setFromMatrixPosition(reticle.matrix);
+
+            // Place artwork upright: stand on surface, face the camera
+            artworkMesh.position.set(pos.x, pos.y + planeHeight / 2, pos.z);
+
+            // Face the camera while staying upright
+            const camPos = new THREE.Vector3();
+            camera.getWorldPosition(camPos);
+            artworkMesh.lookAt(camPos.x, artworkMesh.position.y, camPos.z);
+
             artworkMesh.visible = true;
-            placed = true;
-            reticle.visible = false;
           }
         });
 
-        // Render loop
+        // Render loop — always show reticle so user can re-place
         renderer.setAnimationLoop((_time: number, frame?: XRFrame) => {
           if (!frame) return;
 
-          if (!placed && hitTestSource) {
+          if (hitTestSource) {
             const hitResults = frame.getHitTestResults(hitTestSource);
             if (hitResults.length > 0) {
               const pose = hitResults[0].getPose(refSpace);
@@ -237,6 +240,29 @@ function WebXrViewer({
               cleanupRef.current?.();
               onClose();
             }}
+            className="absolute top-4 left-4 z-10 flex items-center gap-2 rounded-full bg-black/50 px-4 py-2 text-white backdrop-blur-sm"
+            aria-label="Back"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M19 12H5" />
+              <path d="M12 19l-7-7 7-7" />
+            </svg>
+            <span className="text-sm">Back</span>
+          </button>
+          <button
+            onClick={() => {
+              cleanupRef.current?.();
+              onClose();
+            }}
             className="absolute top-4 right-4 z-10 rounded-full bg-black/50 p-3 text-white backdrop-blur-sm"
             aria-label="Close AR view"
           >
@@ -244,7 +270,7 @@ function WebXrViewer({
           </button>
           <div className="absolute bottom-8 left-0 right-0 flex justify-center pointer-events-none">
             <span className="px-4 py-2 bg-black/50 rounded-full text-white/80 text-sm backdrop-blur-sm">
-              Point at a surface, then tap to place
+              Tap a surface to place. Tap again to move.
             </span>
           </div>
         </>
@@ -375,6 +401,26 @@ function CameraOverlay({
         </div>
       )}
 
+      <button
+        onClick={onClose}
+        className="absolute top-4 left-4 z-10 flex items-center gap-2 rounded-full bg-black/50 px-4 py-2 text-white backdrop-blur-sm hover:bg-black/70 transition-colors"
+        aria-label="Back"
+      >
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M19 12H5" />
+          <path d="M12 19l-7-7 7-7" />
+        </svg>
+        <span className="text-sm">Back</span>
+      </button>
       <button
         onClick={onClose}
         className="absolute top-4 right-4 z-10 rounded-full bg-black/50 p-3 text-white backdrop-blur-sm hover:bg-black/70 transition-colors"
