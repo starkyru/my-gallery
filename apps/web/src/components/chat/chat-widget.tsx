@@ -92,6 +92,7 @@ export function ChatWidget() {
       setMessages((prev) => [...prev, { role: 'assistant', content: text }]);
     } finally {
       setIsLoading(false);
+      inputRef.current?.focus();
     }
   }, [input, isLoading, lastSentAt, messages, debugMode]);
 
