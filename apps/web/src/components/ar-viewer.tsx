@@ -108,7 +108,6 @@ function WebXrViewer({
 
         // Reticle (placement indicator)
         const reticleGeometry = new THREE.RingGeometry(0.05, 0.06, 32);
-        reticleGeometry.rotateX(-Math.PI / 2);
         const reticleMaterial = new THREE.MeshBasicMaterial({ color: 0xc9a96e });
         const reticle = new THREE.Mesh(reticleGeometry, reticleMaterial);
         reticle.visible = false;
@@ -137,36 +136,70 @@ function WebXrViewer({
           }
         ).requestHitTestSource({ space: viewerSpace });
 
+        // Track whether the current reticle hit is on a wall
+        let lastHitIsWall = false;
+        let lastHitNormal = new THREE.Vector3(0, 1, 0);
+
         // Tap to place (or re-place)
         session.addEventListener('select', () => {
           if (reticle.visible) {
-            // Get surface hit position
             const pos = new THREE.Vector3();
             pos.setFromMatrixPosition(reticle.matrix);
 
-            // Place artwork upright: stand on surface, face the camera
-            artworkMesh.position.set(pos.x, pos.y + planeHeight / 2, pos.z);
-
-            // Face the camera while staying upright
-            const camPos = new THREE.Vector3();
-            camera.getWorldPosition(camPos);
-            artworkMesh.lookAt(camPos.x, artworkMesh.position.y, camPos.z);
+            if (lastHitIsWall) {
+              // Wall placement: flush against the wall surface
+              artworkMesh.position.copy(pos);
+              // Face outward from the wall (along the surface normal)
+              const target = pos.clone().add(lastHitNormal);
+              artworkMesh.lookAt(target);
+            } else {
+              // Floor/table placement: stand upright, face the camera
+              artworkMesh.position.set(pos.x, pos.y + planeHeight / 2, pos.z);
+              const camPos = new THREE.Vector3();
+              camera.getWorldPosition(camPos);
+              artworkMesh.lookAt(camPos.x, artworkMesh.position.y, camPos.z);
+            }
 
             artworkMesh.visible = true;
           }
         });
 
-        // Render loop — always show reticle so user can re-place
+        // Render loop — prioritize vertical (wall) surfaces
         renderer.setAnimationLoop((_time: number, frame?: XRFrame) => {
           if (!frame) return;
 
           if (hitTestSource) {
             const hitResults = frame.getHitTestResults(hitTestSource);
             if (hitResults.length > 0) {
-              const pose = hitResults[0].getPose(refSpace);
-              if (pose) {
+              // Check all hits — prefer vertical surfaces (walls)
+              let bestPose: XRPose | null = null;
+              let bestIsWall = false;
+              let bestNormal = new THREE.Vector3(0, 1, 0);
+
+              for (const hit of hitResults) {
+                const pose = hit.getPose(refSpace);
+                if (!pose) continue;
+
+                // Extract the surface normal (Y axis of the hit's rotation matrix)
+                const mat = new THREE.Matrix4().fromArray(pose.transform.matrix);
+                const normal = new THREE.Vector3(0, 1, 0).applyMatrix4(
+                  new THREE.Matrix4().extractRotation(mat),
+                );
+                // A wall normal is mostly horizontal (small Y component)
+                const isWall = Math.abs(normal.y) < 0.5;
+
+                if (!bestPose || (isWall && !bestIsWall)) {
+                  bestPose = pose;
+                  bestIsWall = isWall;
+                  bestNormal = normal;
+                }
+              }
+
+              if (bestPose) {
                 reticle.visible = true;
-                reticle.matrix.fromArray(pose.transform.matrix);
+                reticle.matrix.fromArray(bestPose.transform.matrix);
+                lastHitIsWall = bestIsWall;
+                lastHitNormal = bestNormal;
               }
             } else {
               reticle.visible = false;
@@ -270,7 +303,7 @@ function WebXrViewer({
           </button>
           <div className="absolute bottom-8 left-0 right-0 flex justify-center pointer-events-none">
             <span className="px-4 py-2 bg-black/50 rounded-full text-white/80 text-sm backdrop-blur-sm">
-              Tap a surface to place. Tap again to move.
+              Point at a wall and tap to place. Tap again to move.
             </span>
           </div>
         </>
