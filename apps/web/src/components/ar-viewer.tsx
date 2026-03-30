@@ -24,9 +24,9 @@ export function ArViewer({
 }: ArViewerProps) {
   if (!open || !mode) return null;
 
-  if (mode === 'camera') {
+  if (mode === 'webxr') {
     return (
-      <CameraOverlay
+      <WebXrViewer
         onClose={onClose}
         imageUrl={imageUrl}
         imageWidth={imageWidth}
@@ -35,8 +35,6 @@ export function ArViewer({
     );
   }
 
-  // WebXR mode — for now fall back to camera overlay
-  // Full WebXR with Three.js can be added in a future iteration
   return (
     <CameraOverlay
       onClose={onClose}
@@ -46,6 +44,216 @@ export function ArViewer({
     />
   );
 }
+
+// ─── WebXR with Three.js (Android) ───────────────────────────────────────────
+
+function WebXrViewer({
+  onClose,
+  imageUrl,
+  imageWidth,
+  imageHeight,
+}: {
+  onClose: () => void;
+  imageUrl: string;
+  imageWidth: number;
+  imageHeight: number;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [status, setStatus] = useState<'loading' | 'active' | 'error'>('loading');
+  const [errorMsg, setErrorMsg] = useState('');
+  const cleanupRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function startXr() {
+      try {
+        const THREE = await import('three');
+
+        const canvas = canvasRef.current;
+        if (!canvas || cancelled) return;
+
+        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.xr.enabled = true;
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(
+          70,
+          window.innerWidth / window.innerHeight,
+          0.01,
+          20,
+        );
+
+        // Lighting
+        scene.add(new THREE.AmbientLight(0xffffff, 1.5));
+
+        // Load artwork texture
+        const textureLoader = new THREE.TextureLoader();
+        const texture = await new Promise<InstanceType<typeof THREE.Texture>>((resolve, reject) => {
+          textureLoader.load(imageUrl, resolve, undefined, reject);
+        });
+        texture.colorSpace = THREE.SRGBColorSpace;
+
+        // Create artwork plane with correct aspect ratio
+        const aspect = imageWidth / imageHeight;
+        const planeHeight = 0.4; // 40cm in AR space
+        const planeWidth = planeHeight * aspect;
+        const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
+        const material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
+        const artworkMesh = new THREE.Mesh(geometry, material);
+        artworkMesh.visible = false;
+        scene.add(artworkMesh);
+
+        // Reticle (placement indicator)
+        const reticleGeometry = new THREE.RingGeometry(0.05, 0.06, 32);
+        reticleGeometry.rotateX(-Math.PI / 2);
+        const reticleMaterial = new THREE.MeshBasicMaterial({ color: 0xc9a96e });
+        const reticle = new THREE.Mesh(reticleGeometry, reticleMaterial);
+        reticle.visible = false;
+        reticle.matrixAutoUpdate = false;
+        scene.add(reticle);
+
+        // Request AR session
+        const nav = navigator as Navigator & {
+          xr: {
+            requestSession: (mode: string, opts: Record<string, unknown>) => Promise<XRSession>;
+          };
+        };
+        const session = await nav.xr.requestSession('immersive-ar', {
+          requiredFeatures: ['hit-test'],
+          optionalFeatures: ['dom-overlay'],
+        });
+
+        renderer.xr.setReferenceSpaceType('local');
+        await renderer.xr.setSession(session);
+
+        const refSpace = await session.requestReferenceSpace('local');
+        const viewerSpace = await session.requestReferenceSpace('viewer');
+        const hitTestSource = await (
+          session as XRSession & {
+            requestHitTestSource: (opts: { space: XRReferenceSpace }) => Promise<XRHitTestSource>;
+          }
+        ).requestHitTestSource({ space: viewerSpace });
+
+        let placed = false;
+
+        // Tap to place
+        session.addEventListener('select', () => {
+          if (!placed && reticle.visible) {
+            artworkMesh.position.setFromMatrixPosition(reticle.matrix);
+            artworkMesh.quaternion.setFromRotationMatrix(reticle.matrix);
+            // Stand the artwork upright on the surface
+            artworkMesh.rotateX(-Math.PI / 2);
+            artworkMesh.position.y += planeHeight / 2;
+            artworkMesh.visible = true;
+            placed = true;
+            reticle.visible = false;
+          }
+        });
+
+        // Render loop
+        renderer.setAnimationLoop((_time: number, frame?: XRFrame) => {
+          if (!frame) return;
+
+          if (!placed && hitTestSource) {
+            const hitResults = frame.getHitTestResults(hitTestSource);
+            if (hitResults.length > 0) {
+              const pose = hitResults[0].getPose(refSpace);
+              if (pose) {
+                reticle.visible = true;
+                reticle.matrix.fromArray(pose.transform.matrix);
+              }
+            } else {
+              reticle.visible = false;
+            }
+          }
+
+          renderer.render(scene, camera);
+        });
+
+        if (!cancelled) {
+          setStatus('active');
+        }
+
+        // Cleanup
+        cleanupRef.current = () => {
+          renderer.setAnimationLoop(null);
+          session.end().catch(() => {});
+          renderer.dispose();
+          geometry.dispose();
+          material.dispose();
+          texture.dispose();
+          reticleGeometry.dispose();
+          reticleMaterial.dispose();
+        };
+
+        session.addEventListener('end', () => {
+          if (!cancelled) onClose();
+        });
+      } catch (err) {
+        if (!cancelled) {
+          setStatus('error');
+          setErrorMsg(err instanceof Error ? err.message : 'Failed to start AR session');
+        }
+      }
+    }
+
+    startXr();
+
+    return () => {
+      cancelled = true;
+      cleanupRef.current?.();
+    };
+  }, [imageUrl, imageWidth, imageHeight, onClose]);
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black">
+      <canvas ref={canvasRef} className="w-full h-full" />
+
+      {status === 'loading' && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <p className="text-white text-sm">Starting AR...</p>
+        </div>
+      )}
+
+      {status === 'error' && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/90">
+          <p className="text-white text-center px-8">{errorMsg}</p>
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-gallery-accent text-gallery-black rounded-lg text-sm font-medium"
+          >
+            Close
+          </button>
+        </div>
+      )}
+
+      {status === 'active' && (
+        <>
+          <button
+            onClick={() => {
+              cleanupRef.current?.();
+              onClose();
+            }}
+            className="absolute top-4 right-4 z-10 rounded-full bg-black/50 p-3 text-white backdrop-blur-sm"
+            aria-label="Close AR view"
+          >
+            <CloseIcon size={22} />
+          </button>
+          <div className="absolute bottom-8 left-0 right-0 flex justify-center pointer-events-none">
+            <span className="px-4 py-2 bg-black/50 rounded-full text-white/80 text-sm backdrop-blur-sm">
+              Point at a surface, then tap to place
+            </span>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ─── Camera overlay fallback (iOS) ──────────────────────────────────────────
 
 function CameraOverlay({
   onClose,
@@ -59,7 +267,6 @@ function CameraOverlay({
   imageHeight: number;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const artRef = useRef<HTMLDivElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [artPos, setArtPos] = useState({ x: 0, y: 0 });
   const [artScale, setArtScale] = useState(1);
@@ -130,12 +337,11 @@ function CameraOverlay({
     pinchStart.current = null;
   }, []);
 
-  const artW = window.innerWidth * 0.4 * artScale;
+  const artW = typeof window !== 'undefined' ? window.innerWidth * 0.4 * artScale : 200;
   const artH = artW / (imageWidth / imageHeight);
 
   return (
     <div className="fixed inset-0 z-50 bg-black">
-      {/* Camera feed */}
       <video
         ref={videoRef}
         autoPlay
@@ -150,17 +356,10 @@ function CameraOverlay({
         </div>
       )}
 
-      {/* Artwork overlay */}
       {!error && (
         <div
-          ref={artRef}
           className="absolute touch-none"
-          style={{
-            left: artPos.x,
-            top: artPos.y,
-            width: artW,
-            height: artH,
-          }}
+          style={{ left: artPos.x, top: artPos.y, width: artW, height: artH }}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
@@ -176,7 +375,6 @@ function CameraOverlay({
         </div>
       )}
 
-      {/* Close button */}
       <button
         onClick={onClose}
         className="absolute top-4 right-4 z-10 rounded-full bg-black/50 p-3 text-white backdrop-blur-sm hover:bg-black/70 transition-colors"
@@ -185,7 +383,6 @@ function CameraOverlay({
         <CloseIcon size={22} />
       </button>
 
-      {/* Hint */}
       {!error && (
         <div className="absolute bottom-8 left-0 right-0 flex justify-center pointer-events-none">
           <span className="px-4 py-2 bg-black/50 rounded-full text-white/80 text-sm backdrop-blur-sm">
