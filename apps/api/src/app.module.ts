@@ -28,6 +28,9 @@ import { ServiceConfigEntity } from './services/service-config.entity';
 import { TagsModule } from './tags/tags.module';
 import { ContactsModule } from './contacts/contacts.module';
 import { ChatModule } from './chat/chat.module';
+import { WallsModule } from './walls/walls.module';
+import { WallBackgroundEntity } from './walls/wall-background.entity';
+import { FramePresetEntity } from './walls/frame-preset.entity';
 import { ContactInquiryEntity } from './contacts/contact-inquiry.entity';
 import { TagEntity } from './tags/tag.entity';
 import { ImageTagEntity } from './tags/image-tag.entity';
@@ -60,6 +63,8 @@ import { ImageTagEntity } from './tags/image-tag.entity';
           TagEntity,
           ImageTagEntity,
           ContactInquiryEntity,
+          WallBackgroundEntity,
+          FramePresetEntity,
         ],
         synchronize: config.get('NODE_ENV') !== 'production',
       }),
@@ -79,6 +84,7 @@ import { ImageTagEntity } from './tags/image-tag.entity';
     TagsModule,
     ContactsModule,
     ChatModule,
+    WallsModule,
   ],
 })
 export class AppModule {}

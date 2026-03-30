@@ -18,6 +18,7 @@ const ADMIN_NAV = [
   { href: '/admin/projects', label: 'Projects' },
   { href: '/admin/protected-galleries', label: 'Galleries' },
   { href: '/admin/users', label: 'Users' },
+  { href: '/admin/walls', label: 'Walls' },
   { href: '/admin/settings', label: 'Settings' },
 ];
 
@@ -37,6 +38,7 @@ const ADMIN_ONLY_ROUTES = [
   '/admin/protected-galleries',
   '/admin/settings',
   '/admin/users',
+  '/admin/walls',
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

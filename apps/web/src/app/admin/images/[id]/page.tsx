@@ -16,6 +16,8 @@ interface PrintOptionRow {
   sku: string;
   description: string;
   price: number;
+  widthCm: number;
+  heightCm: number;
 }
 
 interface ImageData {
@@ -111,6 +113,8 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
           sku: o.sku,
           description: o.description,
           price: Number(o.price),
+          widthCm: Number(o.widthCm) || 0,
+          heightCm: Number(o.heightCm) || 0,
         })),
       );
       const tagIds = (data.tags || []).map((t) => t.id);
@@ -218,7 +222,10 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
   }
 
   function addPrintOption() {
-    setPrintOptions((opts) => [...opts, { sku: '', description: '', price: 0 }]);
+    setPrintOptions((opts) => [
+      ...opts,
+      { sku: '', description: '', price: 0, widthCm: 0, heightCm: 0 },
+    ]);
   }
 
   function updatePrintOption(index: number, field: string, value: string | number) {
@@ -493,6 +500,22 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
                       step="0.01"
                       placeholder="Price"
                       className={`${inputClass} w-24`}
+                    />
+                    <input
+                      value={opt.widthCm || ''}
+                      onChange={(e) => updatePrintOption(idx, 'widthCm', +e.target.value)}
+                      type="number"
+                      step="0.1"
+                      placeholder="W cm"
+                      className={`${inputClass} w-16`}
+                    />
+                    <input
+                      value={opt.heightCm || ''}
+                      onChange={(e) => updatePrintOption(idx, 'heightCm', +e.target.value)}
+                      type="number"
+                      step="0.1"
+                      placeholder="H cm"
+                      className={`${inputClass} w-16`}
                     />
                     <button
                       onClick={() => removePrintOption(idx)}

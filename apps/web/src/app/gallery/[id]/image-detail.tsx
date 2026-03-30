@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCartStore } from '@/store/cart';
@@ -10,6 +11,16 @@ import { UPLOAD_URL } from '@/config';
 import { Modal } from '@/components/modal';
 import { ShoppingBagIcon } from '@/components/icons/shopping-bag-icon';
 import { ChevronDownIcon } from '@/components/icons/chevron-down-icon';
+import { FrameIcon } from '@/components/icons/frame-icon';
+import { CameraIcon } from '@/components/icons/camera-icon';
+import { useArSupport } from '@/hooks/useArSupport';
+
+const WallPreview = dynamic(() => import('@/components/wall-preview').then((m) => m.WallPreview), {
+  ssr: false,
+});
+const ArViewer = dynamic(() => import('@/components/ar-viewer').then((m) => m.ArViewer), {
+  ssr: false,
+});
 
 interface ImageDetailProps {
   image: {
@@ -38,8 +49,11 @@ export function ImageDetail({ image }: ImageDetailProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [infoOpen, setInfoOpen] = useState(true);
   const [buyOpen, setBuyOpen] = useState(false);
+  const [wallPreviewOpen, setWallPreviewOpen] = useState(false);
+  const [arViewerOpen, setArViewerOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
+  const { supported: arSupported, mode: arMode } = useArSupport();
 
   const originalInCart = items.some((i) => i.imageId === image.id && i.type === 'original');
 
@@ -53,6 +67,10 @@ export function ImageDetail({ image }: ImageDetailProps) {
 
   const hasBuyOptions =
     image.allowDownloadOriginal || (image.printEnabled && image.printOptions?.length > 0);
+
+  const printOptionsWithDimensions = (image.printOptions ?? []).filter(
+    (o) => Number(o.widthCm) > 0 && Number(o.heightCm) > 0,
+  );
 
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -88,6 +106,43 @@ export function ImageDetail({ image }: ImageDetailProps) {
             priority
             onLoad={() => setImageLoaded(true)}
           />
+        </div>
+
+        {/* Side panel — action buttons */}
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 z-10 flex flex-col gap-2">
+          {printOptionsWithDimensions.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setWallPreviewOpen(true)}
+              className="rounded-full bg-white/15 p-3 text-white backdrop-blur-sm hover:bg-gallery-accent hover:text-gallery-black transition-colors duration-300"
+              aria-label="View on wall"
+              title="View on wall"
+            >
+              <FrameIcon size={20} />
+            </button>
+          )}
+          {arSupported && (
+            <button
+              type="button"
+              onClick={() => setArViewerOpen(true)}
+              className="rounded-full bg-white/15 p-3 text-white backdrop-blur-sm hover:bg-gallery-accent hover:text-gallery-black transition-colors duration-300"
+              aria-label="View in AR"
+              title="View in AR"
+            >
+              <CameraIcon size={20} />
+            </button>
+          )}
+          {hasBuyOptions && (
+            <button
+              type="button"
+              onClick={() => setBuyOpen(true)}
+              className="rounded-full bg-white/15 p-3 text-white backdrop-blur-sm hover:bg-gallery-accent hover:text-gallery-black transition-colors duration-300"
+              aria-label="Buy options"
+              title="Buy options"
+            >
+              <ShoppingBagIcon className="w-5 h-5" />
+            </button>
+          )}
         </div>
 
         {/* Bottom overlay — info accordion + buy button */}
@@ -130,17 +185,6 @@ export function ImageDetail({ image }: ImageDetailProps) {
                   }`}
                 />
               </button>
-
-              {hasBuyOptions && (
-                <button
-                  type="button"
-                  onClick={() => setBuyOpen(true)}
-                  className="shrink-0 rounded-full bg-white/15 p-3 text-white backdrop-blur-sm hover:bg-gallery-accent hover:text-gallery-black transition-colors duration-300"
-                  aria-label="Buy options"
-                >
-                  <ShoppingBagIcon className="w-5 h-5" />
-                </button>
-              )}
             </div>
 
             {/* Accordion content */}
@@ -265,6 +309,26 @@ export function ImageDetail({ image }: ImageDetailProps) {
           )}
         </div>
       </Modal>
+
+      {/* Wall Preview */}
+      <WallPreview
+        open={wallPreviewOpen}
+        onClose={() => setWallPreviewOpen(false)}
+        imageUrl={`${UPLOAD_URL}/${image.watermarkPath}`}
+        imageWidth={image.width}
+        imageHeight={image.height}
+        printOptions={printOptionsWithDimensions}
+      />
+
+      {/* AR Viewer */}
+      <ArViewer
+        open={arViewerOpen}
+        onClose={() => setArViewerOpen(false)}
+        imageUrl={`${UPLOAD_URL}/${image.watermarkPath}`}
+        imageWidth={image.width}
+        imageHeight={image.height}
+        mode={arMode}
+      />
     </>
   );
 }

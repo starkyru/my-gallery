@@ -22,6 +22,12 @@ export class ImagePrintOptionEntity {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   price!: number;
 
+  @Column({ name: 'width_cm', type: 'decimal', precision: 6, scale: 1, default: 0 })
+  widthCm!: number;
+
+  @Column({ name: 'height_cm', type: 'decimal', precision: 6, scale: 1, default: 0 })
+  heightCm!: number;
+
   @Column({ name: 'fulfillment_provider', type: 'varchar', nullable: true })
   fulfillmentProvider!: string | null;
 }

@@ -12,6 +12,8 @@ import type {
   Artist,
   Tag,
   ContactInquiry,
+  WallBackground,
+  FramePreset,
 } from '@gallery/shared';
 
 interface CatalogueProductSummary {
@@ -366,6 +368,28 @@ export const api = {
     catalogueProduct: (slug: string, token: string) =>
       request<CatalogueProductDetail>(`/services/catalogue/products/${encodeURIComponent(slug)}`, {
         headers: authHeaders(token),
+      }),
+  },
+  walls: {
+    list: () => request<WallBackground[]>('/walls'),
+    frames: () => request<FramePreset[]>('/walls/frames'),
+    framesAll: (token: string) =>
+      request<FramePreset[]>('/walls/frames/all', { headers: authHeaders(token) }),
+    create: (formData: FormData, token: string) =>
+      uploadRequest<WallBackground>('/walls', formData, token),
+    update: (id: number, data: Record<string, unknown>, token: string) =>
+      request<WallBackground>(`/walls/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+        headers: { ...authHeaders(token), 'Content-Type': 'application/json' },
+      }),
+    delete: (id: number, token: string) =>
+      request(`/walls/${id}`, { method: 'DELETE', headers: authHeaders(token) }),
+    updateFrame: (id: number, data: Record<string, unknown>, token: string) =>
+      request<FramePreset>(`/walls/frames/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+        headers: { ...authHeaders(token), 'Content-Type': 'application/json' },
       }),
   },
   chat: {

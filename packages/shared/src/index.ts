@@ -27,7 +27,36 @@ export interface ImagePrintOption {
   sku: string;
   description: string;
   price: number;
+  widthCm: number;
+  heightCm: number;
   fulfillmentProvider: string | null;
+}
+
+export interface WallBackground {
+  id: number;
+  name: string;
+  imagePath: string;
+  thumbnailPath: string;
+  wallWidthCm: number | null;
+  wallHeightCm: number | null;
+  anchorX: number;
+  anchorY: number;
+  imageWidth: number;
+  imageHeight: number;
+  isDefault: boolean;
+  sortOrder: number;
+}
+
+export interface FramePreset {
+  id: number;
+  name: string;
+  borderColor: string;
+  borderWidthMm: number;
+  matColor: string;
+  matWidthMm: number;
+  shadowEnabled: boolean;
+  enabled: boolean;
+  sortOrder: number;
 }
 
 // Keep for backward compat — no longer used as column enum
