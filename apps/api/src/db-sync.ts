@@ -19,6 +19,9 @@ import { ProtectedGalleryEntity } from './protected-galleries/protected-gallery.
 import { ProtectedGalleryImageEntity } from './protected-galleries/protected-gallery-image.entity';
 import { TagEntity } from './tags/tag.entity';
 import { ImageTagEntity } from './tags/image-tag.entity';
+import { ContactInquiryEntity } from './contacts/contact-inquiry.entity';
+import { WallBackgroundEntity } from './walls/wall-background.entity';
+import { FramePresetEntity } from './walls/frame-preset.entity';
 
 // Use same defaults as app.module.ts TypeOrmModule config
 const ds = new DataSource({
@@ -43,6 +46,9 @@ const ds = new DataSource({
     ProtectedGalleryImageEntity,
     TagEntity,
     ImageTagEntity,
+    ContactInquiryEntity,
+    WallBackgroundEntity,
+    FramePresetEntity,
   ],
   synchronize: true,
 });

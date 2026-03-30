@@ -23,6 +23,10 @@ After editing any file, ensure there are no lint errors or warnings. In particul
 
 SVG icons must be in separate files under `apps/web/src/components/icons/`. Do not inline SVGs — import the icon component instead. Follow the existing pattern (e.g., `download-icon.tsx`).
 
+## Database: Keep db-sync.ts in Sync
+
+When adding or modifying entities, **always** update `apps/api/src/db-sync.ts` to include the new entity in its `entities` array. This file is used in production to create/alter tables (`pnpm db:sync`). If an entity is registered in `app.module.ts` but missing from `db-sync.ts`, the table won't exist in production and the app will crash on startup.
+
 ## Security: Post-Change Security Audit
 
 After **any** code changes, run the `security-vuln-checker` agent to assess security risks. This applies to all changes — new features, bug fixes, refactors, dependency updates, etc.
