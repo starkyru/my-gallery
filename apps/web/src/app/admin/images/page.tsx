@@ -178,31 +178,28 @@ export default function AdminImagesPage() {
     }));
     setDroppedFiles((prev) => [...prev, ...newFiles]);
 
-    // Convert HEIC files to JPEG in background (full quality for upload, low for preview)
-    newFiles.forEach((df) => {
-      if (!df.previewLoading) return;
-      Promise.all([
-        heic2any({ blob: df.file, toType: 'image/jpeg', quality: 1 }),
-        heic2any({ blob: df.file, toType: 'image/jpeg', quality: 0.5 }),
-      ])
-        .then(([uploadResult, previewResult]) => {
-          const uploadBlob = Array.isArray(uploadResult) ? uploadResult[0] : uploadResult;
-          const previewBlob = Array.isArray(previewResult) ? previewResult[0] : previewResult;
+    // Convert HEIC files to JPEG in background — sequential to avoid WASM contention
+    const heicFiles = newFiles.filter((df) => df.previewLoading);
+    (async () => {
+      for (const df of heicFiles) {
+        try {
+          const result = await heic2any({ blob: df.file, toType: 'image/jpeg', quality: 1 });
+          const blob = Array.isArray(result) ? result[0] : result;
           const jpegName = df.file.name.replace(/\.hei[cf]$/i, '.jpg');
-          const jpegFile = new File([uploadBlob], jpegName, { type: 'image/jpeg' });
-          const previewUrl = URL.createObjectURL(previewBlob);
+          const jpegFile = new File([blob], jpegName, { type: 'image/jpeg' });
+          const previewUrl = URL.createObjectURL(blob);
           setDroppedFiles((prev) =>
             prev.map((f) =>
               f.id === df.id ? { ...f, file: jpegFile, previewUrl, previewLoading: false } : f,
             ),
           );
-        })
-        .catch(() => {
-          setDroppedFiles((prev) =>
-            prev.map((f) => (f.id === df.id ? { ...f, previewLoading: false } : f)),
-          );
-        });
-    });
+        } catch {
+          // Remove failed file and notify
+          setDroppedFiles((prev) => prev.filter((f) => f.id !== df.id));
+          notify.error(`Failed to convert ${df.file.name}`);
+        }
+      }
+    })();
   }
 
   function updateDroppedFile(index: number, field: keyof DroppedFile, value: string | File) {
@@ -476,7 +473,9 @@ export default function AdminImagesPage() {
               ? `Uploading ${uploadProgress.done}/${uploadProgress.total}...`
               : aiProgress
                 ? `AI Describing ${aiProgress.done}/${aiProgress.total}...`
-                : `Upload ${droppedFiles.length} Image${droppedFiles.length !== 1 ? 's' : ''}`}
+                : droppedFiles.some((f) => f.previewLoading)
+                  ? 'Converting HEIC...'
+                  : `Upload ${droppedFiles.length} Image${droppedFiles.length !== 1 ? 's' : ''}`}
           </button>
         </div>
       )}
