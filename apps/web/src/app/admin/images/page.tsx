@@ -11,11 +11,13 @@ import { UPLOAD_URL } from '@/config';
 import heic2any from 'heic2any';
 
 interface DroppedFile {
+  id: string;
   file: File;
   title: string;
   price: string;
   category: string;
   previewUrl: string;
+  previewLoading: boolean;
 }
 
 export default function AdminImagesPage() {
@@ -157,31 +159,42 @@ export default function AdminImagesPage() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   }
 
-  async function addFiles(files: File[]) {
-    const newFiles: DroppedFile[] = [];
-    for (const file of files) {
+  function addFiles(files: File[]) {
+    let fileIdCounter = Date.now();
+    const newFiles: DroppedFile[] = files.map((file) => {
       const isHeic =
         /\.hei[cf]$/i.test(file.name) || file.type === 'image/heic' || file.type === 'image/heif';
-      let previewUrl: string;
-      if (isHeic) {
-        try {
-          const blob = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.5 });
-          previewUrl = URL.createObjectURL(Array.isArray(blob) ? blob[0] : blob);
-        } catch {
-          previewUrl = '';
-        }
-      } else {
-        previewUrl = URL.createObjectURL(file);
-      }
-      newFiles.push({
+      return {
+        id: String(fileIdCounter++),
         file,
         title: file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' '),
         price: '',
         category: sharedCategory,
-        previewUrl,
-      });
-    }
+        previewUrl: isHeic ? '' : URL.createObjectURL(file),
+        previewLoading: isHeic,
+      };
+    });
     setDroppedFiles((prev) => [...prev, ...newFiles]);
+
+    // Convert HEIC previews in background
+    newFiles.forEach((df) => {
+      if (!df.previewLoading) return;
+      heic2any({ blob: df.file, toType: 'image/jpeg', quality: 0.5 })
+        .then((result) => {
+          const blob = Array.isArray(result) ? result[0] : result;
+          const url = URL.createObjectURL(blob);
+          setDroppedFiles((prev) =>
+            prev.map((f) =>
+              f.id === df.id ? { ...f, previewUrl: url, previewLoading: false } : f,
+            ),
+          );
+        })
+        .catch(() => {
+          setDroppedFiles((prev) =>
+            prev.map((f) => (f.id === df.id ? { ...f, previewLoading: false } : f)),
+          );
+        });
+    });
   }
 
   function updateDroppedFile(index: number, field: keyof DroppedFile, value: string | File) {
@@ -384,9 +397,13 @@ export default function AdminImagesPage() {
 
           <div className="space-y-3">
             {droppedFiles.map((df, idx) => (
-              <div key={idx} className="flex flex-wrap sm:flex-nowrap gap-3 items-center">
+              <div key={df.id} className="flex flex-wrap sm:flex-nowrap gap-3 items-center">
                 <div className="w-12 h-12 shrink-0 rounded overflow-hidden bg-white/5">
-                  {df.previewUrl ? (
+                  {df.previewLoading ? (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <div className="w-5 h-5 border-2 border-white/20 border-t-gallery-accent rounded-full animate-spin" />
+                    </div>
+                  ) : df.previewUrl ? (
                     <Image
                       src={df.previewUrl}
                       alt={df.title}
