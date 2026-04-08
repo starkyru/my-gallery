@@ -34,7 +34,7 @@ export default function UsersTable({ users, token, onRefresh }: UsersTableProps)
       <section>
         <h2 className="text-xl font-medium mb-4">Admin Users</h2>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm min-w-[500px]">
             <thead>
               <tr className="border-b border-white/10 text-left text-gallery-gray">
                 <th className="pb-2 pr-4">Username</th>

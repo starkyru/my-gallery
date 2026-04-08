@@ -309,7 +309,7 @@ export default function AdminImagesPage() {
 
       {/* Metadata form */}
       {droppedFiles.length > 0 && (
-        <div className="mb-8 p-6 border border-white/10 rounded-lg space-y-4">
+        <div className="mb-8 p-4 sm:p-6 border border-white/10 rounded-lg space-y-4">
           <div>
             <label className="block text-xs text-gallery-gray mb-1">Artist (all images)</label>
             <select
@@ -327,7 +327,7 @@ export default function AdminImagesPage() {
 
           <div className="space-y-3">
             {droppedFiles.map((df, idx) => (
-              <div key={idx} className="flex gap-3 items-center">
+              <div key={idx} className="flex flex-wrap sm:flex-nowrap gap-3 items-center">
                 <div className="w-12 h-12 shrink-0 rounded overflow-hidden bg-white/5">
                   <Image
                     src={URL.createObjectURL(df.file)}
@@ -350,7 +350,7 @@ export default function AdminImagesPage() {
                   placeholder="Price"
                   type="number"
                   step="0.01"
-                  className="w-24 shrink-0 px-3 py-1.5 bg-white/5 border border-white/10 rounded text-sm text-white"
+                  className="w-20 sm:w-24 shrink-0 px-3 py-1.5 bg-white/5 border border-white/10 rounded text-sm text-white"
                 />
                 <select
                   value={df.category}
@@ -632,8 +632,8 @@ export default function AdminImagesPage() {
 
       {/* Bulk action bar */}
       {selectedIds.size > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-gallery-black/95 backdrop-blur-md border-t border-white/10 px-6 py-3 z-50">
-          <div className="mx-auto max-w-7xl flex items-center gap-4 flex-wrap">
+        <div className="fixed bottom-0 left-0 right-0 bg-gallery-black/95 backdrop-blur-md border-t border-white/10 px-4 sm:px-6 py-3 z-50">
+          <div className="mx-auto max-w-7xl flex items-center gap-3 sm:gap-4 flex-wrap">
             <span className="text-sm font-medium">{selectedIds.size} selected</span>
             <button onClick={selectAll} className="text-xs text-gallery-accent hover:underline">
               Select All

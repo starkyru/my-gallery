@@ -3,11 +3,19 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
+import type { Order } from '@gallery/shared';
+
+interface DashboardStats {
+  totalImages: number;
+  totalOrders: number;
+  paidOrders: number;
+  revenue: number;
+}
 
 export default function AdminDashboard() {
   const { token } = useAuthStore();
-  const [stats, setStats] = useState<any>(null);
-  const [orders, setOrders] = useState<any[]>([]);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [orders, setOrders] = useState<Order[]>([]);
 
   useEffect(() => {
     if (!token) return;
@@ -32,7 +40,7 @@ export default function AdminDashboard() {
           { label: 'Paid Orders', value: stats?.paidOrders ?? '-' },
           { label: 'Revenue', value: stats ? `$${stats.revenue}` : '-' },
         ].map((card) => (
-          <div key={card.label} className="p-6 border border-white/10 rounded-lg">
+          <div key={card.label} className="p-4 sm:p-6 border border-white/10 rounded-lg">
             <p className="text-gallery-gray text-sm mb-1">{card.label}</p>
             <p className="text-2xl font-serif">{card.value}</p>
           </div>
@@ -40,8 +48,8 @@ export default function AdminDashboard() {
       </div>
 
       <h2 className="font-serif text-xl mb-4">Recent Orders</h2>
-      <div className="border border-white/10 rounded-lg overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="border border-white/10 rounded-lg overflow-x-auto">
+        <table className="w-full text-sm min-w-[600px]">
           <thead>
             <tr className="border-b border-white/10 text-left text-gallery-gray">
               <th className="px-4 py-3">ID</th>

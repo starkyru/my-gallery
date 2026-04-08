@@ -157,8 +157,8 @@ export default function AdminProtectedGalleriesPage() {
       </form>
 
       {/* Table */}
-      <div className="border border-white/10 rounded-lg overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="border border-white/10 rounded-lg overflow-x-auto">
+        <table className="w-full text-sm min-w-[600px]">
           <thead>
             <tr className="border-b border-white/10 text-left text-gallery-gray">
               <th className="px-4 py-3 font-medium">Name</th>

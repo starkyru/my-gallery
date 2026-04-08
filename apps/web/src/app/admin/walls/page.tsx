@@ -98,7 +98,7 @@ export default function AdminWallsPage() {
       <h1 className="text-2xl font-bold">Wall Backgrounds & Frames</h1>
 
       {/* Upload section */}
-      <div className="border border-white/10 rounded-lg p-6 space-y-4">
+      <div className="border border-white/10 rounded-lg p-4 sm:p-6 space-y-4">
         <h2 className="text-lg font-semibold">Add Wall Background</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -219,7 +219,7 @@ export default function AdminWallsPage() {
       {/* Frame presets */}
       <div className="space-y-3">
         <h2 className="text-lg font-semibold">Frame Presets</h2>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
           {frames.map((frame) => (
             <div
               key={frame.id}

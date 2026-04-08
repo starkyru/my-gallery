@@ -46,7 +46,7 @@ export default function AdminContactsPage() {
 
   return (
     <div>
-      <div className="flex items-center gap-4 mb-8">
+      <div className="flex flex-wrap items-center gap-4 mb-8">
         <h1 className="font-serif text-3xl">Contact Inquiries</h1>
         {unread > 0 && (
           <span className="px-2 py-0.5 bg-gallery-accent/20 text-gallery-accent rounded-full text-xs">

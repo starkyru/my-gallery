@@ -31,7 +31,7 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-10">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="font-serif text-3xl">User Management</h1>
         <div className="flex gap-3">
           <button

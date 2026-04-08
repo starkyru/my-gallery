@@ -46,6 +46,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const { token, role, hydrated, setAuth } = useAuthStore();
   const [encryptionKeyMissing, setEncryptionKeyMissing] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (token && role === 'artist' && ADMIN_ONLY_ROUTES.some((r) => pathname.startsWith(r))) {
@@ -61,6 +62,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         .catch(() => {});
     }
   }, [token, role]);
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
 
   if (pathname === '/admin/login' || pathname === '/admin/reset-password') return <>{children}</>;
 
@@ -80,21 +85,47 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="pt-20 min-h-screen">
-      <nav className="border-b border-white/10 px-6 py-3">
+      <nav className="border-b border-white/10 px-4 sm:px-6 py-3">
         <div className="mx-auto max-w-7xl flex items-center gap-6">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`text-sm transition-colors ${
-                pathname === item.href
-                  ? 'text-gallery-accent'
-                  : 'text-gallery-gray hover:text-white'
-              }`}
+          {/* Desktop nav */}
+          <div className="hidden md:flex items-center gap-6 flex-1">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`text-sm transition-colors whitespace-nowrap ${
+                  pathname === item.href
+                    ? 'text-gallery-accent'
+                    : 'text-gallery-gray hover:text-white'
+                }`}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+
+          {/* Mobile hamburger */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-1 text-gallery-gray hover:text-white"
+            aria-label="Toggle menu"
+          >
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
             >
-              {item.label}
-            </Link>
-          ))}
+              {mobileMenuOpen ? (
+                <path d="M6 6l12 12M6 18L18 6" />
+              ) : (
+                <path d="M4 6h16M4 12h16M4 18h16" />
+              )}
+            </svg>
+          </button>
+
           <button
             onClick={() => {
               setAuth(null);
@@ -105,16 +136,35 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             Logout
           </button>
         </div>
+
+        {/* Mobile menu dropdown */}
+        {mobileMenuOpen && (
+          <div className="md:hidden mt-3 pt-3 border-t border-white/10 grid grid-cols-2 gap-2">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`text-sm py-2 px-3 rounded transition-colors ${
+                  pathname === item.href
+                    ? 'text-gallery-accent bg-white/5'
+                    : 'text-gallery-gray hover:text-white hover:bg-white/5'
+                }`}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+        )}
       </nav>
       {encryptionKeyMissing && (
-        <div className="bg-red-900/80 border border-red-500/50 px-6 py-3">
+        <div className="bg-red-900/80 border border-red-500/50 px-4 sm:px-6 py-3">
           <div className="mx-auto max-w-7xl text-sm text-red-200">
             SERVICE_ENCRYPTION_KEY is not set. Payment and fulfillment services cannot be enabled.
             See PLUGINS.md for setup instructions.
           </div>
         </div>
       )}
-      <div className="mx-auto max-w-7xl px-6 py-8">{children}</div>
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-6 sm:py-8">{children}</div>
       <Toaster
         position="top-right"
         theme="dark"

@@ -4,10 +4,11 @@ import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { OrderStatus } from '@gallery/shared';
+import type { Order, OrderItem } from '@gallery/shared';
 
 export default function AdminOrdersPage() {
   const { token } = useAuthStore();
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [filter, setFilter] = useState('');
 
   useEffect(() => {
@@ -22,7 +23,7 @@ export default function AdminOrdersPage() {
     <div>
       <h1 className="font-serif text-3xl mb-8">Orders</h1>
 
-      <div className="flex gap-2 mb-6">
+      <div className="flex gap-2 mb-6 flex-wrap">
         {['', ...Object.values(OrderStatus)].map((status) => (
           <button
             key={status}
@@ -38,8 +39,8 @@ export default function AdminOrdersPage() {
         ))}
       </div>
 
-      <div className="border border-white/10 rounded-lg overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="border border-white/10 rounded-lg overflow-x-auto">
+        <table className="w-full text-sm min-w-[700px]">
           <thead>
             <tr className="border-b border-white/10 text-left text-gallery-gray">
               <th className="px-4 py-3">ID</th>
@@ -57,14 +58,14 @@ export default function AdminOrdersPage() {
                 <td className="px-4 py-3">#{order.id}</td>
                 <td className="px-4 py-3">{order.customerEmail}</td>
                 <td className="px-4 py-3">
-                  {order.items?.map((item: any, idx: number) => (
+                  {order.items?.map((item: OrderItem, idx: number) => (
                     <span key={idx} className="block text-xs">
                       {item.image?.title || `#${item.imageId}`}{' '}
                       <span className="text-gallery-gray">
                         ({item.type === 'print' ? `print: ${item.printSku}` : 'digital'})
                       </span>
-                      {item.prodigiOrderId && (
-                        <span className="text-gallery-accent"> [{item.prodigiOrderId}]</span>
+                      {item.fulfillmentOrderId && (
+                        <span className="text-gallery-accent"> [{item.fulfillmentOrderId}]</span>
                       )}
                     </span>
                   )) ?? 0}

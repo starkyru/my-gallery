@@ -58,7 +58,7 @@ export default function AdminArtistsPage() {
       {showForm && (
         <form
           onSubmit={handleCreate}
-          className="mb-8 p-6 border border-white/10 rounded-lg space-y-4"
+          className="mb-8 p-4 sm:p-6 border border-white/10 rounded-lg space-y-4"
         >
           <input
             value={form.name}
