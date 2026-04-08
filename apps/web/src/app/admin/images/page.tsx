@@ -8,12 +8,14 @@ import { useAuthStore } from '@/store/auth';
 import { useNotification } from '@/hooks/useNotification';
 import type { Category, Project, GalleryImage, Artist } from '@gallery/shared';
 import { UPLOAD_URL } from '@/config';
+import heic2any from 'heic2any';
 
 interface DroppedFile {
   file: File;
   title: string;
   price: string;
   category: string;
+  previewUrl: string;
 }
 
 export default function AdminImagesPage() {
@@ -155,13 +157,30 @@ export default function AdminImagesPage() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   }
 
-  function addFiles(files: File[]) {
-    const newFiles: DroppedFile[] = files.map((file) => ({
-      file,
-      title: file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' '),
-      price: '',
-      category: sharedCategory,
-    }));
+  async function addFiles(files: File[]) {
+    const newFiles: DroppedFile[] = [];
+    for (const file of files) {
+      const isHeic =
+        /\.hei[cf]$/i.test(file.name) || file.type === 'image/heic' || file.type === 'image/heif';
+      let previewUrl: string;
+      if (isHeic) {
+        try {
+          const blob = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.5 });
+          previewUrl = URL.createObjectURL(Array.isArray(blob) ? blob[0] : blob);
+        } catch {
+          previewUrl = '';
+        }
+      } else {
+        previewUrl = URL.createObjectURL(file);
+      }
+      newFiles.push({
+        file,
+        title: file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' '),
+        price: '',
+        category: sharedCategory,
+        previewUrl,
+      });
+    }
     setDroppedFiles((prev) => [...prev, ...newFiles]);
   }
 
@@ -170,7 +189,10 @@ export default function AdminImagesPage() {
   }
 
   function removeDroppedFile(index: number) {
-    setDroppedFiles((prev) => prev.filter((_, i) => i !== index));
+    setDroppedFiles((prev) => {
+      if (prev[index]?.previewUrl) URL.revokeObjectURL(prev[index].previewUrl);
+      return prev.filter((_, i) => i !== index);
+    });
   }
 
   async function handleUploadAll() {
@@ -195,6 +217,9 @@ export default function AdminImagesPage() {
       setUploadProgress({ done: i + 1, total: droppedFiles.length });
     }
     setUploadProgress(null);
+    droppedFiles.forEach((df) => {
+      if (df.previewUrl) URL.revokeObjectURL(df.previewUrl);
+    });
     setDroppedFiles([]);
 
     if (autoDescribe && uploadedIds.length > 0) {
@@ -361,14 +386,20 @@ export default function AdminImagesPage() {
             {droppedFiles.map((df, idx) => (
               <div key={idx} className="flex flex-wrap sm:flex-nowrap gap-3 items-center">
                 <div className="w-12 h-12 shrink-0 rounded overflow-hidden bg-white/5">
-                  <Image
-                    src={URL.createObjectURL(df.file)}
-                    alt={df.title}
-                    width={48}
-                    height={48}
-                    className="w-full h-full object-cover"
-                    unoptimized
-                  />
+                  {df.previewUrl ? (
+                    <Image
+                      src={df.previewUrl}
+                      alt={df.title}
+                      width={48}
+                      height={48}
+                      className="w-full h-full object-cover"
+                      unoptimized
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-xs text-gallery-gray">
+                      HEIC
+                    </div>
+                  )}
                 </div>
                 <input
                   value={df.title}

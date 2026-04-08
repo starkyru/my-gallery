@@ -15,6 +15,7 @@
     "embla-carousel-autoplay": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
     "gsap": "^3.12.7",
+    "heic2any": "^0.0.4",
     "lenis": "^1.2.3",
     "next": "^15.3.0",
     "react": "^19.1.0",
