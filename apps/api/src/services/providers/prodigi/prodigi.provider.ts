@@ -1,6 +1,12 @@
-import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  UnauthorizedException,
+  Logger,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import * as crypto from 'crypto';
 import {
   ProdigiClient,
   ProdigiApiError,
@@ -27,6 +33,7 @@ interface CacheEntry<T> {
 export class ProdigiProvider implements FulfillmentProvider {
   private readonly logger = new Logger(ProdigiProvider.name);
   private readonly apiKey: string;
+  private readonly webhookSecret: string;
   private readonly clientCache = new Map<Environment, ProdigiClient>();
   private readonly CACHE_TTL = 60 * 60 * 1000; // 1 hour
   private categoriesCache: CacheEntry<CatalogueListResponse> | null = null;
@@ -40,6 +47,7 @@ export class ProdigiProvider implements FulfillmentProvider {
   ) {
     const env = loadProviderEnv(__dirname);
     this.apiKey = env.PRODIGI_API_KEY || '';
+    this.webhookSecret = env.PRODIGI_WEBHOOK_SECRET || '';
   }
 
   get configured(): boolean {
@@ -162,7 +170,29 @@ export class ProdigiProvider implements FulfillmentProvider {
     }
   }
 
-  async handleWebhook(payload: CallbackEvent): Promise<FulfillmentWebhookResult> {
+  async handleWebhook(
+    payload: CallbackEvent,
+    rawBody?: Buffer,
+    headers?: Record<string, string>,
+  ): Promise<FulfillmentWebhookResult> {
+    if (this.webhookSecret && rawBody) {
+      const sig = headers?.['x-prodigi-signature'];
+      if (!sig) {
+        throw new UnauthorizedException('Missing X-Prodigi-Signature header');
+      }
+      const expectedSig = crypto
+        .createHmac('sha256', this.webhookSecret)
+        .update(rawBody)
+        .digest('hex');
+      const sigBuf = Buffer.from(sig);
+      const expectedBuf = Buffer.from(expectedSig);
+      if (sigBuf.length !== expectedBuf.length || !crypto.timingSafeEqual(sigBuf, expectedBuf)) {
+        throw new UnauthorizedException('Invalid webhook signature');
+      }
+    } else if (!this.webhookSecret) {
+      this.logger.warn('No PRODIGI_WEBHOOK_SECRET configured — webhook signature not verified');
+    }
+
     this.logger.log(`Prodigi webhook: ${payload.type}`);
     if (payload.type === 'order.status.update') {
       return {

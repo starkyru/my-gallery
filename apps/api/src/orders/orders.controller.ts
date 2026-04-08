@@ -10,6 +10,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { AdminGuard } from '../auth/admin.guard';
 import { OrdersService } from './orders.service';
 import { OrderStatus, OrderItemType } from '@gallery/shared';
 
@@ -79,13 +80,13 @@ export class OrdersController {
   }
 
   @Get()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   findAll(@Query('status') status?: OrderStatus) {
     return this.service.findAll(status);
   }
 
   @Get('stats')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   getStats() {
     return this.service.getStats();
   }
@@ -101,7 +102,7 @@ export class OrdersController {
   }
 
   @Put(':id/status')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   updateStatus(@Param('id') id: string, @Body() dto: UpdateOrderStatusDto) {
     return this.service.updateStatus(+id, dto.status);
   }

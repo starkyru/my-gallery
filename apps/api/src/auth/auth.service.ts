@@ -31,7 +31,8 @@ export class AuthService implements OnModuleInit {
   async onModuleInit() {
     const count = await this.adminRepo.count();
     if (count === 0) {
-      const password = this.configService.get('ADMIN_INITIAL_PASSWORD', 'admin');
+      const envPassword = this.configService.get<string>('ADMIN_INITIAL_PASSWORD');
+      const password = envPassword || crypto.randomBytes(16).toString('base64url');
       const email = this.configService.get('ADMIN_EMAIL', '');
       const hash = await bcrypt.hash(password, 12);
       await this.adminRepo.save({
@@ -40,6 +41,12 @@ export class AuthService implements OnModuleInit {
         passwordHash: hash,
         mustChangePassword: true,
       });
+      if (!envPassword) {
+        this.logger.warn(
+          `No ADMIN_INITIAL_PASSWORD set. Generated initial admin password: ${password}`,
+        );
+        this.logger.warn('Change this password immediately after first login.');
+      }
     }
   }
 

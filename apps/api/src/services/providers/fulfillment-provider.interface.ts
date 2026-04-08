@@ -26,5 +26,9 @@ export interface FulfillmentProvider {
     },
     reference: string,
   ): Promise<FulfillmentResult>;
-  handleWebhook(payload: unknown): Promise<FulfillmentWebhookResult>;
+  handleWebhook(
+    payload: unknown,
+    rawBody?: Buffer,
+    headers?: Record<string, string>,
+  ): Promise<FulfillmentWebhookResult>;
 }

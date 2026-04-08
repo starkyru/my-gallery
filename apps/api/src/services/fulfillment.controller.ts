@@ -1,4 +1,4 @@
-import { Controller, Post, Param, Body, Logger } from '@nestjs/common';
+import { Controller, Post, Param, Body, Logger, Req } from '@nestjs/common';
 import { ServicesService } from './services.service';
 import { FulfillmentRegistryService } from './providers/fulfillment-registry.service';
 
@@ -15,6 +15,7 @@ export class FulfillmentController {
   async handleWebhook(
     @Param('provider') providerName: string,
     @Body() payload: Record<string, unknown>,
+    @Req() req: { rawBody?: Buffer; headers: Record<string, string> },
   ) {
     await this.servicesService.getEnabledConfig('fulfillment', providerName);
     const provider = this.fulfillmentRegistry.get(providerName);
@@ -23,7 +24,7 @@ export class FulfillmentController {
       return { ok: false };
     }
 
-    const result = await provider.handleWebhook(payload);
+    const result = await provider.handleWebhook(payload, req.rawBody, req.headers);
     this.logger.log(`Fulfillment webhook from ${providerName}: ${JSON.stringify(result)}`);
     return result;
   }
