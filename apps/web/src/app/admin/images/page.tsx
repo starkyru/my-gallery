@@ -578,7 +578,7 @@ export default function AdminImagesPage() {
 
             <Link href={`/admin/images/${image.id}`} className="block relative aspect-4/3">
               <Image
-                src={`${UPLOAD_URL}/${image.thumbnailPath}`}
+                src={`${UPLOAD_URL}/${image.thumbnailPath}?v=${new Date(image.updatedAt).getTime()}`}
                 alt={image.title}
                 fill
                 className={`object-contain ${image.isArchived ? 'opacity-50' : ''}`}

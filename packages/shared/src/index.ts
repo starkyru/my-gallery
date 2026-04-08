@@ -187,6 +187,7 @@ export interface GalleryImage {
   tags?: Tag[];
   adminNote?: string | null;
   createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface LoginResponse {

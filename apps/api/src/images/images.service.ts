@@ -245,6 +245,7 @@ export class ImagesService {
         'image.allowDownloadOriginal',
         'image.isArchived',
         'image.createdAt',
+        'image.updatedAt',
       ])
       .leftJoinAndSelect('image.artist', 'artist')
       .leftJoinAndSelect('image.printOptions', 'printOptions')

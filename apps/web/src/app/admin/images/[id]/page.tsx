@@ -42,6 +42,7 @@ interface ImageData {
   tags?: { id: number; name: string; slug: string }[];
   adminNote?: string | null;
   aiDescription?: string | null;
+  updatedAt: string;
 }
 
 export default function AdminImageEditPage({ params }: { params: Promise<{ id: string }> }) {
@@ -85,7 +86,6 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
   const [aiLoading, setAiLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [reuploading, setReuploading] = useState(false);
-  const [thumbnailKey, setThumbnailKey] = useState(0);
   const reuploadInputRef = useRef<HTMLInputElement>(null);
   const initialState = useRef<string>('');
 
@@ -245,8 +245,11 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
       const formData = new FormData();
       formData.append('file', fileToUpload);
       const updated = (await api.images.reupload(imageId, formData, token)) as unknown as ImageData;
-      setImage((prev) => (prev ? { ...prev, width: updated.width, height: updated.height } : prev));
-      setThumbnailKey((k) => k + 1);
+      setImage((prev) =>
+        prev
+          ? { ...prev, width: updated.width, height: updated.height, updatedAt: updated.updatedAt }
+          : prev,
+      );
       notify.success('Image replaced');
     } catch (e: unknown) {
       notify.error(e instanceof Error ? e.message : 'Failed to re-upload image');
@@ -314,7 +317,7 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
         <div>
           <button onClick={() => setLightboxOpen(true)} className="w-full text-left">
             <Image
-              src={`${UPLOAD_URL}/${image.thumbnailPath}?v=${thumbnailKey}`}
+              src={`${UPLOAD_URL}/${image.thumbnailPath}?v=${new Date(image.updatedAt).getTime()}`}
               alt={image.title}
               width={360}
               height={360}

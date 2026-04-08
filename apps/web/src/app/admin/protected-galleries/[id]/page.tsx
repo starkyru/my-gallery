@@ -220,7 +220,7 @@ export default function AdminProtectedGalleryDetailPage({
                   className="relative group rounded-lg overflow-hidden bg-white/5 break-inside-avoid mb-3"
                 >
                   <Image
-                    src={`${UPLOAD_URL}/${img.thumbnailPath}`}
+                    src={`${UPLOAD_URL}/${img.thumbnailPath}?v=${new Date(img.updatedAt).getTime()}`}
                     alt={img.title}
                     width={400}
                     height={Math.round((400 * img.height) / img.width)}
@@ -297,7 +297,7 @@ export default function AdminProtectedGalleryDetailPage({
                   }`}
                 >
                   <Image
-                    src={`${UPLOAD_URL}/${img.thumbnailPath}`}
+                    src={`${UPLOAD_URL}/${img.thumbnailPath}?v=${new Date(img.updatedAt).getTime()}`}
                     alt={img.title}
                     width={200}
                     height={Math.round((200 * img.height) / img.width)}
