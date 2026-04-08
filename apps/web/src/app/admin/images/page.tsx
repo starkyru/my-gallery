@@ -178,25 +178,21 @@ export default function AdminImagesPage() {
     }));
     setDroppedFiles((prev) => [...prev, ...newFiles]);
 
-    // Convert HEIC files to JPEG in background — sequential to avoid WASM contention
+    // Generate HEIC previews in background — sequential to avoid WASM contention
     const heicFiles = newFiles.filter((df) => df.previewLoading);
     (async () => {
       for (const df of heicFiles) {
         try {
-          const result = await heic2any({ blob: df.file, toType: 'image/jpeg', quality: 1 });
+          const result = await heic2any({ blob: df.file, toType: 'image/jpeg', quality: 0.5 });
           const blob = Array.isArray(result) ? result[0] : result;
-          const jpegName = df.file.name.replace(/\.hei[cf]$/i, '.jpg');
-          const jpegFile = new File([blob], jpegName, { type: 'image/jpeg' });
           const previewUrl = URL.createObjectURL(blob);
           setDroppedFiles((prev) =>
-            prev.map((f) =>
-              f.id === df.id ? { ...f, file: jpegFile, previewUrl, previewLoading: false } : f,
-            ),
+            prev.map((f) => (f.id === df.id ? { ...f, previewUrl, previewLoading: false } : f)),
           );
         } catch {
-          // Remove failed file and notify
-          setDroppedFiles((prev) => prev.filter((f) => f.id !== df.id));
-          notify.error(`Failed to convert ${df.file.name}`);
+          setDroppedFiles((prev) =>
+            prev.map((f) => (f.id === df.id ? { ...f, previewLoading: false } : f)),
+          );
         }
       }
     })();
@@ -461,21 +457,14 @@ export default function AdminImagesPage() {
 
           <button
             onClick={handleUploadAll}
-            disabled={
-              uploadProgress !== null ||
-              aiProgress !== null ||
-              !sharedArtistId ||
-              droppedFiles.some((f) => f.previewLoading)
-            }
+            disabled={uploadProgress !== null || aiProgress !== null || !sharedArtistId}
             className="px-6 py-2 bg-gallery-accent text-gallery-black rounded-lg text-sm font-medium hover:bg-gallery-accent-light transition-colors disabled:opacity-50"
           >
             {uploadProgress
               ? `Uploading ${uploadProgress.done}/${uploadProgress.total}...`
               : aiProgress
                 ? `AI Describing ${aiProgress.done}/${aiProgress.total}...`
-                : droppedFiles.some((f) => f.previewLoading)
-                  ? 'Converting HEIC...'
-                  : `Upload ${droppedFiles.length} Image${droppedFiles.length !== 1 ? 's' : ''}`}
+                : `Upload ${droppedFiles.length} Image${droppedFiles.length !== 1 ? 's' : ''}`}
           </button>
         </div>
       )}

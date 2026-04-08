@@ -27,6 +27,17 @@ SVG icons must be in separate files under `apps/web/src/components/icons/`. Do n
 
 When adding or modifying entities, **always** update `apps/api/src/db-sync.ts` to include the new entity in its `entities` array. This file is used in production to create/alter tables (`pnpm db:sync`). If an entity is registered in `app.module.ts` but missing from `db-sync.ts`, the table won't exist in production and the app will crash on startup.
 
+## Server: System Dependencies
+
+HEIC/HEIF image upload support requires system packages on the server (Ubuntu 22.04):
+
+```bash
+apt-get install -y libheif-dev libheif-examples libvips-dev
+```
+
+- `libheif-examples` provides `heif-convert` CLI used by the API to convert HEIC to JPEG on upload
+- `libvips-dev` and `libheif-dev` are build dependencies
+
 ## Security: Post-Change Security Audit
 
 After **any** code changes, run the `security-vuln-checker` agent to assess security risks. This applies to all changes — new features, bug fixes, refactors, dependency updates, etc.
