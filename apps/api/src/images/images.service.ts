@@ -28,7 +28,7 @@ interface UpdateImageData {
   tagIds?: number[];
 }
 
-const ALLOWED_FORMATS = ['jpeg', 'png', 'webp', 'tiff', 'heif'];
+const ALLOWED_FORMATS = ['jpeg', 'png', 'webp', 'tiff'];
 const SHARP_PIXEL_LIMIT = 100_000_000; // 100 megapixels — guards against decompression bombs
 
 @Injectable()
@@ -254,22 +254,14 @@ export class ImagesService {
     // Validate actual image content using sharp
     const metadata = await sharp(file.buffer, { limitInputPixels: SHARP_PIXEL_LIMIT }).metadata();
     if (!metadata.format || !ALLOWED_FORMATS.includes(metadata.format)) {
-      throw new BadRequestException('Only JPEG, PNG, WebP, TIFF, and HEIC images are allowed');
-    }
-
-    // Convert HEIF/HEIC to JPEG at 100% quality
-    let processBuffer = file.buffer;
-    let storeFormat = metadata.format;
-    if (metadata.format === 'heif') {
-      processBuffer = await sharp(file.buffer, { limitInputPixels: SHARP_PIXEL_LIMIT })
-        .jpeg({ quality: 100 })
-        .toBuffer();
-      storeFormat = 'jpeg';
+      throw new BadRequestException(
+        'Only JPEG, PNG, WebP, and TIFF images are allowed. Convert HEIC to JPEG before uploading.',
+      );
     }
 
     const originalId = crypto.randomUUID();
     const previewId = crypto.randomUUID();
-    const ext = '.' + (storeFormat === 'jpeg' ? 'jpg' : storeFormat);
+    const ext = '.' + (metadata.format === 'jpeg' ? 'jpg' : metadata.format);
 
     const dirs = ['originals', 'thumbnails', 'medium', 'watermarked'].map((d) =>
       path.join(this.uploadDir, d),
@@ -281,18 +273,18 @@ export class ImagesService {
     const mediumPath = path.join(this.uploadDir, 'medium', `${previewId}.webp`);
     const watermarkPath = path.join(this.uploadDir, 'watermarked', `${previewId}.webp`);
 
-    await fs.writeFile(originalPath, processBuffer);
+    await fs.writeFile(originalPath, file.buffer);
 
     await Promise.all([
-      sharp(processBuffer, { limitInputPixels: SHARP_PIXEL_LIMIT })
+      sharp(file.buffer, { limitInputPixels: SHARP_PIXEL_LIMIT })
         .resize(400)
         .webp({ quality: 80 })
         .toFile(thumbnailPath),
-      sharp(processBuffer, { limitInputPixels: SHARP_PIXEL_LIMIT })
+      sharp(file.buffer, { limitInputPixels: SHARP_PIXEL_LIMIT })
         .resize(1200)
         .webp({ quality: 85 })
         .toFile(mediumPath),
-      this.createWatermarked(processBuffer, watermarkPath),
+      this.createWatermarked(file.buffer, watermarkPath),
     ]);
 
     const image = this.repo.create({

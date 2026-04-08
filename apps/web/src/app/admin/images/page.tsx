@@ -159,33 +159,41 @@ export default function AdminImagesPage() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   }
 
+  function isHeicFile(file: File) {
+    return (
+      /\.hei[cf]$/i.test(file.name) || file.type === 'image/heic' || file.type === 'image/heif'
+    );
+  }
+
   function addFiles(files: File[]) {
     let fileIdCounter = Date.now();
-    const newFiles: DroppedFile[] = files.map((file) => {
-      const isHeic =
-        /\.hei[cf]$/i.test(file.name) || file.type === 'image/heic' || file.type === 'image/heif';
-      return {
-        id: String(fileIdCounter++),
-        file,
-        title: file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' '),
-        price: '',
-        category: sharedCategory,
-        previewUrl: isHeic ? '' : URL.createObjectURL(file),
-        previewLoading: isHeic,
-      };
-    });
+    const newFiles: DroppedFile[] = files.map((file) => ({
+      id: String(fileIdCounter++),
+      file,
+      title: file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' '),
+      price: '',
+      category: sharedCategory,
+      previewUrl: isHeicFile(file) ? '' : URL.createObjectURL(file),
+      previewLoading: isHeicFile(file),
+    }));
     setDroppedFiles((prev) => [...prev, ...newFiles]);
 
-    // Convert HEIC previews in background
+    // Convert HEIC files to JPEG in background (full quality for upload, low for preview)
     newFiles.forEach((df) => {
       if (!df.previewLoading) return;
-      heic2any({ blob: df.file, toType: 'image/jpeg', quality: 0.5 })
-        .then((result) => {
-          const blob = Array.isArray(result) ? result[0] : result;
-          const url = URL.createObjectURL(blob);
+      Promise.all([
+        heic2any({ blob: df.file, toType: 'image/jpeg', quality: 1 }),
+        heic2any({ blob: df.file, toType: 'image/jpeg', quality: 0.5 }),
+      ])
+        .then(([uploadResult, previewResult]) => {
+          const uploadBlob = Array.isArray(uploadResult) ? uploadResult[0] : uploadResult;
+          const previewBlob = Array.isArray(previewResult) ? previewResult[0] : previewResult;
+          const jpegName = df.file.name.replace(/\.hei[cf]$/i, '.jpg');
+          const jpegFile = new File([uploadBlob], jpegName, { type: 'image/jpeg' });
+          const previewUrl = URL.createObjectURL(previewBlob);
           setDroppedFiles((prev) =>
             prev.map((f) =>
-              f.id === df.id ? { ...f, previewUrl: url, previewLoading: false } : f,
+              f.id === df.id ? { ...f, file: jpegFile, previewUrl, previewLoading: false } : f,
             ),
           );
         })
@@ -456,7 +464,12 @@ export default function AdminImagesPage() {
 
           <button
             onClick={handleUploadAll}
-            disabled={uploadProgress !== null || aiProgress !== null || !sharedArtistId}
+            disabled={
+              uploadProgress !== null ||
+              aiProgress !== null ||
+              !sharedArtistId ||
+              droppedFiles.some((f) => f.previewLoading)
+            }
             className="px-6 py-2 bg-gallery-accent text-gallery-black rounded-lg text-sm font-medium hover:bg-gallery-accent-light transition-colors disabled:opacity-50"
           >
             {uploadProgress
