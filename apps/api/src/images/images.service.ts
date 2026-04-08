@@ -52,6 +52,14 @@ export class ImagesService {
     this.uploadDir = this.configService.get('UPLOAD_DIR', './uploads');
   }
 
+  private safePath(relativePath: string): string {
+    const resolved = path.resolve(this.uploadDir, relativePath);
+    if (!resolved.startsWith(path.resolve(this.uploadDir) + path.sep)) {
+      throw new BadRequestException('Invalid file path');
+    }
+    return resolved;
+  }
+
   private mapTags(image: ImageEntity, stripAdmin = true) {
     const tags = (image.imageTags ?? []).map((it) => ({
       id: it.tag.id,
@@ -248,22 +256,19 @@ export class ImagesService {
     return this.mapTags(image);
   }
 
-  async upload(file: Express.Multer.File, data: Partial<ImageEntity>) {
-    this.logger.log(
-      `Upload started: ${file?.originalname}, size=${file?.size}, hasBuffer=${!!file?.buffer}`,
-    );
+  private async validateAndProcessFile(file: Express.Multer.File): Promise<{
+    processBuffer: Buffer;
+    metadata: sharp.Metadata;
+  }> {
     if (!file?.buffer) {
       throw new BadRequestException('File buffer is missing — check Multer storage config');
     }
-    // Validate actual image content using sharp
     const metadata = await sharp(file.buffer, { limitInputPixels: SHARP_PIXEL_LIMIT }).metadata();
     if (!metadata.format || !ALLOWED_FORMATS.includes(metadata.format)) {
       throw new BadRequestException('Only JPEG, PNG, WebP, TIFF, and HEIC images are allowed');
     }
 
-    // Convert HEIF/HEIC to JPEG using system heif-convert
     let processBuffer = file.buffer;
-    let storeFormat = metadata.format;
     if (metadata.format === 'heif') {
       const tmpHeic = path.join(this.uploadDir, `tmp-${crypto.randomUUID()}.heic`);
       const tmpJpeg = path.join(this.uploadDir, `tmp-${crypto.randomUUID()}.jpg`);
@@ -271,45 +276,75 @@ export class ImagesService {
         await fs.writeFile(tmpHeic, file.buffer);
         await execFileAsync('heif-convert', ['-q', '100', tmpHeic, tmpJpeg]);
         processBuffer = await fs.readFile(tmpJpeg);
-        storeFormat = 'jpeg';
       } finally {
         await Promise.all([fs.unlink(tmpHeic).catch(() => {}), fs.unlink(tmpJpeg).catch(() => {})]);
       }
     }
 
-    const originalId = crypto.randomUUID();
-    const previewId = crypto.randomUUID();
-    const ext = '.' + (storeFormat === 'jpeg' ? 'jpg' : storeFormat);
+    return { processBuffer, metadata };
+  }
 
+  private async writeImageVariants(
+    processBuffer: Buffer,
+    originalPath: string,
+    thumbnailPath: string,
+    mediumPath: string,
+    watermarkPath: string,
+  ) {
     const dirs = ['originals', 'thumbnails', 'medium', 'watermarked'].map((d) =>
       path.join(this.uploadDir, d),
     );
     await Promise.all(dirs.map((d) => fs.mkdir(d, { recursive: true })));
 
-    const originalPath = path.join(this.uploadDir, 'originals', `${originalId}${ext}`);
-    const thumbnailPath = path.join(this.uploadDir, 'thumbnails', `${previewId}.webp`);
-    const mediumPath = path.join(this.uploadDir, 'medium', `${previewId}.webp`);
-    const watermarkPath = path.join(this.uploadDir, 'watermarked', `${previewId}.webp`);
+    const safeOriginal = this.safePath(originalPath);
+    const safeThumbnail = this.safePath(thumbnailPath);
+    const safeMedium = this.safePath(mediumPath);
+    const safeWatermark = this.safePath(watermarkPath);
 
-    await fs.writeFile(originalPath, processBuffer);
+    await fs.writeFile(safeOriginal, processBuffer);
 
     await Promise.all([
       sharp(processBuffer, { limitInputPixels: SHARP_PIXEL_LIMIT })
         .resize(400)
         .webp({ quality: 80 })
-        .toFile(thumbnailPath),
+        .toFile(safeThumbnail),
       sharp(processBuffer, { limitInputPixels: SHARP_PIXEL_LIMIT })
         .resize(1200)
         .webp({ quality: 85 })
-        .toFile(mediumPath),
-      this.createWatermarked(processBuffer, watermarkPath),
+        .toFile(safeMedium),
+      this.createWatermarked(processBuffer, safeWatermark),
     ]);
+  }
+
+  async upload(file: Express.Multer.File, data: Partial<ImageEntity>) {
+    this.logger.log(
+      `Upload started: ${file?.originalname}, size=${file?.size}, hasBuffer=${!!file?.buffer}`,
+    );
+    const { processBuffer, metadata } = await this.validateAndProcessFile(file);
+
+    const storeFormat = metadata.format === 'heif' ? 'jpeg' : metadata.format!;
+    const originalId = crypto.randomUUID();
+    const previewId = crypto.randomUUID();
+    const ext = '.' + (storeFormat === 'jpeg' ? 'jpg' : storeFormat);
+
+    const filePath = `originals/${originalId}${ext}`;
+    const thumbnailPath = `thumbnails/${previewId}.webp`;
+    const mediumPath = `medium/${previewId}.webp`;
+    const watermarkPath = `watermarked/${previewId}.webp`;
+
+    await this.writeImageVariants(
+      processBuffer,
+      filePath,
+      thumbnailPath,
+      mediumPath,
+      watermarkPath,
+    );
 
     const image = this.repo.create({
       ...data,
-      filePath: `originals/${originalId}${ext}`,
-      thumbnailPath: `thumbnails/${previewId}.webp`,
-      watermarkPath: `watermarked/${previewId}.webp`,
+      filePath,
+      thumbnailPath,
+      watermarkPath,
       width: metadata.width || 0,
       height: metadata.height || 0,
     });
@@ -320,6 +355,29 @@ export class ImagesService {
       this.logger.error(`Failed to save image: ${err}`);
       throw err;
     }
+  }
+
+  async reupload(id: number, file: Express.Multer.File) {
+    const existing = await this.findOne(id);
+    this.logger.log(`Reupload started for image ${id}: ${file?.originalname}, size=${file?.size}`);
+
+    const { processBuffer, metadata } = await this.validateAndProcessFile(file);
+
+    const mediumPath = existing.watermarkPath.replace('watermarked/', 'medium/');
+    await this.writeImageVariants(
+      processBuffer,
+      existing.filePath,
+      existing.thumbnailPath,
+      mediumPath,
+      existing.watermarkPath,
+    );
+
+    await this.repo.update(id, {
+      width: metadata.width || 0,
+      height: metadata.height || 0,
+    });
+
+    return this.findOne(id);
   }
 
   private async createWatermarked(buffer: Buffer, outputPath: string) {
@@ -393,8 +451,9 @@ export class ImagesService {
 
   async remove(id: number) {
     const image = await this.findOne(id);
-    const paths = [image.filePath, image.thumbnailPath, image.watermarkPath].map((p) =>
-      path.join(this.uploadDir, p),
+    const mediumPath = image.watermarkPath.replace('watermarked/', 'medium/');
+    const paths = [image.filePath, image.thumbnailPath, image.watermarkPath, mediumPath].map((p) =>
+      this.safePath(p),
     );
     await Promise.all(paths.map((p) => fs.unlink(p).catch(() => {})));
     await this.repo.delete(id);

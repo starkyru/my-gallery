@@ -84,6 +84,9 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
   const [aiLoading, setAiLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [reuploading, setReuploading] = useState(false);
+  const [thumbnailKey, setThumbnailKey] = useState(0);
+  const reuploadInputRef = useRef<HTMLInputElement>(null);
   const initialState = useRef<string>('');
 
   const isDirty = useCallback(() => {
@@ -221,6 +224,38 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
     }
   }
 
+  async function handleReupload(selectedFile: File) {
+    if (!token || !image) return;
+    if (!confirm('Replace image file with this new version?')) return;
+    setReuploading(true);
+    try {
+      let fileToUpload = selectedFile;
+      if (
+        /\.hei[cf]$/i.test(selectedFile.name) ||
+        selectedFile.type === 'image/heic' ||
+        selectedFile.type === 'image/heif'
+      ) {
+        const heic2any = (await import('heic2any')).default;
+        const blob = await heic2any({ blob: selectedFile, toType: 'image/jpeg', quality: 0.95 });
+        const converted = Array.isArray(blob) ? blob[0] : blob;
+        fileToUpload = new File([converted], selectedFile.name.replace(/\.hei[cf]$/i, '.jpg'), {
+          type: 'image/jpeg',
+        });
+      }
+      const formData = new FormData();
+      formData.append('file', fileToUpload);
+      const updated = (await api.images.reupload(imageId, formData, token)) as unknown as ImageData;
+      setImage((prev) => (prev ? { ...prev, width: updated.width, height: updated.height } : prev));
+      setThumbnailKey((k) => k + 1);
+      notify.success('Image replaced');
+    } catch (e: unknown) {
+      notify.error(e instanceof Error ? e.message : 'Failed to re-upload image');
+    } finally {
+      setReuploading(false);
+      if (reuploadInputRef.current) reuploadInputRef.current.value = '';
+    }
+  }
+
   function addPrintOption() {
     setPrintOptions((opts) => [
       ...opts,
@@ -279,7 +314,7 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
         <div>
           <button onClick={() => setLightboxOpen(true)} className="w-full text-left">
             <Image
-              src={`${UPLOAD_URL}/${image.thumbnailPath}`}
+              src={`${UPLOAD_URL}/${image.thumbnailPath}?v=${thumbnailKey}`}
               alt={image.title}
               width={360}
               height={360}
@@ -289,6 +324,23 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
           <p className="text-xs text-gallery-gray mt-2">
             {image.artist?.name} &middot; {image.width}&times;{image.height} &middot; ID: {image.id}
           </p>
+          <input
+            ref={reuploadInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/tiff,image/heic,image/heif,.heic,.heif"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleReupload(file);
+            }}
+          />
+          <button
+            onClick={() => reuploadInputRef.current?.click()}
+            disabled={reuploading}
+            className="mt-2 w-full px-3 py-1.5 border border-white/10 rounded text-xs text-gallery-gray hover:text-white hover:border-white/30 transition-colors disabled:opacity-50"
+          >
+            {reuploading ? 'Uploading...' : 'Re-upload Image'}
+          </button>
         </div>
 
         {/* Right: Edit form */}

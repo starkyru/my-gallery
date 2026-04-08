@@ -134,7 +134,12 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return promise;
 }
 
-async function uploadRequest<T>(path: string, formData: FormData, token: string): Promise<T> {
+async function uploadRequest<T>(
+  path: string,
+  formData: FormData,
+  token: string,
+  method: 'POST' | 'PUT' = 'POST',
+): Promise<T> {
   // Invalidate cached GET responses for this resource
   const basePath = path.split('?')[0];
   for (const key of cache.keys()) {
@@ -144,7 +149,7 @@ async function uploadRequest<T>(path: string, formData: FormData, token: string)
   }
 
   const res = await fetch(`${API_URL}/api${path}`, {
-    method: 'POST',
+    method,
     headers: { Authorization: `Bearer ${token}` },
     body: formData,
   });
@@ -243,6 +248,8 @@ export const api = {
     getAdmin: (id: number, token: string) =>
       request<GalleryImage>(`/images/admin/${id}`, { headers: authHeaders(token) }),
     upload: (formData: FormData, token: string) => uploadRequest('/images', formData, token),
+    reupload: (id: number, formData: FormData, token: string) =>
+      uploadRequest<GalleryImage>(`/images/${id}/reupload`, formData, token, 'PUT'),
     update: (id: number, data: Record<string, unknown>, token: string) =>
       request(`/images/${id}`, {
         method: 'PUT',

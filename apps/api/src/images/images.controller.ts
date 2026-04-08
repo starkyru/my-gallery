@@ -189,6 +189,15 @@ export class ImagesController {
     return this.service.upload(file, dto);
   }
 
+  @Put(':id/reupload')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @UseInterceptors(
+    FileInterceptor('file', { storage: memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } }),
+  )
+  reupload(@Param('id') id: string, @UploadedFile() file: Express.Multer.File) {
+    return this.service.reupload(+id, file);
+  }
+
   @Put(':id')
   @UseGuards(JwtAuthGuard, AdminGuard)
   update(@Param('id') id: string, @Body() dto: UpdateImageDto) {
