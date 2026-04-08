@@ -9,6 +9,7 @@ import { ImagesService } from '../images/images.service';
 const AiResponseSchema = z.object({
   title: z.string().min(1),
   description: z.string().min(1),
+  keywords: z.array(z.string()).min(1),
 });
 
 @Injectable()
@@ -53,6 +54,7 @@ export class AiService {
 
 1. "title": a descriptive title (up to 20 words) capturing the key subject and setting.
 2. "description": up to 6 sentences describing what you see in detail.
+3. "keywords": a list of 5-30 keywords or short phrases that could help someone find this photo in a search. Include subjects, setting, mood, colors, and any notable details. Avoid generic terms like "photo", "image", "artwork", etc.
 
 Respond ONLY with valid JSON, no markdown formatting.`,
               },
@@ -91,7 +93,7 @@ Respond ONLY with valid JSON, no markdown formatting.`,
     // Save Haiku's vision output to help chatbot search
     await this.imagesService.updateAiDescription(
       imageId,
-      `${visionResult.data.title}. ${visionResult.data.description}`,
+      `${visionResult.data.title}. ${visionResult.data.keywords.join(', ')}`,
     );
 
     if (!runSonnet) {
@@ -121,6 +123,7 @@ Respond ONLY with valid JSON, no markdown formatting.`,
 Here is what the photo shows:
 Title: "${visionResult.data.title}"
 Description: "${visionResult.data.description}"
+Keywords: ${JSON.stringify(visionResult.data.keywords)}
 
 ${photographerContext}
 

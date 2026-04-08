@@ -35,6 +35,7 @@ export default function AdminImagesPage() {
   // Shared upload controls
   const [sharedArtistId, setSharedArtistId] = useState('');
   const sharedCategory = 'other';
+  const [autoDescribe, setAutoDescribe] = useState(false);
 
   // Filters & sorting
   const [filterArtist, setFilterArtist] = useState('');
@@ -142,7 +143,9 @@ export default function AdminImagesPage() {
   function handleDrop(e: React.DragEvent) {
     e.preventDefault();
     setIsDragging(false);
-    const files = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith('image/'));
+    const files = Array.from(e.dataTransfer.files).filter(
+      (f) => f.type.startsWith('image/') || /\.hei[cf]$/i.test(f.name),
+    );
     addFiles(files);
   }
 
@@ -173,6 +176,7 @@ export default function AdminImagesPage() {
   async function handleUploadAll() {
     if (!token || droppedFiles.length === 0 || !sharedArtistId) return;
 
+    const uploadedIds: number[] = [];
     setUploadProgress({ done: 0, total: droppedFiles.length });
     for (let i = 0; i < droppedFiles.length; i++) {
       const df = droppedFiles[i];
@@ -183,7 +187,8 @@ export default function AdminImagesPage() {
       formData.append('artistId', sharedArtistId);
       formData.append('category', df.category);
       try {
-        await api.images.upload(formData, token);
+        const result = (await api.images.upload(formData, token)) as { id: number };
+        uploadedIds.push(result.id);
       } catch {
         // continue with remaining files
       }
@@ -191,6 +196,20 @@ export default function AdminImagesPage() {
     }
     setUploadProgress(null);
     setDroppedFiles([]);
+
+    if (autoDescribe && uploadedIds.length > 0) {
+      setAiProgress({ done: 0, total: uploadedIds.length });
+      for (let i = 0; i < uploadedIds.length; i++) {
+        try {
+          await api.ai.describe(uploadedIds[i], token, true);
+        } catch {
+          // continue with remaining
+        }
+        setAiProgress({ done: i + 1, total: uploadedIds.length });
+      }
+      setAiProgress(null);
+    }
+
     notify.success('Upload complete');
     loadData();
   }
@@ -296,11 +315,13 @@ export default function AdminImagesPage() {
             : 'border-white/20 hover:border-white/40'
         }`}
       >
-        <p className="text-gallery-gray">Drop images here or click to browse</p>
+        <p className="text-gallery-gray">
+          Drop images here or click to browse (JPEG, PNG, WebP, TIFF, HEIC)
+        </p>
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept="image/*,.heic,.heif"
           multiple
           onChange={handleFileSelect}
           className="hidden"
@@ -310,19 +331,30 @@ export default function AdminImagesPage() {
       {/* Metadata form */}
       {droppedFiles.length > 0 && (
         <div className="mb-8 p-4 sm:p-6 border border-white/10 rounded-lg space-y-4">
-          <div>
-            <label className="block text-xs text-gallery-gray mb-1">Artist (all images)</label>
-            <select
-              value={sharedArtistId}
-              onChange={(e) => setSharedArtistId(e.target.value)}
-              className={`${selectClass} w-full`}
-            >
-              {artists.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.name}
-                </option>
-              ))}
-            </select>
+          <div className="flex flex-wrap gap-4 items-end">
+            <div className="flex-1 min-w-[200px]">
+              <label className="block text-xs text-gallery-gray mb-1">Artist (all images)</label>
+              <select
+                value={sharedArtistId}
+                onChange={(e) => setSharedArtistId(e.target.value)}
+                className={`${selectClass} w-full`}
+              >
+                {artists.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <label className="flex items-center gap-1.5 text-sm text-gallery-gray cursor-pointer pb-1">
+              <input
+                type="checkbox"
+                checked={autoDescribe}
+                onChange={(e) => setAutoDescribe(e.target.checked)}
+                className="accent-gallery-accent"
+              />
+              Auto-generate descriptions
+            </label>
           </div>
 
           <div className="space-y-3">
@@ -341,8 +373,9 @@ export default function AdminImagesPage() {
                 <input
                   value={df.title}
                   onChange={(e) => updateDroppedFile(idx, 'title', e.target.value)}
-                  placeholder="Title"
-                  className="flex-1 min-w-0 px-3 py-1.5 bg-white/5 border border-white/10 rounded text-sm text-white"
+                  disabled={autoDescribe}
+                  placeholder={autoDescribe ? 'AI will generate' : 'Title'}
+                  className={`flex-1 min-w-0 px-3 py-1.5 bg-white/5 border border-white/10 rounded text-sm text-white ${autoDescribe ? 'opacity-40' : ''}`}
                 />
                 <input
                   value={df.price}
@@ -375,12 +408,14 @@ export default function AdminImagesPage() {
 
           <button
             onClick={handleUploadAll}
-            disabled={uploadProgress !== null || !sharedArtistId}
+            disabled={uploadProgress !== null || aiProgress !== null || !sharedArtistId}
             className="px-6 py-2 bg-gallery-accent text-gallery-black rounded-lg text-sm font-medium hover:bg-gallery-accent-light transition-colors disabled:opacity-50"
           >
             {uploadProgress
               ? `Uploading ${uploadProgress.done}/${uploadProgress.total}...`
-              : `Upload ${droppedFiles.length} Image${droppedFiles.length !== 1 ? 's' : ''}`}
+              : aiProgress
+                ? `AI Describing ${aiProgress.done}/${aiProgress.total}...`
+                : `Upload ${droppedFiles.length} Image${droppedFiles.length !== 1 ? 's' : ''}`}
           </button>
         </div>
       )}

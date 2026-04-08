@@ -10,7 +10,26 @@ import { ImageEntity } from './image.entity';
 import { ImagePrintOptionEntity } from './image-print-option.entity';
 import { ImageTagEntity } from '../tags/image-tag.entity';
 
-const ALLOWED_FORMATS = ['jpeg', 'png', 'webp', 'tiff'];
+interface UpdateImageData {
+  title?: string;
+  description?: string;
+  price?: number;
+  artistId?: number;
+  category?: string;
+  isFeatured?: boolean;
+  sortOrder?: number;
+  printEnabled?: boolean;
+  printLimit?: number | null;
+  isArchived?: boolean;
+  allowDownloadOriginal?: boolean;
+  projectId?: number | null;
+  adminNote?: string | null;
+  printOptions?: { sku: string; description: string; price: number }[];
+  tagIds?: number[];
+}
+
+const ALLOWED_FORMATS = ['jpeg', 'png', 'webp', 'tiff', 'heif'];
+const SHARP_PIXEL_LIMIT = 100_000_000; // 100 megapixels — guards against decompression bombs
 
 @Injectable()
 export class ImagesService {
@@ -233,14 +252,24 @@ export class ImagesService {
       throw new BadRequestException('File buffer is missing — check Multer storage config');
     }
     // Validate actual image content using sharp
-    const metadata = await sharp(file.buffer).metadata();
+    const metadata = await sharp(file.buffer, { limitInputPixels: SHARP_PIXEL_LIMIT }).metadata();
     if (!metadata.format || !ALLOWED_FORMATS.includes(metadata.format)) {
-      throw new BadRequestException('Only JPEG, PNG, WebP, and TIFF images are allowed');
+      throw new BadRequestException('Only JPEG, PNG, WebP, TIFF, and HEIC images are allowed');
+    }
+
+    // Convert HEIF/HEIC to JPEG at 100% quality
+    let processBuffer = file.buffer;
+    let storeFormat = metadata.format;
+    if (metadata.format === 'heif') {
+      processBuffer = await sharp(file.buffer, { limitInputPixels: SHARP_PIXEL_LIMIT })
+        .jpeg({ quality: 100 })
+        .toBuffer();
+      storeFormat = 'jpeg';
     }
 
     const originalId = crypto.randomUUID();
     const previewId = crypto.randomUUID();
-    const ext = '.' + (metadata.format === 'jpeg' ? 'jpg' : metadata.format);
+    const ext = '.' + (storeFormat === 'jpeg' ? 'jpg' : storeFormat);
 
     const dirs = ['originals', 'thumbnails', 'medium', 'watermarked'].map((d) =>
       path.join(this.uploadDir, d),
@@ -252,12 +281,18 @@ export class ImagesService {
     const mediumPath = path.join(this.uploadDir, 'medium', `${previewId}.webp`);
     const watermarkPath = path.join(this.uploadDir, 'watermarked', `${previewId}.webp`);
 
-    await fs.writeFile(originalPath, file.buffer);
+    await fs.writeFile(originalPath, processBuffer);
 
     await Promise.all([
-      sharp(file.buffer).resize(400).webp({ quality: 80 }).toFile(thumbnailPath),
-      sharp(file.buffer).resize(1200).webp({ quality: 85 }).toFile(mediumPath),
-      this.createWatermarked(file.buffer, watermarkPath),
+      sharp(processBuffer, { limitInputPixels: SHARP_PIXEL_LIMIT })
+        .resize(400)
+        .webp({ quality: 80 })
+        .toFile(thumbnailPath),
+      sharp(processBuffer, { limitInputPixels: SHARP_PIXEL_LIMIT })
+        .resize(1200)
+        .webp({ quality: 85 })
+        .toFile(mediumPath),
+      this.createWatermarked(processBuffer, watermarkPath),
     ]);
 
     const image = this.repo.create({
@@ -279,7 +314,7 @@ export class ImagesService {
 
   private async createWatermarked(buffer: Buffer, outputPath: string) {
     const targetWidth = 1200;
-    const meta = await sharp(buffer).metadata();
+    const meta = await sharp(buffer, { limitInputPixels: SHARP_PIXEL_LIMIT }).metadata();
     const origWidth = meta.width || targetWidth;
     const origHeight = meta.height || targetWidth;
     const resizedHeight = Math.round((origHeight / origWidth) * targetWidth);
@@ -299,7 +334,7 @@ export class ImagesService {
       </svg>`,
     );
 
-    await sharp(buffer)
+    await sharp(buffer, { limitInputPixels: SHARP_PIXEL_LIMIT })
       .resize(targetWidth)
       .composite([
         { input: svg, gravity: 'west' },
@@ -309,7 +344,7 @@ export class ImagesService {
       .toFile(outputPath);
   }
 
-  async update(id: number, data: Record<string, unknown>) {
+  async update(id: number, data: UpdateImageData) {
     const existing = await this.findOne(id);
     const { printOptions, tagIds, ...imageData } = data;
     // If artist changes, clear projectId (project belongs to old artist)
@@ -321,17 +356,17 @@ export class ImagesService {
     }
     if (printOptions !== undefined) {
       await this.printOptionRepo.delete({ imageId: id });
-      const opts = printOptions as { sku: string; description: string; price: number }[];
-      if (opts.length > 0) {
-        const entities = opts.map((opt) => this.printOptionRepo.create({ ...opt, imageId: id }));
+      if (printOptions.length > 0) {
+        const entities = printOptions.map((opt) =>
+          this.printOptionRepo.create({ ...opt, imageId: id }),
+        );
         await this.printOptionRepo.save(entities);
       }
     }
     if (tagIds !== undefined) {
       await this.imageTagRepo.delete({ imageId: id });
-      const ids = tagIds as number[];
-      if (ids.length > 0) {
-        const entities = ids.map((tagId) => this.imageTagRepo.create({ imageId: id, tagId }));
+      if (tagIds.length > 0) {
+        const entities = tagIds.map((tagId) => this.imageTagRepo.create({ imageId: id, tagId }));
         await this.imageTagRepo.save(entities);
       }
     }
