@@ -37,7 +37,9 @@ export function WallPreview({
     Promise.all([api.walls.list(), api.walls.frames()]).then(([w, f]) => {
       setWalls(w);
       setFrames(f);
-      const defaultWall = w.find((wall) => wall.isDefault) ?? w[0] ?? null;
+      const savedWallId = localStorage.getItem('gallery-wall-id');
+      const savedWall = savedWallId ? w.find((wall) => wall.id === Number(savedWallId)) : null;
+      const defaultWall = savedWall ?? w.find((wall) => wall.isDefault) ?? w[0] ?? null;
       setSelectedWall(defaultWall);
       const noneFrame = f.find((frame) => frame.borderWidthMm === 0) ?? f[0] ?? null;
       setSelectedFrame(noneFrame);
@@ -278,7 +280,10 @@ export function WallPreview({
           {walls.map((wall) => (
             <button
               key={wall.id}
-              onClick={() => setSelectedWall(wall)}
+              onClick={() => {
+                setSelectedWall(wall);
+                localStorage.setItem('gallery-wall-id', String(wall.id));
+              }}
               className={`relative flex-shrink-0 w-16 h-12 rounded-lg overflow-hidden border-2 transition-colors ${
                 selectedWall?.id === wall.id
                   ? 'border-gallery-accent'

@@ -51,6 +51,10 @@ export default function AdminImagesPage() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [colsPerRow, setColsPerRow] = useState<number>(3);
 
+  // Keyboard navigation
+  const [focusedIndex, setFocusedIndex] = useState<number>(-1);
+  const gridRef = useRef<HTMLDivElement>(null);
+
   // Bulk selection
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [bulkCategory, setBulkCategory] = useState('');
@@ -132,6 +136,56 @@ export default function AdminImagesPage() {
 
     return result;
   }, [images, filterArtist, filterCategory, filterArchive, sortBy, sortDir]);
+
+  // Reset focused index when filtered list changes
+  useEffect(() => {
+    setFocusedIndex(-1);
+  }, [filteredImages.length]);
+
+  // Keyboard navigation for image grid
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT' ||
+        target.isContentEditable
+      ) {
+        return;
+      }
+
+      const count = filteredImages.length;
+      if (count === 0) return;
+
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        setFocusedIndex((prev) => (prev < count - 1 ? prev + 1 : prev));
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        setFocusedIndex((prev) => (prev > 0 ? prev - 1 : prev));
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setFocusedIndex((prev) => (prev + colsPerRow < count ? prev + colsPerRow : prev));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setFocusedIndex((prev) => (prev - colsPerRow >= 0 ? prev - colsPerRow : prev));
+      } else if (e.key === ' ' && focusedIndex >= 0) {
+        e.preventDefault();
+        toggleSelection(filteredImages[focusedIndex].id);
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [filteredImages, focusedIndex, colsPerRow]);
+
+  // Scroll focused card into view
+  useEffect(() => {
+    if (focusedIndex < 0 || !gridRef.current) return;
+    const card = gridRef.current.children[focusedIndex] as HTMLElement | undefined;
+    card?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, [focusedIndex]);
 
   // Drop zone handlers
   function handleDragOver(e: React.DragEvent) {
@@ -326,6 +380,27 @@ export default function AdminImagesPage() {
       notify.success('AI descriptions generated');
     }
     if (aiApplyTitleDesc) loadData();
+  }
+
+  async function handleBulkDelete() {
+    if (!token || selectedIds.size === 0) return;
+    if (!confirm(`Delete ${selectedIds.size} image(s) permanently? This cannot be undone.`)) return;
+    const ids = Array.from(selectedIds);
+    let failed = 0;
+    for (const id of ids) {
+      try {
+        await api.images.delete(id, token);
+      } catch {
+        failed++;
+      }
+    }
+    setSelectedIds(new Set());
+    if (failed > 0) {
+      notify.error(`Failed to delete ${failed} image(s)`);
+    } else {
+      notify.success(`${ids.length} image(s) deleted`);
+    }
+    loadData();
   }
 
   const gridOptions = [
@@ -548,15 +623,19 @@ export default function AdminImagesPage() {
 
       {/* Image grid */}
       <div
+        ref={gridRef}
         className={`grid gap-4 ${gridOptions.find((o) => o.cols === colsPerRow)?.className ?? gridOptions[1].className}`}
       >
-        {filteredImages.map((image) => (
+        {filteredImages.map((image, idx) => (
           <div
             key={image.id}
+            onClick={() => setFocusedIndex(idx)}
             className={`relative border rounded-lg overflow-hidden ${
               selectedIds.has(image.id)
                 ? 'ring-2 ring-gallery-accent border-gallery-accent/50'
-                : 'border-white/10'
+                : focusedIndex === idx
+                  ? 'ring-2 ring-white/50 border-white/30'
+                  : 'border-white/10'
             }`}
           >
             {/* Selection checkbox */}
@@ -808,6 +887,13 @@ export default function AdminImagesPage() {
               />
               Update title &amp; description
             </label>
+            <div className="border-l border-white/10 h-6" />
+            <button
+              onClick={handleBulkDelete}
+              className="px-3 py-1.5 border border-red-500/30 text-red-400 rounded text-xs hover:bg-red-500/10"
+            >
+              Delete
+            </button>
           </div>
         </div>
       )}
