@@ -101,6 +101,7 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
   const [allPaintTypes, setAllPaintTypes] = useState<PaintType[]>([]);
   const [selectedPaintTypeIds, setSelectedPaintTypeIds] = useState<number[]>([]);
   const [aiLoading, setAiLoading] = useState(false);
+  const [aiKeywordsLoading, setAiKeywordsLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [reuploading, setReuploading] = useState(false);
   const reuploadInputRef = useRef<HTMLInputElement>(null);
@@ -255,6 +256,21 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
       notify.error(e instanceof Error ? e.message : 'Failed to generate description');
     } finally {
       setAiLoading(false);
+    }
+  }
+
+  async function handleAiKeywords() {
+    if (!token || !image) return;
+    setAiKeywordsLoading(true);
+    try {
+      await api.ai.describe(imageId, token);
+      const refreshed = await api.images.getAdmin(imageId, token);
+      setImage(refreshed as unknown as ImageData);
+      notify.success('AI keywords generated');
+    } catch (e: unknown) {
+      notify.error(e instanceof Error ? e.message : 'Failed to generate keywords');
+    } finally {
+      setAiKeywordsLoading(false);
     }
   }
 
@@ -433,16 +449,24 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
           </div>
 
           {/* AI Description (read-only, used by chat search) */}
-          {image.aiDescription && (
+          {image.aiDescription ? (
             <details className="group">
               <summary className="flex items-center gap-1 text-xs text-gallery-gray cursor-pointer select-none list-none">
                 <ChevronRightIcon className="w-3.5 h-3.5 transition-transform group-open:rotate-90" />
-                AI Description (auto-generated, used by chat search)
+                AI Keywords (auto-generated, used by chat search)
               </summary>
               <p className="mt-1 px-3 py-1.5 bg-white/5 border border-white/5 rounded text-sm text-white/60 whitespace-pre-wrap">
                 {image.aiDescription}
               </p>
             </details>
+          ) : (
+            <button
+              onClick={handleAiKeywords}
+              disabled={aiKeywordsLoading}
+              className="px-3 py-1 border border-gallery-accent text-gallery-accent rounded text-xs hover:bg-gallery-accent hover:text-gallery-black disabled:opacity-50 transition-colors"
+            >
+              {aiKeywordsLoading ? 'Generating...' : 'Generate AI Keywords'}
+            </button>
           )}
 
           {/* Admin Note */}
