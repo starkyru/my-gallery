@@ -51,6 +51,7 @@ export function ImageDetail({ image }: ImageDetailProps) {
   const [buyOpen, setBuyOpen] = useState(false);
   const [wallPreviewOpen, setWallPreviewOpen] = useState(false);
   const [arViewerOpen, setArViewerOpen] = useState(false);
+  const [bgColor, setBgColor] = useState('#000000');
   const containerRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const { supported: arSupported, mode: arMode } = useArSupport();
@@ -90,7 +91,11 @@ export function ImageDetail({ image }: ImageDetailProps) {
 
   return (
     <>
-      <div ref={containerRef} className="relative h-screen w-full bg-black">
+      <div
+        ref={containerRef}
+        className="relative h-screen w-full transition-colors duration-300"
+        style={{ backgroundColor: bgColor }}
+      >
         {/* Full-screen image */}
         <div
           className={`absolute inset-0 flex items-center justify-center transition-all duration-1000 ease-out ${
@@ -108,8 +113,30 @@ export function ImageDetail({ image }: ImageDetailProps) {
           />
         </div>
 
-        {/* Side panel — action buttons */}
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 z-10 flex flex-col gap-2">
+        {/* Side panel — background color + action buttons */}
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 z-10 flex flex-col gap-2 items-center">
+          <div className="flex flex-col gap-1.5 mb-1">
+            {[
+              { color: '#ffffff', label: 'White' },
+              { color: '#808080', label: 'Gray' },
+              { color: '#d4c5a9', label: 'Beige' },
+              { color: '#000000', label: 'Black' },
+            ].map(({ color, label }) => (
+              <button
+                key={color}
+                type="button"
+                onClick={() => setBgColor(color)}
+                className={`w-8 h-8 rounded border transition-all duration-200 ${
+                  bgColor === color
+                    ? 'border-gallery-accent scale-110'
+                    : 'border-white/30 hover:border-white/60'
+                }`}
+                style={{ backgroundColor: color }}
+                aria-label={`${label} background`}
+                title={`${label} background`}
+              />
+            ))}
+          </div>
           {printOptionsWithDimensions.length > 0 && (
             <button
               type="button"

@@ -307,11 +307,13 @@ export class ImagesService {
     await Promise.all([
       sharp(processBuffer, { limitInputPixels: SHARP_PIXEL_LIMIT })
         .resize(400)
-        .webp({ quality: 80 })
+        .withMetadata()
+        .jpeg({ quality: 80 })
         .toFile(safeThumbnail),
       sharp(processBuffer, { limitInputPixels: SHARP_PIXEL_LIMIT })
         .resize(1200)
-        .webp({ quality: 85 })
+        .withMetadata()
+        .jpeg({ quality: 85 })
         .toFile(safeMedium),
       this.createWatermarked(processBuffer, safeWatermark),
     ]);
@@ -329,9 +331,9 @@ export class ImagesService {
     const ext = '.' + (storeFormat === 'jpeg' ? 'jpg' : storeFormat);
 
     const filePath = `originals/${originalId}${ext}`;
-    const thumbnailPath = `thumbnails/${previewId}.webp`;
-    const mediumPath = `medium/${previewId}.webp`;
-    const watermarkPath = `watermarked/${previewId}.webp`;
+    const thumbnailPath = `thumbnails/${previewId}.jpg`;
+    const mediumPath = `medium/${previewId}.jpg`;
+    const watermarkPath = `watermarked/${previewId}.jpg`;
 
     await this.writeImageVariants(
       processBuffer,
@@ -409,7 +411,8 @@ export class ImagesService {
         { input: svg, gravity: 'west' },
         { input: svg, gravity: 'east' },
       ])
-      .webp({ quality: 85 })
+      .withMetadata()
+      .jpeg({ quality: 85 })
       .toFile(outputPath);
   }
 
