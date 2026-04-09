@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
-import { api } from '@/lib/api';
 import { UPLOAD_URL } from '@/config';
-import type { ImagePrintOption, WallBackground, FramePreset } from '@gallery/shared';
+import type { ImagePrintOption, FramePreset, WallBackground } from '@gallery/shared';
 import { CloseIcon } from '@/components/icons/close-icon';
+import { useWalls } from '@/hooks/useWalls';
 
 interface WallPreviewProps {
   open: boolean;
@@ -24,9 +24,7 @@ export function WallPreview({
   imageHeight,
   printOptions,
 }: WallPreviewProps) {
-  const [walls, setWalls] = useState<WallBackground[]>([]);
-  const [frames, setFrames] = useState<FramePreset[]>([]);
-  const [selectedWall, setSelectedWall] = useState<WallBackground | null>(null);
+  const { walls, frames, selectedWall, selectWall } = useWalls();
   const [selectedOption, setSelectedOption] = useState<ImagePrintOption | null>(null);
   const [selectedFrame, setSelectedFrame] = useState<FramePreset | null>(null);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
@@ -34,20 +32,14 @@ export function WallPreview({
 
   useEffect(() => {
     if (!open) return;
-    Promise.all([api.walls.list(), api.walls.frames()]).then(([w, f]) => {
-      setWalls(w);
-      setFrames(f);
-      const savedWallId = localStorage.getItem('gallery-wall-id');
-      const savedWall = savedWallId ? w.find((wall) => wall.id === Number(savedWallId)) : null;
-      const defaultWall = savedWall ?? w.find((wall) => wall.isDefault) ?? w[0] ?? null;
-      setSelectedWall(defaultWall);
-      const noneFrame = f.find((frame) => frame.borderWidthMm === 0) ?? f[0] ?? null;
+    if (frames.length > 0 && !selectedFrame) {
+      const noneFrame = frames.find((frame) => frame.borderWidthMm === 0) ?? frames[0] ?? null;
       setSelectedFrame(noneFrame);
-    });
-    if (printOptions.length > 0) {
+    }
+    if (printOptions.length > 0 && !selectedOption) {
       setSelectedOption(printOptions[0]);
     }
-  }, [open, printOptions]);
+  }, [open, printOptions, frames, selectedFrame, selectedOption]);
 
   const measureContainer = useCallback(() => {
     if (containerRef.current) {
@@ -280,10 +272,7 @@ export function WallPreview({
           {walls.map((wall) => (
             <button
               key={wall.id}
-              onClick={() => {
-                setSelectedWall(wall);
-                localStorage.setItem('gallery-wall-id', String(wall.id));
-              }}
+              onClick={() => selectWall(wall)}
               className={`relative flex-shrink-0 w-16 h-12 rounded-lg overflow-hidden border-2 transition-colors ${
                 selectedWall?.id === wall.id
                   ? 'border-gallery-accent'

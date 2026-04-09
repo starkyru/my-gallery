@@ -14,6 +14,7 @@ import { ChevronDownIcon } from '@/components/icons/chevron-down-icon';
 import { FrameIcon } from '@/components/icons/frame-icon';
 import { CameraIcon } from '@/components/icons/camera-icon';
 import { useArSupport } from '@/hooks/useArSupport';
+import { useWalls } from '@/hooks/useWalls';
 
 const WallPreview = dynamic(() => import('@/components/wall-preview').then((m) => m.WallPreview), {
   ssr: false,
@@ -55,6 +56,7 @@ export function ImageDetail({ image }: ImageDetailProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const { supported: arSupported, mode: arMode } = useArSupport();
+  const { walls, selectedWall, selectWall } = useWalls();
 
   const originalInCart = items.some((i) => i.imageId === image.id && i.type === 'original');
 
@@ -94,7 +96,14 @@ export function ImageDetail({ image }: ImageDetailProps) {
       <div
         ref={containerRef}
         className="relative h-screen w-full transition-colors duration-300"
-        style={{ backgroundColor: bgColor }}
+        style={{
+          backgroundColor: selectedWall ? undefined : bgColor,
+          backgroundImage: selectedWall
+            ? `url(${UPLOAD_URL}/${selectedWall.imagePath})`
+            : undefined,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
       >
         {/* Full-screen image */}
         <div
@@ -116,26 +125,49 @@ export function ImageDetail({ image }: ImageDetailProps) {
         {/* Side panel — background color + action buttons */}
         <div className="absolute right-4 top-1/2 -translate-y-1/2 z-10 flex flex-col gap-2 items-center">
           <div className="flex flex-col gap-1.5 mb-1">
-            {[
-              { color: '#ffffff', label: 'White' },
-              { color: '#808080', label: 'Gray' },
-              { color: '#d4c5a9', label: 'Beige' },
-              { color: '#000000', label: 'Black' },
-            ].map(({ color, label }) => (
-              <button
-                key={color}
-                type="button"
-                onClick={() => setBgColor(color)}
-                className={`w-8 h-8 rounded border transition-all duration-200 ${
-                  bgColor === color
-                    ? 'border-gallery-accent scale-110'
-                    : 'border-white/30 hover:border-white/60'
-                }`}
-                style={{ backgroundColor: color }}
-                aria-label={`${label} background`}
-                title={`${label} background`}
-              />
-            ))}
+            {walls.length > 0
+              ? walls.map((wall) => (
+                  <button
+                    key={wall.id}
+                    type="button"
+                    onClick={() => selectWall(wall)}
+                    className={`relative w-8 h-8 rounded overflow-hidden border-2 transition-all duration-200 ${
+                      selectedWall?.id === wall.id
+                        ? 'border-gallery-accent scale-110'
+                        : 'border-white/30 hover:border-white/60'
+                    }`}
+                    aria-label={wall.name}
+                    title={wall.name}
+                  >
+                    <Image
+                      src={`${UPLOAD_URL}/${wall.thumbnailPath}`}
+                      alt={wall.name}
+                      fill
+                      className="object-cover"
+                      sizes="32px"
+                    />
+                  </button>
+                ))
+              : [
+                  { color: '#ffffff', label: 'White' },
+                  { color: '#808080', label: 'Gray' },
+                  { color: '#d4c5a9', label: 'Beige' },
+                  { color: '#000000', label: 'Black' },
+                ].map(({ color, label }) => (
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => setBgColor(color)}
+                    className={`w-8 h-8 rounded border transition-all duration-200 ${
+                      bgColor === color
+                        ? 'border-gallery-accent scale-110'
+                        : 'border-white/30 hover:border-white/60'
+                    }`}
+                    style={{ backgroundColor: color }}
+                    aria-label={`${label} background`}
+                    title={`${label} background`}
+                  />
+                ))}
           </div>
           {printOptionsWithDimensions.length > 0 && (
             <button
