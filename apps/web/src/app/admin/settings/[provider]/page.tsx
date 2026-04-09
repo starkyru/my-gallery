@@ -18,8 +18,10 @@ export default function ProviderSettingsPage() {
   const notify = useNotification();
 
   const [config, setConfig] = useState<ServiceConfig | null>(null);
-  const [skus, setSkus] = useState<{ sku: string; description: string; price?: string }[]>([]);
-  const [newSku, setNewSku] = useState({ sku: '', description: '' });
+  const [skus, setSkus] = useState<
+    { sku: string; description: string; price?: string; widthCm?: number; heightCm?: number }[]
+  >([]);
+  const [newSku, setNewSku] = useState({ sku: '', description: '', widthCm: '', heightCm: '' });
   const [sandbox, setSandbox] = useState(true);
   const [saving, setSaving] = useState(false);
   const [catalogueOpen, setCatalogueOpen] = useState(false);
@@ -61,8 +63,16 @@ export default function ProviderSettingsPage() {
 
   function addSku() {
     if (!newSku.sku || !newSku.description) return;
-    setSkus((prev) => [...prev, { sku: newSku.sku, description: newSku.description }]);
-    setNewSku({ sku: '', description: '' });
+    setSkus((prev) => [
+      ...prev,
+      {
+        sku: newSku.sku,
+        description: newSku.description,
+        ...(newSku.widthCm ? { widthCm: +newSku.widthCm } : {}),
+        ...(newSku.heightCm ? { heightCm: +newSku.heightCm } : {}),
+      },
+    ]);
+    setNewSku({ sku: '', description: '', widthCm: '', heightCm: '' });
   }
 
   function removeSku(index: number) {
@@ -178,9 +188,43 @@ export default function ProviderSettingsPage() {
         <div className="space-y-2">
           {skus.map((s, idx) => (
             <div key={idx} className="flex items-center gap-2 text-sm">
-              <span className="font-mono text-xs text-gallery-gray">{s.sku}</span>
-              <span className="flex-1">{s.description}</span>
+              <span className="font-mono text-xs text-gallery-gray min-w-0 truncate max-w-[140px]">
+                {s.sku}
+              </span>
+              <span className="flex-1 min-w-0 truncate">{s.description}</span>
               {s.price && <span className="text-xs text-gallery-gray">${s.price}</span>}
+              <input
+                value={s.widthCm ?? ''}
+                onChange={(e) =>
+                  setSkus((prev) =>
+                    prev.map((sk, i) =>
+                      i === idx
+                        ? { ...sk, widthCm: e.target.value ? +e.target.value : undefined }
+                        : sk,
+                    ),
+                  )
+                }
+                type="number"
+                step="0.1"
+                placeholder="W cm"
+                className={`${inputClass} w-16`}
+              />
+              <input
+                value={s.heightCm ?? ''}
+                onChange={(e) =>
+                  setSkus((prev) =>
+                    prev.map((sk, i) =>
+                      i === idx
+                        ? { ...sk, heightCm: e.target.value ? +e.target.value : undefined }
+                        : sk,
+                    ),
+                  )
+                }
+                type="number"
+                step="0.1"
+                placeholder="H cm"
+                className={`${inputClass} w-16`}
+              />
               <button
                 onClick={() => removeSku(idx)}
                 className="text-red-400 hover:text-red-300 text-xs px-1"
@@ -190,18 +234,34 @@ export default function ProviderSettingsPage() {
             </div>
           ))}
         </div>
-        <div className="flex gap-2 mt-3">
+        <div className="flex flex-wrap gap-2 mt-3">
           <input
             value={newSku.sku}
             onChange={(e) => setNewSku((prev) => ({ ...prev, sku: e.target.value }))}
             placeholder="SKU code"
-            className={`${inputClass} flex-1`}
+            className={`${inputClass} flex-1 min-w-[100px]`}
           />
           <input
             value={newSku.description}
             onChange={(e) => setNewSku((prev) => ({ ...prev, description: e.target.value }))}
             placeholder="Description"
-            className={`${inputClass} flex-1`}
+            className={`${inputClass} flex-1 min-w-[100px]`}
+          />
+          <input
+            value={newSku.widthCm}
+            onChange={(e) => setNewSku((prev) => ({ ...prev, widthCm: e.target.value }))}
+            type="number"
+            step="0.1"
+            placeholder="W cm"
+            className={`${inputClass} w-16`}
+          />
+          <input
+            value={newSku.heightCm}
+            onChange={(e) => setNewSku((prev) => ({ ...prev, heightCm: e.target.value }))}
+            type="number"
+            step="0.1"
+            placeholder="H cm"
+            className={`${inputClass} w-16`}
           />
           <button
             onClick={addSku}

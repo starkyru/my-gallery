@@ -109,13 +109,33 @@ export class PaymentsService {
       try {
         const image = await this.imagesService.findOne(item.imageId);
 
-        const incremented = await this.imagesService.incrementPrintsSold(
-          image.id,
-          image.printLimit,
-        );
-        if (!incremented) {
-          this.logger.error(`Print edition sold out for image ${image.id}, order ${order.id}`);
-          continue;
+        if (image.perOptionLimits) {
+          const option = await this.imagesService.findPrintOption(image.id, item.printSku!);
+          if (!option) {
+            this.logger.error(
+              `Print option ${item.printSku} not found for image ${image.id}, order ${order.id}`,
+            );
+            continue;
+          }
+          const incremented = await this.imagesService.incrementOptionSoldCount(
+            option.id,
+            option.printLimit,
+          );
+          if (!incremented) {
+            this.logger.error(
+              `Print option ${item.printSku} sold out for image ${image.id}, order ${order.id}`,
+            );
+            continue;
+          }
+        } else {
+          const incremented = await this.imagesService.incrementPrintsSold(
+            image.id,
+            image.printLimit,
+          );
+          if (!incremented) {
+            this.logger.error(`Print edition sold out for image ${image.id}, order ${order.id}`);
+            continue;
+          }
         }
 
         const imageUrl = this.imagesService.generateDownloadUrl(item.imageId);

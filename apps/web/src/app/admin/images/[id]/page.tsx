@@ -19,7 +19,12 @@ interface PrintOptionRow {
   price: number;
   widthCm: number;
   heightCm: number;
+  printLimit: number | null;
+  soldCount: number;
 }
+
+const cmToInch = (cm: number) => (cm ? +(cm / 2.54).toFixed(2) : 0);
+const inchToCm = (inch: number) => (inch ? +(inch * 2.54).toFixed(1) : 0);
 
 interface ImageData {
   id: number;
@@ -32,6 +37,7 @@ interface ImageData {
   printEnabled: boolean;
   printLimit: number | null;
   printsSold: number;
+  perOptionLimits: boolean;
   printOptions: PrintOptionRow[];
   isArchived: boolean;
   thumbnailPath: string;
@@ -69,6 +75,7 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
     allowDownloadOriginal: boolean;
     printEnabled: boolean;
     printLimit: number | null;
+    perOptionLimits: boolean;
     adminNote: string;
     shotDate: string;
     place: string;
@@ -82,6 +89,7 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
     allowDownloadOriginal: false,
     printEnabled: false,
     printLimit: null,
+    perOptionLimits: false,
     adminNote: '',
     shotDate: '',
     place: '',
@@ -91,7 +99,7 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
   const [categories, setCategories] = useState<Category[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [availableSkus, setAvailableSkus] = useState<
-    { provider: string; sku: string; description: string }[]
+    { provider: string; sku: string; description: string; widthCm?: number; heightCm?: number }[]
   >([]);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [allTags, setAllTags] = useState<Tag[]>([]);
@@ -133,6 +141,7 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
         allowDownloadOriginal: data.allowDownloadOriginal ?? false,
         printEnabled: data.printEnabled ?? false,
         printLimit: data.printLimit,
+        perOptionLimits: data.perOptionLimits ?? false,
         adminNote: data.adminNote ?? '',
         shotDate: data.shotDate ?? '',
         place: data.place ?? '',
@@ -144,6 +153,8 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
           price: Number(o.price),
           widthCm: Number(o.widthCm) || 0,
           heightCm: Number(o.heightCm) || 0,
+          printLimit: o.printLimit ?? null,
+          soldCount: o.soldCount ?? 0,
         })),
       );
       const tagIds = (data.tags || []).map((t) => t.id);
@@ -164,6 +175,7 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
           allowDownloadOriginal: data.allowDownloadOriginal ?? false,
           printEnabled: data.printEnabled ?? false,
           printLimit: data.printLimit,
+          perOptionLimits: data.perOptionLimits ?? false,
           adminNote: data.adminNote ?? '',
           shotDate: data.shotDate ?? '',
           place: data.place ?? '',
@@ -334,17 +346,31 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
   function addPrintOption() {
     setPrintOptions((opts) => [
       ...opts,
-      { sku: '', description: '', price: 0, widthCm: 0, heightCm: 0 },
+      {
+        sku: '',
+        description: '',
+        price: 0,
+        widthCm: 0,
+        heightCm: 0,
+        printLimit: null,
+        soldCount: 0,
+      },
     ]);
   }
 
-  function updatePrintOption(index: number, field: string, value: string | number) {
+  function updatePrintOption(index: number, field: string, value: string | number | null) {
     setPrintOptions((opts) =>
       opts.map((o, i) => {
         if (i !== index) return o;
         if (field === 'sku') {
           const catalog = availableSkus.find((s) => s.sku === value);
-          return { ...o, sku: String(value), description: catalog?.description || o.description };
+          return {
+            ...o,
+            sku: String(value),
+            description: catalog?.description || o.description,
+            ...(catalog?.widthCm != null ? { widthCm: catalog.widthCm } : {}),
+            ...(catalog?.heightCm != null ? { heightCm: catalog.heightCm } : {}),
+          };
         }
         return { ...o, [field]: value };
       }),
@@ -724,74 +750,152 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
           {/* Print settings */}
           {editData.printEnabled && (
             <div className="border border-white/10 rounded-lg p-4 space-y-3">
-              <div className="flex items-center gap-2">
-                <label className="text-xs text-gallery-gray whitespace-nowrap">Print Limit</label>
+              <label className="flex items-center gap-2 text-sm">
                 <input
-                  value={editData.printLimit ?? ''}
-                  onChange={(e) =>
-                    setEditData({
-                      ...editData,
-                      printLimit: e.target.value ? +e.target.value : null,
-                    })
-                  }
-                  type="number"
-                  placeholder="Unlimited"
-                  className={`${inputClass} flex-1`}
+                  type="checkbox"
+                  checked={editData.perOptionLimits}
+                  onChange={(e) => setEditData({ ...editData, perOptionLimits: e.target.checked })}
+                  className="accent-gallery-accent"
                 />
-              </div>
+                Track limits per print option
+              </label>
 
-              {image.printsSold > 0 && (
-                <p className="text-xs text-gallery-gray">Prints sold: {image.printsSold}</p>
+              {!editData.perOptionLimits && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs text-gallery-gray whitespace-nowrap">
+                      Print Limit
+                    </label>
+                    <input
+                      value={editData.printLimit ?? ''}
+                      onChange={(e) =>
+                        setEditData({
+                          ...editData,
+                          printLimit: e.target.value ? +e.target.value : null,
+                        })
+                      }
+                      type="number"
+                      placeholder="Unlimited"
+                      className={`${inputClass} flex-1`}
+                    />
+                  </div>
+                  {editData.printLimit !== null && (
+                    <p className="text-xs text-gallery-gray">
+                      Prints sold: {image.printsSold} / {editData.printLimit}
+                    </p>
+                  )}
+                </>
               )}
 
               <div className="space-y-2">
                 <label className="text-xs text-gallery-gray">Print Options</label>
-                {printOptions.map((opt, idx) => (
-                  <div key={idx} className="flex gap-1.5 items-center">
-                    <select
-                      value={opt.sku}
-                      onChange={(e) => updatePrintOption(idx, 'sku', e.target.value)}
-                      className={`${inputClass} flex-1`}
-                    >
-                      <option value="">Select SKU</option>
-                      {availableSkus.map((s) => (
-                        <option key={`${s.provider}-${s.sku}`} value={s.sku}>
-                          {s.description} ({s.provider})
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      value={opt.price || ''}
-                      onChange={(e) => updatePrintOption(idx, 'price', +e.target.value)}
-                      type="number"
-                      step="0.01"
-                      placeholder="Price"
-                      className={`${inputClass} w-24`}
-                    />
-                    <input
-                      value={opt.widthCm || ''}
-                      onChange={(e) => updatePrintOption(idx, 'widthCm', +e.target.value)}
-                      type="number"
-                      step="0.1"
-                      placeholder="W cm"
-                      className={`${inputClass} w-16`}
-                    />
-                    <input
-                      value={opt.heightCm || ''}
-                      onChange={(e) => updatePrintOption(idx, 'heightCm', +e.target.value)}
-                      type="number"
-                      step="0.1"
-                      placeholder="H cm"
-                      className={`${inputClass} w-16`}
-                    />
-                    <button
-                      onClick={() => removePrintOption(idx)}
-                      className="text-red-400 text-xs hover:text-red-300 px-1"
-                    >
-                      &times;
-                    </button>
-                  </div>
-                ))}
+                {printOptions.map((opt, idx) => {
+                  const catalogSku = availableSkus.find((s) => s.sku === opt.sku);
+                  const dimsLocked = catalogSku?.widthCm != null && catalogSku?.heightCm != null;
+                  return (
+                    <div key={idx} className="border border-white/5 rounded p-2 space-y-1.5">
+                      {/* Row 1: SKU dropdown, price, remove */}
+                      <div className="flex gap-1.5 items-center">
+                        <select
+                          value={opt.sku}
+                          onChange={(e) => updatePrintOption(idx, 'sku', e.target.value)}
+                          className={`${inputClass} flex-1`}
+                        >
+                          <option value="">Select SKU</option>
+                          {availableSkus.map((s) => (
+                            <option key={`${s.provider}-${s.sku}`} value={s.sku}>
+                              {s.description} ({s.provider})
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          value={opt.price || ''}
+                          onChange={(e) => updatePrintOption(idx, 'price', +e.target.value)}
+                          type="number"
+                          step="0.01"
+                          placeholder="Price"
+                          className={`${inputClass} w-24`}
+                        />
+                        <button
+                          onClick={() => removePrintOption(idx)}
+                          className="text-red-400 text-xs hover:text-red-300 px-1"
+                        >
+                          &times;
+                        </button>
+                      </div>
+                      {/* SKU code display */}
+                      {opt.sku && (
+                        <p className="font-mono text-xs text-gallery-gray px-0.5">{opt.sku}</p>
+                      )}
+                      {/* Row 2: Dimensions cm + inches */}
+                      <div className="flex gap-1.5 items-center flex-wrap">
+                        <input
+                          value={opt.widthCm || ''}
+                          onChange={(e) => updatePrintOption(idx, 'widthCm', +e.target.value)}
+                          type="number"
+                          step="0.1"
+                          placeholder="W cm"
+                          readOnly={dimsLocked}
+                          className={`${inputClass} w-16 ${dimsLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        />
+                        <input
+                          value={opt.heightCm || ''}
+                          onChange={(e) => updatePrintOption(idx, 'heightCm', +e.target.value)}
+                          type="number"
+                          step="0.1"
+                          placeholder="H cm"
+                          readOnly={dimsLocked}
+                          className={`${inputClass} w-16 ${dimsLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        />
+                        <input
+                          value={opt.widthCm ? cmToInch(opt.widthCm) : ''}
+                          onChange={(e) =>
+                            updatePrintOption(idx, 'widthCm', inchToCm(+e.target.value))
+                          }
+                          type="number"
+                          step="0.01"
+                          placeholder="W in"
+                          readOnly={dimsLocked}
+                          className={`${inputClass} w-16 ${dimsLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        />
+                        <input
+                          value={opt.heightCm ? cmToInch(opt.heightCm) : ''}
+                          onChange={(e) =>
+                            updatePrintOption(idx, 'heightCm', inchToCm(+e.target.value))
+                          }
+                          type="number"
+                          step="0.01"
+                          placeholder="H in"
+                          readOnly={dimsLocked}
+                          className={`${inputClass} w-16 ${dimsLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        />
+                        {/* Per-option limit */}
+                        {editData.perOptionLimits && (
+                          <>
+                            <input
+                              value={opt.printLimit ?? ''}
+                              onChange={(e) =>
+                                updatePrintOption(
+                                  idx,
+                                  'printLimit',
+                                  e.target.value ? +e.target.value : null,
+                                )
+                              }
+                              type="number"
+                              placeholder="Limit"
+                              className={`${inputClass} w-16`}
+                            />
+                            {opt.printLimit !== null && (
+                              <span className="text-xs text-gallery-gray whitespace-nowrap">
+                                {opt.soldCount} sold
+                              </span>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
                 <button
                   onClick={addPrintOption}
                   className="text-xs text-gallery-accent hover:underline"

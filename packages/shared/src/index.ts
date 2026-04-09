@@ -30,6 +30,8 @@ export interface ImagePrintOption {
   widthCm: number;
   heightCm: number;
   fulfillmentProvider: string | null;
+  printLimit: number | null;
+  soldCount: number;
 }
 
 export interface WallBackground {
@@ -88,6 +90,8 @@ export interface FulfillmentSku {
   sku: string;
   description: string;
   price?: string;
+  widthCm?: number;
+  heightCm?: number;
 }
 
 export type UserRole = 'admin' | 'artist';
@@ -197,6 +201,7 @@ export interface GalleryImage {
   printEnabled: boolean;
   printLimit: number | null;
   printsSold: number;
+  perOptionLimits: boolean;
   shotDate?: string | null;
   place?: string | null;
   originalFileName?: string | null;

@@ -25,6 +25,8 @@ import {
   IsInt,
   MaxLength,
   Matches,
+  ValidateNested,
+  Min,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { Response } from 'express';
@@ -63,6 +65,37 @@ class CreateImageDto {
   @Type(() => Number)
   @IsNumber()
   projectId?: number | null;
+}
+
+class PrintOptionDto {
+  @IsString()
+  sku!: string;
+
+  @IsString()
+  description!: string;
+
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  price!: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  widthCm?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  heightCm?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  printLimit?: number | null;
 }
 
 class UpdateImageDto {
@@ -120,8 +153,14 @@ class UpdateImageDto {
   projectId?: number | null;
 
   @IsOptional()
+  @IsBoolean()
+  perOptionLimits?: boolean;
+
+  @IsOptional()
   @IsArray()
-  printOptions?: { sku: string; description: string; price: number }[];
+  @ValidateNested({ each: true })
+  @Type(() => PrintOptionDto)
+  printOptions?: PrintOptionDto[];
 
   @IsOptional()
   @IsArray()

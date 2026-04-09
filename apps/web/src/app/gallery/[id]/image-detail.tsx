@@ -39,6 +39,7 @@ interface ImageDetailProps {
     printEnabled: boolean;
     printLimit: number | null;
     printsSold: number;
+    perOptionLimits: boolean;
     printOptions: ImagePrintOption[];
     tags?: { id: number; name: string; slug: string }[];
     mediaTypes?: { id: number; name: string; slug: string }[];
@@ -69,8 +70,21 @@ export function ImageDetail({ image }: ImageDetailProps) {
     ? items.some((i) => i.imageId === image.id && i.type === 'print' && i.printSku === selectedSku)
     : false;
 
-  const remaining = image.printLimit !== null ? image.printLimit - image.printsSold : null;
+  const remaining =
+    !image.perOptionLimits && image.printLimit !== null
+      ? image.printLimit - image.printsSold
+      : null;
   const soldOut = remaining !== null && remaining <= 0;
+
+  const selectedOptionSoldOut =
+    image.perOptionLimits && selectedPrintOption
+      ? selectedPrintOption.printLimit !== null &&
+        selectedPrintOption.soldCount >= selectedPrintOption.printLimit
+      : false;
+  const selectedOptionRemaining =
+    image.perOptionLimits && selectedPrintOption?.printLimit != null
+      ? selectedPrintOption.printLimit - selectedPrintOption.soldCount
+      : null;
 
   const hasBuyOptions =
     image.allowDownloadOriginal || (image.printEnabled && image.printOptions?.length > 0);
@@ -338,6 +352,16 @@ export function ImageDetail({ image }: ImageDetailProps) {
                     </p>
                   )}
                   {soldOut && <p className="text-red-400 text-sm">Sold out</p>}
+                  {image.perOptionLimits &&
+                    selectedOptionRemaining !== null &&
+                    !selectedOptionSoldOut && (
+                      <p className="text-gallery-accent text-sm">
+                        Limited edition &mdash; {selectedOptionRemaining} remaining
+                      </p>
+                    )}
+                  {image.perOptionLimits && selectedOptionSoldOut && (
+                    <p className="text-red-400 text-sm">This option is sold out</p>
+                  )}
                 </div>
                 {selectedPrintOption && (
                   <p className="text-2xl font-light">${selectedPrintOption.price}</p>
@@ -352,11 +376,23 @@ export function ImageDetail({ image }: ImageDetailProps) {
                     className="w-full mb-3 px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-gallery-accent text-sm"
                   >
                     <option value="">Select print size</option>
-                    {image.printOptions.map((opt) => (
-                      <option key={opt.sku} value={opt.sku}>
-                        {opt.description} &mdash; ${opt.price}
-                      </option>
-                    ))}
+                    {image.printOptions.map((opt) => {
+                      const optSoldOut =
+                        image.perOptionLimits &&
+                        opt.printLimit !== null &&
+                        opt.soldCount >= opt.printLimit;
+                      const optRemaining =
+                        image.perOptionLimits && opt.printLimit !== null
+                          ? opt.printLimit - opt.soldCount
+                          : null;
+                      return (
+                        <option key={opt.sku} value={opt.sku} disabled={optSoldOut}>
+                          {opt.description} &mdash; ${opt.price}
+                          {optSoldOut ? ' (sold out)' : ''}
+                          {optRemaining !== null && !optSoldOut ? ` (${optRemaining} left)` : ''}
+                        </option>
+                      );
+                    })}
                   </select>
 
                   <button
@@ -372,7 +408,7 @@ export function ImageDetail({ image }: ImageDetailProps) {
                         printDescription: selectedPrintOption.description,
                       });
                     }}
-                    disabled={!selectedSku || printInCart}
+                    disabled={!selectedSku || printInCart || selectedOptionSoldOut}
                     className="w-full px-6 py-2.5 bg-white/10 text-white font-medium rounded-lg hover:bg-white/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm border border-white/10"
                   >
                     {printInCart ? 'In Cart' : 'Add Print to Cart'}

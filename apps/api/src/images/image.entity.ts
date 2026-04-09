@@ -72,6 +72,9 @@ export class ImageEntity {
   @Column({ name: 'prints_sold', type: 'int', default: 0 })
   printsSold!: number;
 
+  @Column({ name: 'per_option_limits', type: 'boolean', default: false })
+  perOptionLimits!: boolean;
+
   @OneToMany(() => ImagePrintOptionEntity, (opt) => opt.image, { cascade: true })
   printOptions!: ImagePrintOptionEntity[];
 

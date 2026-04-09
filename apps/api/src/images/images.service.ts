@@ -33,7 +33,15 @@ interface UpdateImageData {
   adminNote?: string | null;
   shotDate?: string | null;
   place?: string | null;
-  printOptions?: { sku: string; description: string; price: number }[];
+  perOptionLimits?: boolean;
+  printOptions?: {
+    sku: string;
+    description: string;
+    price: number;
+    widthCm?: number;
+    heightCm?: number;
+    printLimit?: number | null;
+  }[];
   tagIds?: number[];
   mediaTypeIds?: number[];
   paintTypeIds?: number[];
@@ -332,6 +340,7 @@ export class ImagesService {
         'image.printEnabled',
         'image.printLimit',
         'image.printsSold',
+        'image.perOptionLimits',
         'image.projectId',
         'image.shotDate',
         'image.place',
@@ -527,10 +536,16 @@ export class ImagesService {
       await this.repo.update(id, imageData);
     }
     if (printOptions !== undefined) {
+      const existingOptions = await this.printOptionRepo.find({ where: { imageId: id } });
+      const soldCountMap = new Map(existingOptions.map((o) => [o.sku, o.soldCount]));
       await this.printOptionRepo.delete({ imageId: id });
       if (printOptions.length > 0) {
         const entities = printOptions.map((opt) =>
-          this.printOptionRepo.create({ ...opt, imageId: id }),
+          this.printOptionRepo.create({
+            ...opt,
+            imageId: id,
+            soldCount: soldCountMap.get(opt.sku) ?? 0,
+          }),
         );
         await this.printOptionRepo.save(entities);
       }
@@ -590,6 +605,25 @@ export class ImagesService {
 
     if (printLimit !== null) {
       qb.andWhere('prints_sold < :limit', { limit: printLimit });
+    }
+
+    const result = await qb.execute();
+    return (result.affected ?? 0) > 0;
+  }
+
+  async findPrintOption(imageId: number, sku: string): Promise<ImagePrintOptionEntity | null> {
+    return this.printOptionRepo.findOne({ where: { imageId, sku } });
+  }
+
+  async incrementOptionSoldCount(optionId: number, optionLimit: number | null): Promise<boolean> {
+    const qb = this.printOptionRepo
+      .createQueryBuilder()
+      .update()
+      .set({ soldCount: () => 'sold_count + 1' })
+      .where('id = :id', { id: optionId });
+
+    if (optionLimit !== null) {
+      qb.andWhere('sold_count < :limit', { limit: optionLimit });
     }
 
     const result = await qb.execute();

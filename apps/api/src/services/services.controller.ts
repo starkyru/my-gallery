@@ -85,10 +85,22 @@ export class ServicesController {
   @Get('fulfillment/skus')
   async fulfillmentSkus() {
     const configs = await this.servicesService.getEnabledByType('fulfillment');
-    const skus: { provider: string; sku: string; description: string }[] = [];
+    const skus: {
+      provider: string;
+      sku: string;
+      description: string;
+      widthCm?: number;
+      heightCm?: number;
+    }[] = [];
     for (const config of configs) {
       for (const s of config.skus || []) {
-        skus.push({ provider: config.provider, sku: s.sku, description: s.description });
+        skus.push({
+          provider: config.provider,
+          sku: s.sku,
+          description: s.description,
+          ...(s.widthCm != null && { widthCm: s.widthCm }),
+          ...(s.heightCm != null && { heightCm: s.heightCm }),
+        });
       }
     }
     return skus;

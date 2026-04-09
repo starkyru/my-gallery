@@ -24,7 +24,13 @@ export class ServiceConfigEntity {
   enabled!: boolean;
 
   @Column({ type: 'jsonb', default: [] })
-  skus!: { sku: string; description: string; price?: string }[];
+  skus!: {
+    sku: string;
+    description: string;
+    price?: string;
+    widthCm?: number;
+    heightCm?: number;
+  }[];
 
   @Column({ type: 'boolean', default: true })
   sandbox!: boolean;

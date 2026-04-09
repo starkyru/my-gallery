@@ -1,4 +1,11 @@
-import { IsBoolean, IsOptional, IsString, IsArray, ValidateNested } from 'class-validator';
+import {
+  IsBoolean,
+  IsOptional,
+  IsString,
+  IsArray,
+  ValidateNested,
+  IsNumber,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 class SkuDto {
@@ -11,6 +18,14 @@ class SkuDto {
   @IsOptional()
   @IsString()
   price?: string;
+
+  @IsOptional()
+  @IsNumber()
+  widthCm?: number;
+
+  @IsOptional()
+  @IsNumber()
+  heightCm?: number;
 }
 
 export class UpdateServiceDto {

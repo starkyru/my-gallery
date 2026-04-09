@@ -30,4 +30,10 @@ export class ImagePrintOptionEntity {
 
   @Column({ name: 'fulfillment_provider', type: 'varchar', nullable: true })
   fulfillmentProvider!: string | null;
+
+  @Column({ name: 'print_limit', type: 'int', nullable: true, default: null })
+  printLimit!: number | null;
+
+  @Column({ name: 'sold_count', type: 'int', default: 0 })
+  soldCount!: number;
 }

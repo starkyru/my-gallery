@@ -46,7 +46,13 @@ export class OrdersService {
             `Print option ${item.printSku} not found for "${image.title}"`,
           );
         }
-        if (image.printLimit !== null && image.printsSold >= image.printLimit) {
+        if (image.perOptionLimits) {
+          if (printOption.printLimit !== null && printOption.soldCount >= printOption.printLimit) {
+            throw new BadRequestException(
+              `Print option "${printOption.description}" sold out for "${image.title}"`,
+            );
+          }
+        } else if (image.printLimit !== null && image.printsSold >= image.printLimit) {
           throw new BadRequestException(`Print edition sold out for "${image.title}"`);
         }
 
