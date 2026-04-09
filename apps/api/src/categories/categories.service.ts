@@ -31,7 +31,7 @@ export class CategoriesService implements OnModuleInit {
       .leftJoin(ImageEntity, 'img', 'img.category = cat.slug')
       .addSelect('COUNT(img.id)', 'imageCount')
       .groupBy('cat.id')
-      .orderBy('cat.sortOrder', 'ASC')
+      .orderBy('cat.name', 'ASC')
       .getRawAndEntities();
 
     return categories.entities.map((cat, i) => ({
