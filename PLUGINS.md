@@ -24,6 +24,7 @@ Each provider reads credentials from its own `.env` file located in the provider
 | -------- | ---------------------------------------------- |
 | BTCPay   | `apps/api/src/services/providers/btcpay/.env`  |
 | PayPal   | `apps/api/src/services/providers/paypal/.env`  |
+| Stripe   | `apps/api/src/services/providers/stripe/.env`  |
 | Prodigi  | `apps/api/src/services/providers/prodigi/.env` |
 
 **Important:** After building, these `.env` files must also exist in the compiled output at the corresponding path under `apps/api/dist/services/providers/<provider>/.env`. The simplest approach is to copy them into the `dist/` directory after each build, or symlink them.
@@ -62,6 +63,18 @@ Card and PayPal balance payments via the Orders v2 API.
 | `sandbox` | Use sandbox API (default: true) |
 
 **Webhook URL:** `https://your-domain.com/api/payments/paypal/webhook`
+
+#### Stripe
+
+Card payments via Stripe Checkout. Redirects customers to a Stripe-hosted payment page, then confirms via webhook.
+
+| Credential              | Description                                                                          |
+| ----------------------- | ------------------------------------------------------------------------------------ |
+| `STRIPE_SECRET_KEY`     | Secret key from [dashboard.stripe.com/apikeys](https://dashboard.stripe.com/apikeys) |
+| `STRIPE_WEBHOOK_SECRET` | Webhook signing secret from the webhook endpoint configuration                       |
+
+**Webhook URL:** `https://your-domain.com/api/payments/stripe/webhook`
+**Events:** `checkout.session.completed`, `checkout.session.async_payment_succeeded`
 
 ### Fulfillment providers
 

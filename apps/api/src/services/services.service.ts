@@ -44,6 +44,13 @@ export class ServicesService implements OnModuleInit {
           sortOrder: 1,
         }),
         this.repo.create({
+          type: 'payment',
+          provider: 'stripe',
+          displayName: 'Stripe',
+          enabled: false,
+          sortOrder: 2,
+        }),
+        this.repo.create({
           type: 'fulfillment',
           provider: 'prodigi',
           displayName: 'Prodigi',
@@ -54,6 +61,24 @@ export class ServicesService implements OnModuleInit {
         }),
       ]);
       this.logger.log('Default service configs seeded');
+    } else {
+      // Ensure newer providers exist in existing DBs
+      await this.ensureProvider('payment', 'stripe', 'Stripe', 2);
+    }
+  }
+
+  private async ensureProvider(
+    type: string,
+    provider: string,
+    displayName: string,
+    sortOrder: number,
+  ) {
+    const existing = await this.repo.findOne({ where: { provider } });
+    if (!existing) {
+      this.logger.log(`Adding missing service config: ${provider}`);
+      await this.repo.save(
+        this.repo.create({ type, provider, displayName, enabled: false, sortOrder }),
+      );
     }
   }
 

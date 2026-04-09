@@ -12,6 +12,7 @@ const inputClass =
 const PROVIDER_STYLES: Record<string, { bg: string; hover: string; label: string }> = {
   paypal: { bg: 'bg-[#0070ba]', hover: 'hover:bg-[#005ea6]', label: 'Pay with PayPal / Card' },
   btcpay: { bg: 'bg-[#f7931a]', hover: 'hover:bg-[#e8850f]', label: 'Pay with Bitcoin' },
+  stripe: { bg: 'bg-[#635bff]', hover: 'hover:bg-[#4b45c6]', label: 'Pay with Card' },
 };
 
 export default function CheckoutPage() {

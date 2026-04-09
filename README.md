@@ -91,7 +91,7 @@ CREATE USER gallery_user WITH PASSWORD 'your_password';
 CREATE DATABASE gallery OWNER gallery_user;
 ```
 
-On first startup the API seeds the `service_configs` table with default entries for BTCPay, PayPal, and Prodigi (all disabled). Configure them from the admin settings page.
+On first startup the API seeds the `service_configs` table with default entries for BTCPay, PayPal, Stripe, and Prodigi (all disabled). Configure them from the admin settings page.
 
 ## Plugins
 
@@ -99,11 +99,12 @@ Payment providers and print fulfillment services are managed as configurable plu
 
 ### Built-in providers
 
-| Type        | Provider                                   | Description                      |
-| ----------- | ------------------------------------------ | -------------------------------- |
-| Payment     | [BTCPay Server](https://btcpayserver.org/) | Bitcoin and Lightning payments   |
-| Payment     | [PayPal](https://developer.paypal.com/)    | Card and PayPal balance payments |
-| Fulfillment | [Prodigi](https://www.prodigi.com/)        | Print-on-demand fulfillment      |
+| Type        | Provider                                   | Description                       |
+| ----------- | ------------------------------------------ | --------------------------------- |
+| Payment     | [BTCPay Server](https://btcpayserver.org/) | Bitcoin and Lightning payments    |
+| Payment     | [PayPal](https://developer.paypal.com/)    | Card and PayPal balance payments  |
+| Payment     | [Stripe](https://stripe.com/)              | Card payments via Stripe Checkout |
+| Fulfillment | [Prodigi](https://www.prodigi.com/)        | Print-on-demand fulfillment       |
 
 The Prodigi integration uses the [`prodigi-print-api`](https://www.npmjs.com/package/prodigi-print-api) npm package — a co-project that provides a typed Node.js client for the Prodigi API.
 
