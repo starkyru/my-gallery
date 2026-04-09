@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { useNotification } from '@/hooks/useNotification';
-import type { Category, Project, Tag } from '@gallery/shared';
+import type { Artist, Category, Project, Tag } from '@gallery/shared';
 import { UPLOAD_URL } from '@/config';
 import CreatableSelect from 'react-select/creatable';
 import { darkSelectStyles } from '@/lib/select-styles';
@@ -58,6 +58,7 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
     description: string;
     category: string;
     price: number;
+    artistId: number;
     projectId: number | null;
     allowDownloadOriginal: boolean;
     printEnabled: boolean;
@@ -68,6 +69,7 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
     description: '',
     category: '',
     price: 0,
+    artistId: 0,
     projectId: null,
     allowDownloadOriginal: false,
     printEnabled: false,
@@ -75,6 +77,7 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
     adminNote: '',
   });
   const [printOptions, setPrintOptions] = useState<PrintOptionRow[]>([]);
+  const [artists, setArtists] = useState<Artist[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [availableSkus, setAvailableSkus] = useState<
@@ -105,6 +108,7 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
         description: data.description ?? '',
         category: data.category ?? '',
         price: data.price,
+        artistId: data.artist.id,
         projectId: data.projectId,
         allowDownloadOriginal: data.allowDownloadOriginal ?? false,
         printEnabled: data.printEnabled ?? false,
@@ -129,6 +133,7 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
           description: data.description ?? '',
           category: data.category ?? '',
           price: data.price,
+          artistId: data.artist.id,
           projectId: data.projectId,
           allowDownloadOriginal: data.allowDownloadOriginal ?? false,
           printEnabled: data.printEnabled ?? false,
@@ -138,6 +143,7 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
         tagIds,
       });
     });
+    api.artists.list().then(setArtists);
     api.categories.list().then(setCategories);
     api.projects.list().then(setProjects);
     api.services.fulfillmentSkus().then(setAvailableSkus);
@@ -290,7 +296,7 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
   const inputClass =
     'w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded text-sm text-white focus:outline-none focus:border-gallery-accent';
 
-  const filteredProjects = projects.filter((p) => p.artistId === image.artist.id);
+  const filteredProjects = projects.filter((p) => p.artistId === editData.artistId);
 
   return (
     <div className="pb-20">
@@ -430,6 +436,24 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
               step="0.01"
               className={inputClass}
             />
+          </div>
+
+          {/* Artist */}
+          <div>
+            <label className="block text-xs text-gallery-gray mb-1">Artist</label>
+            <select
+              value={editData.artistId}
+              onChange={(e) =>
+                setEditData({ ...editData, artistId: Number(e.target.value), projectId: null })
+              }
+              className={inputClass}
+            >
+              {artists.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Project */}
