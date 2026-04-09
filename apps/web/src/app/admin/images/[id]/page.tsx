@@ -44,6 +44,9 @@ interface ImageData {
   paintTypes?: { id: number; name: string; slug: string }[];
   adminNote?: string | null;
   aiDescription?: string | null;
+  shotDate?: string | null;
+  place?: string | null;
+  originalFileName?: string | null;
   updatedAt: string;
 }
 
@@ -66,6 +69,8 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
     printEnabled: boolean;
     printLimit: number | null;
     adminNote: string;
+    shotDate: string;
+    place: string;
   }>({
     title: '',
     description: '',
@@ -77,6 +82,8 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
     printEnabled: false,
     printLimit: null,
     adminNote: '',
+    shotDate: '',
+    place: '',
   });
   const [printOptions, setPrintOptions] = useState<PrintOptionRow[]>([]);
   const [artists, setArtists] = useState<Artist[]>([]);
@@ -125,6 +132,8 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
         printEnabled: data.printEnabled ?? false,
         printLimit: data.printLimit,
         adminNote: data.adminNote ?? '',
+        shotDate: data.shotDate ?? '',
+        place: data.place ?? '',
       });
       setPrintOptions(
         (data.printOptions || []).map((o) => ({
@@ -154,6 +163,8 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
           printEnabled: data.printEnabled ?? false,
           printLimit: data.printLimit,
           adminNote: data.adminNote ?? '',
+          shotDate: data.shotDate ?? '',
+          place: data.place ?? '',
         },
         tagIds,
         mediaTypeIds,
@@ -446,6 +457,54 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
               className={inputClass}
             />
           </div>
+
+          {/* Shot Date */}
+          <div>
+            <label className="block text-xs text-gallery-gray mb-1">
+              Date (YYYY, YYYY-MM, or YYYY-MM-DD)
+            </label>
+            <div className="flex gap-2 items-center">
+              <input
+                value={editData.shotDate}
+                onChange={(e) => setEditData({ ...editData, shotDate: e.target.value })}
+                placeholder="e.g. 2024 or 2024-03 or 2024-03-15"
+                className={inputClass}
+              />
+              <input
+                type="date"
+                onChange={(e) => {
+                  if (e.target.value) {
+                    setEditData({ ...editData, shotDate: e.target.value });
+                  }
+                }}
+                className={`${inputClass} w-10 px-1.5 cursor-pointer [&::-webkit-calendar-picker-indicator]:invert`}
+                title="Pick a date"
+              />
+            </div>
+          </div>
+
+          {/* Place */}
+          <div>
+            <label className="block text-xs text-gallery-gray mb-1">Place</label>
+            <input
+              value={editData.place}
+              onChange={(e) => setEditData({ ...editData, place: e.target.value })}
+              placeholder="Where the work was created"
+              className={inputClass}
+            />
+          </div>
+
+          {/* Original File Name (read-only) */}
+          {image.originalFileName && (
+            <div>
+              <label className="block text-xs text-gallery-gray mb-1">Original File Name</label>
+              <input
+                value={image.originalFileName}
+                readOnly
+                className={`${inputClass} opacity-60 cursor-default`}
+              />
+            </div>
+          )}
 
           {/* Category */}
           <div>

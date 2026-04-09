@@ -15,7 +15,17 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
-import { IsString, IsOptional, IsNumber, IsBoolean, IsArray, IsIn, IsInt } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsNumber,
+  IsBoolean,
+  IsArray,
+  IsIn,
+  IsInt,
+  MaxLength,
+  Matches,
+} from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { Response } from 'express';
 import * as path from 'path';
@@ -131,6 +141,19 @@ class UpdateImageDto {
   @IsOptional()
   @IsString()
   adminNote?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  @Matches(/^\d{4}(-\d{2}(-\d{2})?)?$/, {
+    message: 'shotDate must be YYYY, YYYY-MM, or YYYY-MM-DD',
+  })
+  shotDate?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  place?: string | null;
 }
 
 class BulkActionDto {

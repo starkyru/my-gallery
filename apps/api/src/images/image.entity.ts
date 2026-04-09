@@ -97,6 +97,15 @@ export class ImageEntity {
   @Column({ name: 'admin_note', type: 'text', nullable: true })
   adminNote!: string | null;
 
+  @Column({ name: 'shot_date', type: 'varchar', nullable: true })
+  shotDate!: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  place!: string | null;
+
+  @Column({ name: 'original_file_name', type: 'varchar', nullable: true })
+  originalFileName!: string | null;
+
   @Column({ name: 'allow_download_original', default: false })
   allowDownloadOriginal!: boolean;
 

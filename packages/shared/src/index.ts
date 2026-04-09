@@ -197,6 +197,9 @@ export interface GalleryImage {
   printEnabled: boolean;
   printLimit: number | null;
   printsSold: number;
+  shotDate?: string | null;
+  place?: string | null;
+  originalFileName?: string | null;
   allowDownloadOriginal: boolean;
   isArchived: boolean;
   printOptions: ImagePrintOption[];

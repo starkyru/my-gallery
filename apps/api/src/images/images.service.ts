@@ -10,6 +10,7 @@ import { execFile } from 'child_process';
 import { promisify } from 'util';
 
 const execFileAsync = promisify(execFile);
+import exifReader from 'exif-reader';
 import { ImageEntity } from './image.entity';
 import { ImagePrintOptionEntity } from './image-print-option.entity';
 import { ImageTagEntity } from '../tags/image-tag.entity';
@@ -30,6 +31,8 @@ interface UpdateImageData {
   allowDownloadOriginal?: boolean;
   projectId?: number | null;
   adminNote?: string | null;
+  shotDate?: string | null;
+  place?: string | null;
   printOptions?: { sku: string; description: string; price: number }[];
   tagIds?: number[];
   mediaTypeIds?: number[];
@@ -68,6 +71,23 @@ export class ImagesService {
     return resolved;
   }
 
+  private extractExifDate(metadata: sharp.Metadata): string | null {
+    if (!metadata.exif) return null;
+    try {
+      const exif = exifReader(metadata.exif);
+      const dateValue = exif?.Photo?.DateTimeOriginal ?? exif?.Photo?.DateTimeDigitized;
+      if (!dateValue) return null;
+      const d = dateValue instanceof Date ? dateValue : new Date(String(dateValue));
+      if (isNaN(d.getTime())) return null;
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    } catch {
+      return null;
+    }
+  }
+
   private mapRelations(image: ImageEntity, stripAdmin = true) {
     const tags = (image.imageTags ?? []).map((it) => ({
       id: it.tag.id,
@@ -84,7 +104,7 @@ export class ImagesService {
       name: ipt.paintType.name,
       slug: ipt.paintType.slug,
     }));
-    const { imageTags, imageMediaTypes, imagePaintTypes, adminNote, ...rest } =
+    const { imageTags, imageMediaTypes, imagePaintTypes, adminNote, originalFileName, ...rest } =
       image as ImageEntity & {
         imageTags?: unknown;
         imageMediaTypes?: unknown;
@@ -95,9 +115,10 @@ export class ImagesService {
     void imagePaintTypes;
     if (stripAdmin) {
       void adminNote;
+      void originalFileName;
       return { ...rest, tags, mediaTypes, paintTypes };
     }
-    return { ...rest, adminNote, tags, mediaTypes, paintTypes };
+    return { ...rest, adminNote, originalFileName, tags, mediaTypes, paintTypes };
   }
 
   private getSigningKey(): string {
@@ -299,6 +320,8 @@ export class ImagesService {
         'image.printLimit',
         'image.printsSold',
         'image.projectId',
+        'image.shotDate',
+        'image.place',
         'image.allowDownloadOriginal',
         'image.isArchived',
         'image.createdAt',
@@ -404,6 +427,7 @@ export class ImagesService {
       watermarkPath,
     );
 
+    const exifDate = this.extractExifDate(metadata);
     const image = this.repo.create({
       ...data,
       filePath,
@@ -411,6 +435,8 @@ export class ImagesService {
       watermarkPath,
       width: metadata.width || 0,
       height: metadata.height || 0,
+      shotDate: exifDate,
+      originalFileName: file.originalname || null,
     });
 
     try {

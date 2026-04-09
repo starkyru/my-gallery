@@ -43,6 +43,8 @@ interface ImageDetailProps {
     tags?: { id: number; name: string; slug: string }[];
     mediaTypes?: { id: number; name: string; slug: string }[];
     paintTypes?: { id: number; name: string; slug: string }[];
+    shotDate?: string | null;
+    place?: string | null;
   };
 }
 
@@ -269,6 +271,8 @@ export function ImageDetail({ image }: ImageDetailProps) {
 
               <p className="text-gallery-gray text-xs mb-2">
                 Category: {image.category.replace(/_/g, ' ')}
+                {image.shotDate && <> &middot; {image.shotDate}</>}
+                {image.place && <> &middot; {image.place}</>}
               </p>
 
               {image.tags && image.tags.length > 0 && (
