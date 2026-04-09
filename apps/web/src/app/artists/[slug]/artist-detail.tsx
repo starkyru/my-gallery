@@ -24,6 +24,8 @@ export function ArtistDetail({ artist, images }: ArtistDetailProps) {
   const [filter, setFilter] = useState('');
   const [projectFilter, setProjectFilter] = useState('');
   const [tagFilter, setTagFilter] = useState<string[]>([]);
+  const [mediaTypeFilter, setMediaTypeFilter] = useState('');
+  const [paintTypeFilter, setPaintTypeFilter] = useState('');
   const [visible, setVisible] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const portraitRef = useRef<HTMLDivElement>(null);
@@ -38,6 +40,14 @@ export function ArtistDetail({ artist, images }: ArtistDetailProps) {
     if (tagFilter.length > 0) {
       const imgSlugs = (img.tags ?? []).map((t) => t.slug);
       if (!tagFilter.some((slug) => imgSlugs.includes(slug))) return false;
+    }
+    if (mediaTypeFilter) {
+      const slugs = (img.mediaTypes ?? []).map((m) => m.slug);
+      if (!slugs.includes(mediaTypeFilter)) return false;
+    }
+    if (paintTypeFilter) {
+      const slugs = (img.paintTypes ?? []).map((p) => p.slug);
+      if (!slugs.includes(paintTypeFilter)) return false;
     }
     return true;
   });
@@ -173,6 +183,10 @@ export function ArtistDetail({ artist, images }: ArtistDetailProps) {
             artistId={artist.id}
             tagValues={tagFilter}
             onTagChange={handleTagFilter}
+            mediaTypeValue={mediaTypeFilter}
+            onMediaTypeChange={setMediaTypeFilter}
+            paintTypeValue={paintTypeFilter}
+            onPaintTypeChange={setPaintTypeFilter}
             className="mb-8"
           />
 

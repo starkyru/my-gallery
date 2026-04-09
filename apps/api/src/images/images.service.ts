@@ -13,6 +13,8 @@ const execFileAsync = promisify(execFile);
 import { ImageEntity } from './image.entity';
 import { ImagePrintOptionEntity } from './image-print-option.entity';
 import { ImageTagEntity } from '../tags/image-tag.entity';
+import { ImageMediaTypeEntity } from '../media-types/image-media-type.entity';
+import { ImagePaintTypeEntity } from '../paint-types/image-paint-type.entity';
 
 interface UpdateImageData {
   title?: string;
@@ -30,6 +32,8 @@ interface UpdateImageData {
   adminNote?: string | null;
   printOptions?: { sku: string; description: string; price: number }[];
   tagIds?: number[];
+  mediaTypeIds?: number[];
+  paintTypeIds?: number[];
 }
 
 const ALLOWED_FORMATS = ['jpeg', 'png', 'webp', 'tiff', 'heif'];
@@ -47,6 +51,10 @@ export class ImagesService {
     private readonly printOptionRepo: Repository<ImagePrintOptionEntity>,
     @InjectRepository(ImageTagEntity)
     private readonly imageTagRepo: Repository<ImageTagEntity>,
+    @InjectRepository(ImageMediaTypeEntity)
+    private readonly imageMediaTypeRepo: Repository<ImageMediaTypeEntity>,
+    @InjectRepository(ImagePaintTypeEntity)
+    private readonly imagePaintTypeRepo: Repository<ImagePaintTypeEntity>,
     private readonly configService: ConfigService,
   ) {
     this.uploadDir = this.configService.get('UPLOAD_DIR', './uploads');
@@ -60,19 +68,36 @@ export class ImagesService {
     return resolved;
   }
 
-  private mapTags(image: ImageEntity, stripAdmin = true) {
+  private mapRelations(image: ImageEntity, stripAdmin = true) {
     const tags = (image.imageTags ?? []).map((it) => ({
       id: it.tag.id,
       name: it.tag.name,
       slug: it.tag.slug,
     }));
-    const { imageTags, adminNote, ...rest } = image as ImageEntity & { imageTags?: unknown };
+    const mediaTypes = (image.imageMediaTypes ?? []).map((imt) => ({
+      id: imt.mediaType.id,
+      name: imt.mediaType.name,
+      slug: imt.mediaType.slug,
+    }));
+    const paintTypes = (image.imagePaintTypes ?? []).map((ipt) => ({
+      id: ipt.paintType.id,
+      name: ipt.paintType.name,
+      slug: ipt.paintType.slug,
+    }));
+    const { imageTags, imageMediaTypes, imagePaintTypes, adminNote, ...rest } =
+      image as ImageEntity & {
+        imageTags?: unknown;
+        imageMediaTypes?: unknown;
+        imagePaintTypes?: unknown;
+      };
     void imageTags;
+    void imageMediaTypes;
+    void imagePaintTypes;
     if (stripAdmin) {
       void adminNote;
-      return { ...rest, tags };
+      return { ...rest, tags, mediaTypes, paintTypes };
     }
-    return { ...rest, adminNote, tags };
+    return { ...rest, adminNote, tags, mediaTypes, paintTypes };
   }
 
   private getSigningKey(): string {
@@ -89,6 +114,8 @@ export class ImagesService {
     artistId?: number;
     projectId?: number;
     tags?: string[];
+    mediaTypes?: string[];
+    paintTypes?: string[];
     search?: string[][];
     condition?: 'AND' | 'OR';
   }) {
@@ -99,6 +126,10 @@ export class ImagesService {
       .leftJoinAndSelect('image.project', 'project')
       .leftJoinAndSelect('image.imageTags', 'imageTags')
       .leftJoinAndSelect('imageTags.tag', 'tag')
+      .leftJoinAndSelect('image.imageMediaTypes', 'imageMediaTypes')
+      .leftJoinAndSelect('imageMediaTypes.mediaType', 'mediaType')
+      .leftJoinAndSelect('image.imagePaintTypes', 'imagePaintTypes')
+      .leftJoinAndSelect('imagePaintTypes.paintType', 'paintType')
       .andWhere('image.isArchived = false')
       .andWhere('artist.isActive = true')
       .andWhere('image.id NOT IN (SELECT pgi.image_id FROM protected_gallery_images pgi)')
@@ -154,8 +185,21 @@ export class ImagesService {
       qb.andWhere(searchSql, params);
     }
 
+    if (query?.mediaTypes && query.mediaTypes.length > 0) {
+      qb.andWhere(
+        'image.id IN (SELECT imt.image_id FROM image_media_types imt INNER JOIN media_types mt ON mt.id = imt.media_type_id WHERE mt.slug IN (:...mediaTypeSlugs))',
+        { mediaTypeSlugs: query.mediaTypes },
+      );
+    }
+    if (query?.paintTypes && query.paintTypes.length > 0) {
+      qb.andWhere(
+        'image.id IN (SELECT ipt.image_id FROM image_paint_types ipt INNER JOIN paint_types pt ON pt.id = ipt.paint_type_id WHERE pt.slug IN (:...paintTypeSlugs))',
+        { paintTypeSlugs: query.paintTypes },
+      );
+    }
+
     const images = await qb.getMany();
-    return images.map((img) => this.mapTags(img));
+    return images.map((img) => this.mapRelations(img));
   }
 
   async findAllAdmin() {
@@ -166,10 +210,14 @@ export class ImagesService {
       .leftJoinAndSelect('image.project', 'project')
       .leftJoinAndSelect('image.imageTags', 'imageTags')
       .leftJoinAndSelect('imageTags.tag', 'tag')
+      .leftJoinAndSelect('image.imageMediaTypes', 'imageMediaTypes')
+      .leftJoinAndSelect('imageMediaTypes.mediaType', 'mediaType')
+      .leftJoinAndSelect('image.imagePaintTypes', 'imagePaintTypes')
+      .leftJoinAndSelect('imagePaintTypes.paintType', 'paintType')
       .orderBy('image.sortOrder', 'ASC')
       .addOrderBy('image.createdAt', 'DESC')
       .getMany();
-    return images.map((img) => this.mapTags(img, false));
+    return images.map((img) => this.mapRelations(img, false));
   }
 
   async bulkAction(ids: number[], action: string, value?: string) {
@@ -215,10 +263,19 @@ export class ImagesService {
   async findOne(id: number) {
     const image = await this.repo.findOne({
       where: { id },
-      relations: ['artist', 'printOptions', 'imageTags', 'imageTags.tag'],
+      relations: [
+        'artist',
+        'printOptions',
+        'imageTags',
+        'imageTags.tag',
+        'imageMediaTypes',
+        'imageMediaTypes.mediaType',
+        'imagePaintTypes',
+        'imagePaintTypes.paintType',
+      ],
     });
     if (!image) throw new NotFoundException('Image not found');
-    return this.mapTags(image, false);
+    return this.mapRelations(image, false);
   }
 
   async findOnePublic(id: number) {
@@ -251,10 +308,14 @@ export class ImagesService {
       .leftJoinAndSelect('image.printOptions', 'printOptions')
       .leftJoinAndSelect('image.imageTags', 'imageTags')
       .leftJoinAndSelect('imageTags.tag', 'tag')
+      .leftJoinAndSelect('image.imageMediaTypes', 'imageMediaTypes')
+      .leftJoinAndSelect('imageMediaTypes.mediaType', 'mediaType')
+      .leftJoinAndSelect('image.imagePaintTypes', 'imagePaintTypes')
+      .leftJoinAndSelect('imagePaintTypes.paintType', 'paintType')
       .where('image.id = :id', { id })
       .getOne();
     if (!image) throw new NotFoundException('Image not found');
-    return this.mapTags(image);
+    return this.mapRelations(image);
   }
 
   private async validateAndProcessFile(file: Express.Multer.File): Promise<{
@@ -418,7 +479,7 @@ export class ImagesService {
 
   async update(id: number, data: UpdateImageData) {
     const existing = await this.findOne(id);
-    const { printOptions, tagIds, ...imageData } = data;
+    const { printOptions, tagIds, mediaTypeIds, paintTypeIds, ...imageData } = data;
     // If artist changes, clear projectId (project belongs to old artist)
     if (imageData.artistId !== undefined && imageData.artistId !== existing.artistId) {
       imageData.projectId = null;
@@ -440,6 +501,24 @@ export class ImagesService {
       if (tagIds.length > 0) {
         const entities = tagIds.map((tagId) => this.imageTagRepo.create({ imageId: id, tagId }));
         await this.imageTagRepo.save(entities);
+      }
+    }
+    if (mediaTypeIds !== undefined) {
+      await this.imageMediaTypeRepo.delete({ imageId: id });
+      if (mediaTypeIds.length > 0) {
+        const entities = mediaTypeIds.map((mediaTypeId) =>
+          this.imageMediaTypeRepo.create({ imageId: id, mediaTypeId }),
+        );
+        await this.imageMediaTypeRepo.save(entities);
+      }
+    }
+    if (paintTypeIds !== undefined) {
+      await this.imagePaintTypeRepo.delete({ imageId: id });
+      if (paintTypeIds.length > 0) {
+        const entities = paintTypeIds.map((paintTypeId) =>
+          this.imagePaintTypeRepo.create({ imageId: id, paintTypeId }),
+        );
+        await this.imagePaintTypeRepo.save(entities);
       }
     }
     return this.findOne(id);

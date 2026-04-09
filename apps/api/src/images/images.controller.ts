@@ -119,6 +119,16 @@ class UpdateImageDto {
   tagIds?: number[];
 
   @IsOptional()
+  @IsArray()
+  @IsInt({ each: true })
+  mediaTypeIds?: number[];
+
+  @IsOptional()
+  @IsArray()
+  @IsInt({ each: true })
+  paintTypeIds?: number[];
+
+  @IsOptional()
   @IsString()
   adminNote?: string | null;
 }
@@ -149,6 +159,8 @@ export class ImagesController {
     @Query('artistId') artistId?: string,
     @Query('projectId') projectId?: string,
     @Query('tags') tags?: string,
+    @Query('mediaTypes') mediaTypes?: string,
+    @Query('paintTypes') paintTypes?: string,
   ) {
     return this.service.findAll({
       category,
@@ -156,6 +168,8 @@ export class ImagesController {
       artistId: artistId ? +artistId : undefined,
       projectId: projectId ? +projectId : undefined,
       tags: tags ? tags.split(',').filter(Boolean).slice(0, 20) : undefined,
+      mediaTypes: mediaTypes ? mediaTypes.split(',').filter(Boolean).slice(0, 20) : undefined,
+      paintTypes: paintTypes ? paintTypes.split(',').filter(Boolean).slice(0, 20) : undefined,
     });
   }
 

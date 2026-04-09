@@ -19,6 +19,10 @@ import { ProtectedGalleryEntity } from './protected-galleries/protected-gallery.
 import { ProtectedGalleryImageEntity } from './protected-galleries/protected-gallery-image.entity';
 import { TagEntity } from './tags/tag.entity';
 import { ImageTagEntity } from './tags/image-tag.entity';
+import { MediaTypeEntity } from './media-types/media-type.entity';
+import { ImageMediaTypeEntity } from './media-types/image-media-type.entity';
+import { PaintTypeEntity } from './paint-types/paint-type.entity';
+import { ImagePaintTypeEntity } from './paint-types/image-paint-type.entity';
 import { ContactInquiryEntity } from './contacts/contact-inquiry.entity';
 import { WallBackgroundEntity } from './walls/wall-background.entity';
 import { FramePresetEntity } from './walls/frame-preset.entity';
@@ -46,6 +50,10 @@ const ds = new DataSource({
     ProtectedGalleryImageEntity,
     TagEntity,
     ImageTagEntity,
+    MediaTypeEntity,
+    ImageMediaTypeEntity,
+    PaintTypeEntity,
+    ImagePaintTypeEntity,
     ContactInquiryEntity,
     WallBackgroundEntity,
     FramePresetEntity,

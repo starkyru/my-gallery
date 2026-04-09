@@ -34,6 +34,12 @@ import { FramePresetEntity } from './walls/frame-preset.entity';
 import { ContactInquiryEntity } from './contacts/contact-inquiry.entity';
 import { TagEntity } from './tags/tag.entity';
 import { ImageTagEntity } from './tags/image-tag.entity';
+import { MediaTypesModule } from './media-types/media-types.module';
+import { MediaTypeEntity } from './media-types/media-type.entity';
+import { ImageMediaTypeEntity } from './media-types/image-media-type.entity';
+import { PaintTypesModule } from './paint-types/paint-types.module';
+import { PaintTypeEntity } from './paint-types/paint-type.entity';
+import { ImagePaintTypeEntity } from './paint-types/image-paint-type.entity';
 
 @Module({
   imports: [
@@ -62,6 +68,10 @@ import { ImageTagEntity } from './tags/image-tag.entity';
           ProtectedGalleryImageEntity,
           TagEntity,
           ImageTagEntity,
+          MediaTypeEntity,
+          ImageMediaTypeEntity,
+          PaintTypeEntity,
+          ImagePaintTypeEntity,
           ContactInquiryEntity,
           WallBackgroundEntity,
           FramePresetEntity,
@@ -82,6 +92,8 @@ import { ImageTagEntity } from './tags/image-tag.entity';
     ProjectsModule,
     ProtectedGalleriesModule,
     TagsModule,
+    MediaTypesModule,
+    PaintTypesModule,
     ContactsModule,
     ChatModule,
     WallsModule,

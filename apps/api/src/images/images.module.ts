@@ -5,12 +5,20 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ImageEntity } from './image.entity';
 import { ImagePrintOptionEntity } from './image-print-option.entity';
 import { ImageTagEntity } from '../tags/image-tag.entity';
+import { ImageMediaTypeEntity } from '../media-types/image-media-type.entity';
+import { ImagePaintTypeEntity } from '../paint-types/image-paint-type.entity';
 import { ImagesService } from './images.service';
 import { ImagesController } from './images.controller';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([ImageEntity, ImagePrintOptionEntity, ImageTagEntity]),
+    TypeOrmModule.forFeature([
+      ImageEntity,
+      ImagePrintOptionEntity,
+      ImageTagEntity,
+      ImageMediaTypeEntity,
+      ImagePaintTypeEntity,
+    ]),
     MulterModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

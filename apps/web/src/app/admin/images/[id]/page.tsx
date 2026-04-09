@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { useNotification } from '@/hooks/useNotification';
-import type { Artist, Category, Project, Tag } from '@gallery/shared';
+import type { Artist, Category, Project, Tag, MediaType, PaintType } from '@gallery/shared';
 import { UPLOAD_URL } from '@/config';
 import CreatableSelect from 'react-select/creatable';
 import { darkSelectStyles } from '@/lib/select-styles';
@@ -40,6 +40,8 @@ interface ImageData {
   height: number;
   artist: { id: number; name: string };
   tags?: { id: number; name: string; slug: string }[];
+  mediaTypes?: { id: number; name: string; slug: string }[];
+  paintTypes?: { id: number; name: string; slug: string }[];
   adminNote?: string | null;
   aiDescription?: string | null;
   updatedAt: string;
@@ -86,6 +88,10 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [allTags, setAllTags] = useState<Tag[]>([]);
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
+  const [allMediaTypes, setAllMediaTypes] = useState<MediaType[]>([]);
+  const [selectedMediaTypeIds, setSelectedMediaTypeIds] = useState<number[]>([]);
+  const [allPaintTypes, setAllPaintTypes] = useState<PaintType[]>([]);
+  const [selectedPaintTypeIds, setSelectedPaintTypeIds] = useState<number[]>([]);
   const [aiLoading, setAiLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [reuploading, setReuploading] = useState(false);
@@ -94,9 +100,14 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
 
   const isDirty = useCallback(() => {
     if (!initialState.current) return false;
-    const current = JSON.stringify({ editData, tagIds: selectedTagIds });
+    const current = JSON.stringify({
+      editData,
+      tagIds: selectedTagIds,
+      mediaTypeIds: selectedMediaTypeIds,
+      paintTypeIds: selectedPaintTypeIds,
+    });
     return current !== initialState.current;
-  }, [editData, selectedTagIds]);
+  }, [editData, selectedTagIds, selectedMediaTypeIds, selectedPaintTypeIds]);
 
   useEffect(() => {
     if (!token) return;
@@ -126,6 +137,10 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
       );
       const tagIds = (data.tags || []).map((t) => t.id);
       setSelectedTagIds(tagIds);
+      const mediaTypeIds = (data.mediaTypes || []).map((mt) => mt.id);
+      setSelectedMediaTypeIds(mediaTypeIds);
+      const paintTypeIds = (data.paintTypes || []).map((pt) => pt.id);
+      setSelectedPaintTypeIds(paintTypeIds);
       // Snapshot initial state for dirty checking
       initialState.current = JSON.stringify({
         editData: {
@@ -141,6 +156,8 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
           adminNote: data.adminNote ?? '',
         },
         tagIds,
+        mediaTypeIds,
+        paintTypeIds,
       });
     });
     api.artists.list().then(setArtists);
@@ -148,6 +165,8 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
     api.projects.list().then(setProjects);
     api.services.fulfillmentSkus().then(setAvailableSkus);
     api.tags.list().then(setAllTags);
+    api.mediaTypes.list().then(setAllMediaTypes);
+    api.paintTypes.list().then(setAllPaintTypes);
   }, [token, imageId]);
 
   // Warn on browser back/refresh with unsaved changes
@@ -167,22 +186,41 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
     try {
       await api.images.update(
         imageId,
-        { ...editData, printOptions, tagIds: selectedTagIds } as Record<string, unknown>,
+        {
+          ...editData,
+          printOptions,
+          tagIds: selectedTagIds,
+          mediaTypeIds: selectedMediaTypeIds,
+          paintTypeIds: selectedPaintTypeIds,
+        } as Record<string, unknown>,
         token,
       );
       notify.success('Image updated');
       // Refresh image data and tags list
-      const [img, tags] = await Promise.all([
+      const [img, tags, mediaTypes, paintTypes] = await Promise.all([
         api.images.getAdmin(imageId, token) as Promise<unknown>,
         api.tags.list(),
+        api.mediaTypes.list(),
+        api.paintTypes.list(),
       ]);
       const refreshed = img as ImageData;
       setImage(refreshed);
       const newTagIds = (refreshed.tags || []).map((t) => t.id);
       setSelectedTagIds(newTagIds);
       setAllTags(tags);
+      const newMediaTypeIds = (refreshed.mediaTypes || []).map((mt) => mt.id);
+      setSelectedMediaTypeIds(newMediaTypeIds);
+      setAllMediaTypes(mediaTypes);
+      const newPaintTypeIds = (refreshed.paintTypes || []).map((pt) => pt.id);
+      setSelectedPaintTypeIds(newPaintTypeIds);
+      setAllPaintTypes(paintTypes);
       // Reset dirty tracking
-      initialState.current = JSON.stringify({ editData, tagIds: newTagIds });
+      initialState.current = JSON.stringify({
+        editData,
+        tagIds: newTagIds,
+        mediaTypeIds: newMediaTypeIds,
+        paintTypeIds: newPaintTypeIds,
+      });
     } catch {
       notify.error('Failed to update image');
     } finally {
@@ -505,6 +543,68 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
                 }
               }}
               placeholder="Select or create tags..."
+              styles={darkSelectStyles<{ value: number; label: string }>()}
+            />
+          </div>
+
+          {/* Media Types */}
+          <div>
+            <label className="block text-xs text-gallery-gray mb-1">Media Types</label>
+            <CreatableSelect
+              isMulti
+              options={allMediaTypes.map((mt) => ({ value: mt.id, label: mt.name }))}
+              value={selectedMediaTypeIds.map((id) => {
+                const mt = allMediaTypes.find((m) => m.id === id);
+                return { value: id, label: mt?.name ?? String(id) };
+              })}
+              onChange={(opts) => setSelectedMediaTypeIds(opts.map((o) => o.value))}
+              onCreateOption={async (name) => {
+                if (!token) return;
+                const slug = name
+                  .toLowerCase()
+                  .trim()
+                  .replace(/[^a-z0-9]+/g, '_')
+                  .replace(/^_|_$/g, '');
+                try {
+                  const created = await api.mediaTypes.create({ name, slug }, token);
+                  setAllMediaTypes((prev) => [...prev, created]);
+                  setSelectedMediaTypeIds((prev) => [...prev, created.id]);
+                } catch {
+                  /* may already exist */
+                }
+              }}
+              placeholder="Select or create media types..."
+              styles={darkSelectStyles<{ value: number; label: string }>()}
+            />
+          </div>
+
+          {/* Paint Types */}
+          <div>
+            <label className="block text-xs text-gallery-gray mb-1">Paint Types</label>
+            <CreatableSelect
+              isMulti
+              options={allPaintTypes.map((pt) => ({ value: pt.id, label: pt.name }))}
+              value={selectedPaintTypeIds.map((id) => {
+                const pt = allPaintTypes.find((p) => p.id === id);
+                return { value: id, label: pt?.name ?? String(id) };
+              })}
+              onChange={(opts) => setSelectedPaintTypeIds(opts.map((o) => o.value))}
+              onCreateOption={async (name) => {
+                if (!token) return;
+                const slug = name
+                  .toLowerCase()
+                  .trim()
+                  .replace(/[^a-z0-9]+/g, '_')
+                  .replace(/^_|_$/g, '');
+                try {
+                  const created = await api.paintTypes.create({ name, slug }, token);
+                  setAllPaintTypes((prev) => [...prev, created]);
+                  setSelectedPaintTypeIds((prev) => [...prev, created.id]);
+                } catch {
+                  /* may already exist */
+                }
+              }}
+              placeholder="Select or create paint types..."
               styles={darkSelectStyles<{ value: number; label: string }>()}
             />
           </div>

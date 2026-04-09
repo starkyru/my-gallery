@@ -12,6 +12,8 @@ import { ArtistEntity } from '../artists/artist.entity';
 import { ProjectEntity } from '../projects/project.entity';
 import { ImagePrintOptionEntity } from './image-print-option.entity';
 import { ImageTagEntity } from '../tags/image-tag.entity';
+import { ImageMediaTypeEntity } from '../media-types/image-media-type.entity';
+import { ImagePaintTypeEntity } from '../paint-types/image-paint-type.entity';
 
 @Entity('images')
 export class ImageEntity {
@@ -82,6 +84,12 @@ export class ImageEntity {
 
   @OneToMany(() => ImageTagEntity, (it) => it.image)
   imageTags!: ImageTagEntity[];
+
+  @OneToMany(() => ImageMediaTypeEntity, (imt) => imt.image)
+  imageMediaTypes!: ImageMediaTypeEntity[];
+
+  @OneToMany(() => ImagePaintTypeEntity, (ipt) => ipt.image)
+  imagePaintTypes!: ImagePaintTypeEntity[];
 
   @Column({ name: 'ai_description', type: 'text', nullable: true })
   aiDescription!: string | null;

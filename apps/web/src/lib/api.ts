@@ -11,6 +11,8 @@ import type {
   Order,
   Artist,
   Tag,
+  MediaType,
+  PaintType,
   ContactInquiry,
   WallBackground,
   FramePreset,
@@ -239,6 +241,40 @@ export const api = {
       }),
     delete: (id: number, token: string) =>
       request(`/tags/${id}`, { method: 'DELETE', headers: authHeaders(token) }),
+  },
+  mediaTypes: {
+    list: () => request<MediaType[]>('/media-types'),
+    create: (data: { name: string; slug: string }, token: string) =>
+      request<MediaType>('/media-types', {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: authHeaders(token),
+      }),
+    update: (id: number, data: Partial<MediaType>, token: string) =>
+      request<MediaType>(`/media-types/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+        headers: authHeaders(token),
+      }),
+    delete: (id: number, token: string) =>
+      request(`/media-types/${id}`, { method: 'DELETE', headers: authHeaders(token) }),
+  },
+  paintTypes: {
+    list: () => request<PaintType[]>('/paint-types'),
+    create: (data: { name: string; slug: string }, token: string) =>
+      request<PaintType>('/paint-types', {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: authHeaders(token),
+      }),
+    update: (id: number, data: Partial<PaintType>, token: string) =>
+      request<PaintType>(`/paint-types/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+        headers: authHeaders(token),
+      }),
+    delete: (id: number, token: string) =>
+      request(`/paint-types/${id}`, { method: 'DELETE', headers: authHeaders(token) }),
   },
   images: {
     list: (params?: string) => request<GalleryImage[]>(`/images${params ? `?${params}` : ''}`),

@@ -149,6 +149,22 @@ export interface Tag {
   imageCount?: number;
 }
 
+export interface MediaType {
+  id: number;
+  name: string;
+  slug: string;
+  sortOrder: number;
+  imageCount?: number;
+}
+
+export interface PaintType {
+  id: number;
+  name: string;
+  slug: string;
+  sortOrder: number;
+  imageCount?: number;
+}
+
 export interface Artist {
   id: number;
   name: string;
@@ -185,6 +201,8 @@ export interface GalleryImage {
   isArchived: boolean;
   printOptions: ImagePrintOption[];
   tags?: Tag[];
+  mediaTypes?: MediaType[];
+  paintTypes?: PaintType[];
   adminNote?: string | null;
   createdAt: Date;
   updatedAt: Date;

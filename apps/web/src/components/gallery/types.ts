@@ -12,4 +12,6 @@ export interface GalleryImage {
   blurHash?: string | null;
   artist: { id: number; name: string; slug: string };
   tags?: { id: number; name: string; slug: string }[];
+  mediaTypes?: { id: number; name: string; slug: string }[];
+  paintTypes?: { id: number; name: string; slug: string }[];
 }

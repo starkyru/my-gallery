@@ -41,6 +41,8 @@ interface ImageDetailProps {
     printsSold: number;
     printOptions: ImagePrintOption[];
     tags?: { id: number; name: string; slug: string }[];
+    mediaTypes?: { id: number; name: string; slug: string }[];
+    paintTypes?: { id: number; name: string; slug: string }[];
   };
 }
 
@@ -221,6 +223,15 @@ export function ImageDetail({ image }: ImageDetailProps) {
                 {infoOpen ? (
                   <div>
                     <span className="block text-lg font-semibold text-white">{image.title}</span>
+                    {((image.mediaTypes && image.mediaTypes.length > 0) ||
+                      (image.paintTypes && image.paintTypes.length > 0)) && (
+                      <span className="block text-sm text-white/60">
+                        {[
+                          ...(image.mediaTypes ?? []).map((m) => m.name),
+                          ...(image.paintTypes ?? []).map((p) => p.name),
+                        ].join(', ')}
+                      </span>
+                    )}
                     <span className="block text-sm text-white/70">
                       by{' '}
                       <Link

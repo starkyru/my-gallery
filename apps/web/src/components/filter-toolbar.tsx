@@ -17,6 +17,10 @@ interface FilterToolbarProps {
   artistId?: number;
   tagValues?: string[];
   onTagChange?: (values: string[]) => void;
+  mediaTypeValue?: string;
+  onMediaTypeChange?: (value: string) => void;
+  paintTypeValue?: string;
+  onPaintTypeChange?: (value: string) => void;
 }
 
 export function FilterToolbar({
@@ -30,6 +34,10 @@ export function FilterToolbar({
   artistId,
   tagValues,
   onTagChange,
+  mediaTypeValue,
+  onMediaTypeChange,
+  paintTypeValue,
+  onPaintTypeChange,
 }: FilterToolbarProps) {
   const [categories, setCategories] = useState<{ label: string; value: string }[]>([
     { label: 'All', value: '' },
@@ -37,6 +45,8 @@ export function FilterToolbar({
   const [artistOptions, setArtistOptions] = useState<{ label: string; value: string }[]>([]);
   const [projectOptions, setProjectOptions] = useState<{ label: string; value: string }[]>([]);
   const [tagOptions, setTagOptions] = useState<{ label: string; value: string }[]>([]);
+  const [mediaTypeOptions, setMediaTypeOptions] = useState<{ label: string; value: string }[]>([]);
+  const [paintTypeOptions, setPaintTypeOptions] = useState<{ label: string; value: string }[]>([]);
 
   useEffect(() => {
     api.categories
@@ -99,6 +109,36 @@ export function FilterToolbar({
       .catch(() => {});
   }, [onTagChange]);
 
+  useEffect(() => {
+    if (!onMediaTypeChange) return;
+    api.mediaTypes
+      .list()
+      .then((items) => {
+        const opts = items
+          .filter((m) => (m.imageCount ?? 0) > 0)
+          .map((m) => ({ label: m.name, value: m.slug }));
+        if (opts.length > 0) {
+          setMediaTypeOptions([{ label: 'All Media', value: '' }, ...opts]);
+        }
+      })
+      .catch(() => {});
+  }, [onMediaTypeChange]);
+
+  useEffect(() => {
+    if (!onPaintTypeChange) return;
+    api.paintTypes
+      .list()
+      .then((items) => {
+        const opts = items
+          .filter((p) => (p.imageCount ?? 0) > 0)
+          .map((p) => ({ label: p.name, value: p.slug }));
+        if (opts.length > 0) {
+          setPaintTypeOptions([{ label: 'All Paints', value: '' }, ...opts]);
+        }
+      })
+      .catch(() => {});
+  }, [onPaintTypeChange]);
+
   return (
     <div className={`${className} flex flex-wrap items-center gap-3`}>
       <PillGroup options={categories} value={value} onChange={onChange} />
@@ -135,6 +175,38 @@ export function FilterToolbar({
             onChange={(opts) => onTagChange(opts.map((o) => o.value))}
             placeholder="Tags..."
             styles={darkSelectStyles()}
+          />
+        </div>
+      )}
+      {(onMediaTypeChange && mediaTypeOptions.length > 1) ||
+      (onPaintTypeChange && paintTypeOptions.length > 1) ? (
+        <div className="w-full" />
+      ) : null}
+      {onMediaTypeChange && mediaTypeOptions.length > 1 && (
+        <div className="w-44">
+          <Select
+            options={mediaTypeOptions}
+            value={
+              mediaTypeOptions.find((o) => o.value === (mediaTypeValue ?? '')) ??
+              mediaTypeOptions[0]
+            }
+            onChange={(opt) => onMediaTypeChange((opt as { value: string } | null)?.value ?? '')}
+            placeholder="All Media"
+            styles={darkSelectStyles<{ label: string; value: string }, false>()}
+          />
+        </div>
+      )}
+      {onPaintTypeChange && paintTypeOptions.length > 1 && (
+        <div className="w-44">
+          <Select
+            options={paintTypeOptions}
+            value={
+              paintTypeOptions.find((o) => o.value === (paintTypeValue ?? '')) ??
+              paintTypeOptions[0]
+            }
+            onChange={(opt) => onPaintTypeChange((opt as { value: string } | null)?.value ?? '')}
+            placeholder="All Paints"
+            styles={darkSelectStyles<{ label: string; value: string }, false>()}
           />
         </div>
       )}
