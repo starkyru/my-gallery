@@ -10,6 +10,7 @@ import type { Artist, Category, Project, Tag, MediaType, PaintType } from '@gall
 import { UPLOAD_URL } from '@/config';
 import CreatableSelect from 'react-select/creatable';
 import { darkSelectStyles } from '@/lib/select-styles';
+import { CalendarIcon } from '@/components/icons/calendar-icon';
 import { ChevronRightIcon } from '@/components/icons/chevron-right-icon';
 
 interface PrintOptionRow {
@@ -458,31 +459,6 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
             />
           </div>
 
-          {/* Shot Date */}
-          <div>
-            <label className="block text-xs text-gallery-gray mb-1">
-              Date (YYYY, YYYY-MM, or YYYY-MM-DD)
-            </label>
-            <div className="flex gap-2 items-center">
-              <input
-                value={editData.shotDate}
-                onChange={(e) => setEditData({ ...editData, shotDate: e.target.value })}
-                placeholder="e.g. 2024 or 2024-03 or 2024-03-15"
-                className={inputClass}
-              />
-              <input
-                type="date"
-                onChange={(e) => {
-                  if (e.target.value) {
-                    setEditData({ ...editData, shotDate: e.target.value });
-                  }
-                }}
-                className={`${inputClass} w-10 px-1.5 cursor-pointer [&::-webkit-calendar-picker-indicator]:invert`}
-                title="Pick a date"
-              />
-            </div>
-          </div>
-
           {/* Place */}
           <div>
             <label className="block text-xs text-gallery-gray mb-1">Place</label>
@@ -494,85 +470,114 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
             />
           </div>
 
-          {/* Original File Name (read-only) */}
-          {image.originalFileName && (
+          {/* 2-column grid for metadata fields */}
+          <div className="grid grid-cols-2 gap-4">
+            {/* Artist */}
+            <div>
+              <label className="block text-xs text-gallery-gray mb-1">Artist</label>
+              <select
+                value={editData.artistId}
+                onChange={(e) =>
+                  setEditData({ ...editData, artistId: Number(e.target.value), projectId: null })
+                }
+                className={inputClass}
+              >
+                {artists.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Category */}
+            <div>
+              <label className="block text-xs text-gallery-gray mb-1">Category</label>
+              <select
+                value={editData.category}
+                onChange={(e) => setEditData({ ...editData, category: e.target.value })}
+                className={inputClass}
+              >
+                <option value="">No category</option>
+                {categories.map((c) => (
+                  <option key={c.slug} value={c.slug}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Project */}
+            <div>
+              <label className="block text-xs text-gallery-gray mb-1">Project</label>
+              <select
+                value={editData.projectId ?? ''}
+                onChange={(e) =>
+                  setEditData({
+                    ...editData,
+                    projectId: e.target.value ? Number(e.target.value) : null,
+                  })
+                }
+                className={inputClass}
+              >
+                <option value="">No project</option>
+                {filteredProjects.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Price */}
+            <div>
+              <label className="block text-xs text-gallery-gray mb-1">Price</label>
+              <input
+                value={editData.price}
+                onChange={(e) => setEditData({ ...editData, price: +e.target.value })}
+                type="number"
+                step="0.01"
+                className={inputClass}
+              />
+            </div>
+
+            {/* Shot Date */}
+            <div>
+              <label className="block text-xs text-gallery-gray mb-1">
+                Date (YYYY, YYYY-MM, or YYYY-MM-DD)
+              </label>
+              <div className="relative">
+                <input
+                  value={editData.shotDate}
+                  onChange={(e) => setEditData({ ...editData, shotDate: e.target.value })}
+                  placeholder="e.g. 2024 or 2024-03 or 2024-03-15"
+                  className={inputClass}
+                />
+                <input
+                  type="date"
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      setEditData({ ...editData, shotDate: e.target.value });
+                    }
+                  }}
+                  className="absolute right-0 top-0 h-full w-10 cursor-pointer opacity-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                  title="Pick a date"
+                />
+                <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gallery-gray">
+                  <CalendarIcon size={16} />
+                </span>
+              </div>
+            </div>
+
+            {/* Original File Name (read-only) */}
             <div>
               <label className="block text-xs text-gallery-gray mb-1">Original File Name</label>
               <input
-                value={image.originalFileName}
+                value={image.originalFileName ?? ''}
                 readOnly
                 className={`${inputClass} opacity-60 cursor-default`}
               />
             </div>
-          )}
-
-          {/* Category */}
-          <div>
-            <label className="block text-xs text-gallery-gray mb-1">Category</label>
-            <select
-              value={editData.category}
-              onChange={(e) => setEditData({ ...editData, category: e.target.value })}
-              className={inputClass}
-            >
-              <option value="">No category</option>
-              {categories.map((c) => (
-                <option key={c.slug} value={c.slug}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Price */}
-          <div>
-            <label className="block text-xs text-gallery-gray mb-1">Price</label>
-            <input
-              value={editData.price}
-              onChange={(e) => setEditData({ ...editData, price: +e.target.value })}
-              type="number"
-              step="0.01"
-              className={inputClass}
-            />
-          </div>
-
-          {/* Artist */}
-          <div>
-            <label className="block text-xs text-gallery-gray mb-1">Artist</label>
-            <select
-              value={editData.artistId}
-              onChange={(e) =>
-                setEditData({ ...editData, artistId: Number(e.target.value), projectId: null })
-              }
-              className={inputClass}
-            >
-              {artists.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Project */}
-          <div>
-            <label className="block text-xs text-gallery-gray mb-1">Project</label>
-            <select
-              value={editData.projectId ?? ''}
-              onChange={(e) =>
-                setEditData({
-                  ...editData,
-                  projectId: e.target.value ? Number(e.target.value) : null,
-                })
-              }
-              className={inputClass}
-            >
-              <option value="">No project</option>
-              {filteredProjects.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
           </div>
 
           {/* Tags */}

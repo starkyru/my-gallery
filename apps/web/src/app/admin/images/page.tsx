@@ -59,6 +59,7 @@ export default function AdminImagesPage() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [bulkCategory, setBulkCategory] = useState('');
   const [bulkProject, setBulkProject] = useState('');
+  const [bulkArtist, setBulkArtist] = useState('');
   const [aiApplyTitleDesc, setAiApplyTitleDesc] = useState(false);
   const [aiProgress, setAiProgress] = useState<{ done: number; total: number } | null>(null);
 
@@ -864,6 +865,38 @@ export default function AdminImagesPage() {
                 onClick={() => {
                   handleBulkAction('setProject', bulkProject);
                   setBulkProject('');
+                }}
+                className="px-3 py-1.5 bg-gallery-accent text-gallery-black rounded text-xs font-medium"
+              >
+                Apply
+              </button>
+            )}
+            <div className="border-l border-white/10 h-6" />
+            <select
+              value={bulkArtist}
+              onChange={(e) => setBulkArtist(e.target.value)}
+              className={`${selectClass} text-xs`}
+            >
+              <option value="">Set artist...</option>
+              {artists.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name}
+                </option>
+              ))}
+            </select>
+            {bulkArtist && (
+              <button
+                onClick={() => {
+                  const selectedImages = images.filter((img) => selectedIds.has(img.id));
+                  const withProject = selectedImages.filter((img) => img.projectId);
+                  const message =
+                    withProject.length > 0
+                      ? `Are you sure? ${withProject.length} image(s) have a project assigned — it will be removed.`
+                      : 'Are you sure you want to change the artist?';
+                  if (window.confirm(message)) {
+                    handleBulkAction('setArtist', bulkArtist);
+                    setBulkArtist('');
+                  }
                 }}
                 className="px-3 py-1.5 bg-gallery-accent text-gallery-black rounded text-xs font-medium"
               >

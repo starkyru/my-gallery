@@ -278,6 +278,19 @@ export class ImagesService {
         await this.repo.createQueryBuilder().update().set({ projectId }).whereInIds(ids).execute();
         break;
       }
+      case 'setArtist': {
+        const artistId = value ? Number(value) : null;
+        if (artistId === null || isNaN(artistId)) {
+          throw new BadRequestException('Invalid artist ID');
+        }
+        await this.repo
+          .createQueryBuilder()
+          .update()
+          .set({ artistId, projectId: null })
+          .whereInIds(ids)
+          .execute();
+        break;
+      }
     }
   }
 
