@@ -46,7 +46,7 @@ export class AiService {
             content: [
               {
                 type: 'image',
-                source: { type: 'base64', media_type: 'image/webp', data: base64 },
+                source: { type: 'base64', media_type: 'image/jpeg', data: base64 },
               },
               {
                 type: 'text',
