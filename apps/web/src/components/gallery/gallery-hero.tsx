@@ -102,7 +102,7 @@ export function GalleryHero({ images }: GalleryHeroProps) {
       )}
 
       {/* Background selection */}
-      <div className="absolute right-4 top-1/2 -translate-y-1/2 z-10 flex flex-col gap-1.5">
+      <div className="fixed right-4 top-1/2 -translate-y-1/2 z-30 flex flex-col gap-1.5">
         {walls.length > 0
           ? walls.map((wall) => (
               <button
