@@ -255,6 +255,12 @@ export class ImagesController {
     return this.service.findAllAdmin();
   }
 
+  @Get('admin/regenerate-blurhashes')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  regenerateBlurhashes() {
+    return this.service.regenerateAllBlurhashes();
+  }
+
   @Post('bulk-action')
   @UseGuards(JwtAuthGuard, AdminGuard)
   bulkAction(@Body() dto: BulkActionDto) {
@@ -298,12 +304,6 @@ export class ImagesController {
   @UseGuards(JwtAuthGuard, AdminGuard)
   updateSortOrder(@Body() updates: { id: number; sortOrder: number }[]) {
     return this.service.updateSortOrder(updates);
-  }
-
-  @Get('admin/regenerate-blurhashes')
-  @UseGuards(JwtAuthGuard, AdminGuard)
-  regenerateBlurhashes() {
-    return this.service.regenerateAllBlurhashes();
   }
 
   @Delete(':id')
