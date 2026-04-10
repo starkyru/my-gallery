@@ -1,6 +1,7 @@
-import React, { memo, useCallback, useRef } from 'react';
+import React, { memo, useCallback, useRef, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import FastImage from 'react-native-fast-image';
+import { Blurhash } from 'react-native-blurhash';
 import { uploadUrl } from '@/lib/api';
 import type { SourceRect } from '@/lib/shared-transition';
 import type { GalleryImage } from '@gallery/shared';
@@ -13,6 +14,7 @@ interface Props {
 
 function ImageCard({ image, size, onPress }: Props) {
   const viewRef = useRef<View>(null);
+  const [loaded, setLoaded] = useState(false);
 
   const handlePress = useCallback(() => {
     viewRef.current?.measureInWindow((x, y, width, height) => {
@@ -27,10 +29,12 @@ function ImageCard({ image, size, onPress }: Props) {
       onPress={handlePress}
       activeOpacity={0.8}
     >
+      {image.blurHash && !loaded && <Blurhash blurhash={image.blurHash} style={styles.blurhash} />}
       <FastImage
         style={styles.image}
         source={{ uri: uploadUrl(image.watermarkPath), priority: FastImage.priority.normal }}
         resizeMode={FastImage.resizeMode.cover}
+        onLoad={() => setLoaded(true)}
       />
       <View style={styles.overlay}>
         <Text style={styles.title} numberOfLines={1}>
@@ -49,6 +53,10 @@ const styles = StyleSheet.create({
     margin: 1,
     backgroundColor: '#f0f0f0',
     overflow: 'hidden',
+  },
+  blurhash: {
+    ...StyleSheet.absoluteFill,
+    zIndex: 0,
   },
   image: {
     width: '100%',

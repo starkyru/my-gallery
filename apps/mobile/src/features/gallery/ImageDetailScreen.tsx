@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Dimensions,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,9 +11,8 @@ import {
 import FastImage from 'react-native-fast-image';
 import { api, uploadUrl } from '@/lib/api';
 import { useCartStore } from '@/store/cart';
+import ZoomableImage from '@/components/ZoomableImage';
 import type { GalleryImage, ImagePrintOption, OrderItemType } from '@gallery/shared';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 type Props = {
   route: { params: { imageId: number; image?: GalleryImage } };
@@ -39,6 +37,7 @@ export default function ImageDetailScreen({ route, navigation }: Props) {
   useEffect(() => {
     if (image) {
       navigation.setOptions({ title: image.title });
+      FastImage.preload([{ uri: uploadUrl(image.watermarkPath) }]);
     }
   }, [image, navigation]);
 
@@ -67,14 +66,13 @@ export default function ImageDetailScreen({ route, navigation }: Props) {
     );
   }
 
-  const imageHeight = (SCREEN_WIDTH * image.height) / image.width;
-
   return (
     <ScrollView style={styles.container} bounces={false}>
-      <FastImage
-        style={{ width: SCREEN_WIDTH, height: imageHeight }}
-        source={{ uri: uploadUrl(image.watermarkPath), priority: FastImage.priority.high }}
-        resizeMode={FastImage.resizeMode.contain}
+      <ZoomableImage
+        uri={uploadUrl(image.watermarkPath)}
+        width={image.width}
+        height={image.height}
+        blurHash={image.blurHash}
       />
       <View style={styles.content}>
         <Text style={styles.title}>{image.title}</Text>

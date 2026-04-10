@@ -11,6 +11,7 @@ import { promisify } from 'util';
 
 const execFileAsync = promisify(execFile);
 import exifReader from 'exif-reader';
+import { encode } from 'blurhash';
 import { ImageEntity } from './image.entity';
 import { ImagePrintOptionEntity } from './image-print-option.entity';
 import { ImageTagEntity } from '../tags/image-tag.entity';
@@ -453,7 +454,10 @@ export class ImagesService {
       watermarkPath,
     );
 
-    const exifDate = this.extractExifDate(metadata);
+    const [exifDate, blurHash] = await Promise.all([
+      Promise.resolve(this.extractExifDate(metadata)),
+      this.generateBlurHash(processBuffer),
+    ]);
     const image = this.repo.create({
       ...data,
       filePath,
@@ -463,6 +467,7 @@ export class ImagesService {
       height: metadata.height || 0,
       shotDate: exifDate,
       originalFileName: file.originalname || null,
+      blurHash,
     });
 
     try {
@@ -480,20 +485,33 @@ export class ImagesService {
     const { processBuffer, metadata } = await this.validateAndProcessFile(file);
 
     const mediumPath = existing.watermarkPath.replace('watermarked/', 'medium/');
-    await this.writeImageVariants(
-      processBuffer,
-      existing.filePath,
-      existing.thumbnailPath,
-      mediumPath,
-      existing.watermarkPath,
-    );
+    const [blurHash] = await Promise.all([
+      this.generateBlurHash(processBuffer),
+      this.writeImageVariants(
+        processBuffer,
+        existing.filePath,
+        existing.thumbnailPath,
+        mediumPath,
+        existing.watermarkPath,
+      ),
+    ]);
 
     await this.repo.update(id, {
       width: metadata.width || 0,
       height: metadata.height || 0,
+      blurHash,
     });
 
     return this.findOne(id);
+  }
+
+  private async generateBlurHash(buffer: Buffer): Promise<string> {
+    const { data, info } = await sharp(buffer, { limitInputPixels: SHARP_PIXEL_LIMIT })
+      .resize(32)
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    return encode(new Uint8ClampedArray(data), info.width, info.height, 4, 3);
   }
 
   private async createWatermarked(buffer: Buffer, outputPath: string) {
@@ -641,6 +659,27 @@ export class ImagesService {
     const signature = crypto.createHmac('sha256', secret).update(data).digest('hex');
     const publicUrl = this.configService.get('PUBLIC_URL', 'http://localhost:4000');
     return `${publicUrl}/api/images/${imageId}/download?expires=${expires}&sig=${signature}`;
+  }
+
+  async regenerateAllBlurhashes(): Promise<{ updated: number; failed: number }> {
+    const images = await this.repo.find({ select: ['id', 'filePath'] });
+    let updated = 0;
+    let failed = 0;
+
+    for (const image of images) {
+      try {
+        const fileBuf = await fs.readFile(this.safePath(image.filePath));
+        const blurHash = await this.generateBlurHash(fileBuf);
+        await this.repo.update(image.id, { blurHash });
+        updated++;
+      } catch (err) {
+        this.logger.warn(`Failed to generate blurhash for image ${image.id}: ${err}`);
+        failed++;
+      }
+    }
+
+    this.logger.log(`Blurhash regeneration complete: ${updated} updated, ${failed} failed`);
+    return { updated, failed };
   }
 
   verifyDownloadSignature(imageId: number, expires: string, signature: string): boolean {

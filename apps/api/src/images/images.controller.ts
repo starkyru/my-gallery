@@ -300,6 +300,12 @@ export class ImagesController {
     return this.service.updateSortOrder(updates);
   }
 
+  @Post('admin/regenerate-blurhashes')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  regenerateBlurhashes() {
+    return this.service.regenerateAllBlurhashes();
+  }
+
   @Delete(':id')
   @UseGuards(JwtAuthGuard, AdminGuard)
   remove(@Param('id') id: string) {

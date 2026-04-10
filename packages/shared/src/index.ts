@@ -198,6 +198,7 @@ export interface GalleryImage {
   project?: Project;
   isFeatured: boolean;
   sortOrder: number;
+  blurHash: string | null;
   printEnabled: boolean;
   printLimit: number | null;
   printsSold: number;
