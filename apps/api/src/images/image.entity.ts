@@ -109,6 +109,12 @@ export class ImageEntity {
   @Column({ name: 'original_file_name', type: 'varchar', nullable: true })
   originalFileName!: string | null;
 
+  @Column({ name: 'size_width_cm', type: 'decimal', precision: 6, scale: 1, nullable: true })
+  sizeWidthCm!: number | null;
+
+  @Column({ name: 'size_height_cm', type: 'decimal', precision: 6, scale: 1, nullable: true })
+  sizeHeightCm!: number | null;
+
   @Column({ name: 'allow_download_original', default: false })
   allowDownloadOriginal!: boolean;
 

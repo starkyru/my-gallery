@@ -205,6 +205,8 @@ export interface GalleryImage {
   shotDate?: string | null;
   place?: string | null;
   originalFileName?: string | null;
+  sizeWidthCm?: number | null;
+  sizeHeightCm?: number | null;
   allowDownloadOriginal: boolean;
   isArchived: boolean;
   printOptions: ImagePrintOption[];

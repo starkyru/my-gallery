@@ -54,6 +54,8 @@ interface ImageData {
   shotDate?: string | null;
   place?: string | null;
   originalFileName?: string | null;
+  sizeWidthCm?: number | null;
+  sizeHeightCm?: number | null;
   updatedAt: string;
 }
 
@@ -79,6 +81,8 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
     adminNote: string;
     shotDate: string;
     place: string;
+    sizeWidthCm: number | null;
+    sizeHeightCm: number | null;
   }>({
     title: '',
     description: '',
@@ -93,6 +97,8 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
     adminNote: '',
     shotDate: '',
     place: '',
+    sizeWidthCm: null,
+    sizeHeightCm: null,
   });
   const [printOptions, setPrintOptions] = useState<PrintOptionRow[]>([]);
   const [artists, setArtists] = useState<Artist[]>([]);
@@ -145,6 +151,8 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
         adminNote: data.adminNote ?? '',
         shotDate: data.shotDate ?? '',
         place: data.place ?? '',
+        sizeWidthCm: data.sizeWidthCm ? Number(data.sizeWidthCm) : null,
+        sizeHeightCm: data.sizeHeightCm ? Number(data.sizeHeightCm) : null,
       });
       setPrintOptions(
         (data.printOptions || []).map((o) => ({
@@ -213,6 +221,9 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
         imageId,
         {
           ...editData,
+          shotDate: editData.shotDate || null,
+          sizeWidthCm: editData.sizeWidthCm || null,
+          sizeHeightCm: editData.sizeHeightCm || null,
           printOptions,
           tagIds: selectedTagIds,
           mediaTypeIds: selectedMediaTypeIds,
@@ -628,6 +639,39 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
                 className={`${inputClass} opacity-60 cursor-default`}
               />
             </div>
+
+            {/* Physical Size (inches input, stored as cm) */}
+            <div>
+              <label className="block text-xs text-gallery-gray mb-1">Physical Size (inches)</label>
+              <div className="grid grid-cols-2 gap-1.5">
+                <input
+                  value={editData.sizeWidthCm ? cmToInch(editData.sizeWidthCm) : ''}
+                  onChange={(e) =>
+                    setEditData({
+                      ...editData,
+                      sizeWidthCm: e.target.value ? inchToCm(+e.target.value) : null,
+                    })
+                  }
+                  type="number"
+                  step="0.01"
+                  placeholder="Width"
+                  className={inputClass}
+                />
+                <input
+                  value={editData.sizeHeightCm ? cmToInch(editData.sizeHeightCm) : ''}
+                  onChange={(e) =>
+                    setEditData({
+                      ...editData,
+                      sizeHeightCm: e.target.value ? inchToCm(+e.target.value) : null,
+                    })
+                  }
+                  type="number"
+                  step="0.01"
+                  placeholder="Height"
+                  className={inputClass}
+                />
+              </div>
+            </div>
           </div>
 
           {/* Tags */}
@@ -827,8 +871,8 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
                       {opt.sku && (
                         <p className="font-mono text-xs text-gallery-gray px-0.5">{opt.sku}</p>
                       )}
-                      {/* Row 2: Dimensions cm + inches */}
-                      <div className="flex gap-1.5 items-center flex-wrap">
+                      {/* Row 2: Dimensions cm + inches (2-column grid) */}
+                      <div className="grid grid-cols-2 gap-1.5">
                         <input
                           value={opt.widthCm || ''}
                           onChange={(e) => updatePrintOption(idx, 'widthCm', +e.target.value)}
@@ -836,7 +880,7 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
                           step="0.1"
                           placeholder="W cm"
                           readOnly={dimsLocked}
-                          className={`${inputClass} w-16 ${dimsLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          className={`${inputClass} ${dimsLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
                         />
                         <input
                           value={opt.heightCm || ''}
@@ -845,7 +889,7 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
                           step="0.1"
                           placeholder="H cm"
                           readOnly={dimsLocked}
-                          className={`${inputClass} w-16 ${dimsLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          className={`${inputClass} ${dimsLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
                         />
                         <input
                           value={opt.widthCm ? cmToInch(opt.widthCm) : ''}
@@ -856,7 +900,7 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
                           step="0.01"
                           placeholder="W in"
                           readOnly={dimsLocked}
-                          className={`${inputClass} w-16 ${dimsLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          className={`${inputClass} ${dimsLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
                         />
                         <input
                           value={opt.heightCm ? cmToInch(opt.heightCm) : ''}
@@ -867,32 +911,32 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
                           step="0.01"
                           placeholder="H in"
                           readOnly={dimsLocked}
-                          className={`${inputClass} w-16 ${dimsLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          className={`${inputClass} ${dimsLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
                         />
-                        {/* Per-option limit */}
-                        {editData.perOptionLimits && (
-                          <>
-                            <input
-                              value={opt.printLimit ?? ''}
-                              onChange={(e) =>
-                                updatePrintOption(
-                                  idx,
-                                  'printLimit',
-                                  e.target.value ? +e.target.value : null,
-                                )
-                              }
-                              type="number"
-                              placeholder="Limit"
-                              className={`${inputClass} w-16`}
-                            />
-                            {opt.printLimit !== null && (
-                              <span className="text-xs text-gallery-gray whitespace-nowrap">
-                                {opt.soldCount} sold
-                              </span>
-                            )}
-                          </>
-                        )}
                       </div>
+                      {/* Per-option limit */}
+                      {editData.perOptionLimits && (
+                        <div className="flex gap-1.5 items-center">
+                          <input
+                            value={opt.printLimit ?? ''}
+                            onChange={(e) =>
+                              updatePrintOption(
+                                idx,
+                                'printLimit',
+                                e.target.value ? +e.target.value : null,
+                              )
+                            }
+                            type="number"
+                            placeholder="Limit"
+                            className={`${inputClass} w-20`}
+                          />
+                          {opt.printLimit !== null && (
+                            <span className="text-xs text-gallery-gray whitespace-nowrap">
+                              {opt.soldCount} sold
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}

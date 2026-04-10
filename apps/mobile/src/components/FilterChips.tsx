@@ -13,11 +13,13 @@ interface Props {
 }
 
 export default function FilterChips({ items, selected, onSelect }: Props) {
+  const sorted = [...items].sort((a, b) => a.label.localeCompare(b.label));
   return (
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.container}
+      style={styles.scroll}
     >
       <TouchableOpacity
         style={[styles.chip, !selected && styles.chipActive]}
@@ -25,7 +27,7 @@ export default function FilterChips({ items, selected, onSelect }: Props) {
       >
         <Text style={[styles.label, !selected && styles.labelActive]}>All</Text>
       </TouchableOpacity>
-      {items.map((item) => (
+      {sorted.map((item) => (
         <TouchableOpacity
           key={item.value}
           style={[styles.chip, selected === item.value && styles.chipActive]}
@@ -41,9 +43,14 @@ export default function FilterChips({ items, selected, onSelect }: Props) {
 }
 
 const styles = StyleSheet.create({
+  scroll: {
+    maxHeight: 44,
+    flexGrow: 0,
+  },
   container: {
     paddingHorizontal: 12,
     paddingVertical: 8,
+    alignItems: 'center',
     gap: 6,
   },
   chip: {

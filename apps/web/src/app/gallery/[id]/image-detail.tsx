@@ -46,6 +46,8 @@ interface ImageDetailProps {
     paintTypes?: { id: number; name: string; slug: string }[];
     shotDate?: string | null;
     place?: string | null;
+    sizeWidthCm?: number | null;
+    sizeHeightCm?: number | null;
   };
 }
 
@@ -287,6 +289,13 @@ export function ImageDetail({ image }: ImageDetailProps) {
                 Category: {image.category.replace(/_/g, ' ')}
                 {image.shotDate && <> &middot; {image.shotDate}</>}
                 {image.place && <> &middot; {image.place}</>}
+                {image.sizeWidthCm && image.sizeHeightCm && (
+                  <>
+                    {' '}
+                    &middot; {+(Number(image.sizeWidthCm) / 2.54).toFixed(1)}&times;
+                    {+(Number(image.sizeHeightCm) / 2.54).toFixed(1)}&Prime;
+                  </>
+                )}
               </p>
 
               {image.tags && image.tags.length > 0 && (

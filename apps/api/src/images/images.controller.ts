@@ -26,6 +26,7 @@ import {
   MaxLength,
   Matches,
   ValidateNested,
+  ValidateIf,
   Min,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
@@ -182,6 +183,7 @@ class UpdateImageDto {
   adminNote?: string | null;
 
   @IsOptional()
+  @ValidateIf((_o, value) => value !== null)
   @IsString()
   @MaxLength(10)
   @Matches(/^\d{4}(-\d{2}(-\d{2})?)?$/, {
@@ -193,6 +195,18 @@ class UpdateImageDto {
   @IsString()
   @MaxLength(255)
   place?: string | null;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  sizeWidthCm?: number | null;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  sizeHeightCm?: number | null;
 }
 
 class BulkActionDto {

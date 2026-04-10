@@ -9,7 +9,10 @@ import type { CartItem } from '@gallery/shared';
 import type { RootStackParams } from '@/navigation';
 
 export default function CartScreen() {
-  const { items, removeItem, clear, total } = useCartStore();
+  const items = useCartStore((s) => s.items);
+  const removeItem = useCartStore((s) => s.removeItem);
+  const clear = useCartStore((s) => s.clear);
+  const total = items.reduce((sum, item) => sum + item.price, 0);
   const token = useAuthStore((s) => s.token);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParams>>();
 
@@ -41,7 +44,7 @@ export default function CartScreen() {
       <View style={styles.footer}>
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>Total</Text>
-          <Text style={styles.totalValue}>${total().toFixed(2)}</Text>
+          <Text style={styles.totalValue}>${total.toFixed(2)}</Text>
         </View>
         <View style={styles.actions}>
           <TouchableOpacity style={styles.clearBtn} onPress={clear}>

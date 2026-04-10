@@ -33,6 +33,8 @@ interface UpdateImageData {
   adminNote?: string | null;
   shotDate?: string | null;
   place?: string | null;
+  sizeWidthCm?: number | null;
+  sizeHeightCm?: number | null;
   perOptionLimits?: boolean;
   printOptions?: {
     sku: string;
@@ -344,6 +346,8 @@ export class ImagesService {
         'image.projectId',
         'image.shotDate',
         'image.place',
+        'image.sizeWidthCm',
+        'image.sizeHeightCm',
         'image.allowDownloadOriginal',
         'image.isArchived',
         'image.createdAt',

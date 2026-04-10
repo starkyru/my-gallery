@@ -10,7 +10,7 @@ import type {
 } from '@gallery/shared';
 
 // TODO: change this to your production API URL
-const API_URL = 'http://localhost:4000';
+const API_URL = 'https://gallery.ilia.to';
 
 const isDev: boolean = typeof __DEV__ !== 'undefined' ? __DEV__ : false;
 
