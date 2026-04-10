@@ -1,24 +1,12 @@
 import React, { useCallback, useEffect } from 'react';
-import {
-  ActivityIndicator,
-  Dimensions,
-  FlatList,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useGalleryStore } from '@/store/gallery';
 import { useConfigStore } from '@/store/config';
-import ImageCard from '@/components/ImageCard';
+import ImageGrid from '@/components/ImageGrid';
 import FilterChips from '@/components/FilterChips';
 import type { GalleryImage } from '@gallery/shared';
 import type { GalleryStackParams } from '@/navigation';
-
-const SCREEN_WIDTH = Dimensions.get('window').width;
-const NUM_COLUMNS = 2;
-const ITEM_SIZE = (SCREEN_WIDTH - 2) / NUM_COLUMNS;
 
 type Props = NativeStackScreenProps<GalleryStackParams, 'Gallery'>;
 
@@ -47,15 +35,6 @@ export default function GalleryScreen({ navigation }: Props) {
     value: c.slug,
   }));
 
-  const renderItem = useCallback(
-    ({ item }: { item: GalleryImage }) => (
-      <ImageCard image={item} size={ITEM_SIZE} onPress={onImagePress} />
-    ),
-    [onImagePress],
-  );
-
-  const keyExtractor = useCallback((item: GalleryImage) => String(item.id), []);
-
   return (
     <View style={styles.container}>
       <FilterChips
@@ -70,15 +49,11 @@ export default function GalleryScreen({ navigation }: Props) {
           <Text style={styles.emptyText}>No images found</Text>
         </View>
       ) : (
-        <FlatList
-          data={images}
-          renderItem={renderItem}
-          keyExtractor={keyExtractor}
-          numColumns={NUM_COLUMNS}
-          refreshControl={
-            <RefreshControl refreshing={loading} onRefresh={fetchImages} tintColor="#000" />
-          }
-          contentContainerStyle={styles.grid}
+        <ImageGrid
+          images={images}
+          refreshing={loading}
+          onRefresh={fetchImages}
+          onImagePress={onImagePress}
         />
       )}
     </View>
@@ -89,9 +64,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-  },
-  grid: {
-    paddingBottom: 20,
   },
   loader: {
     flex: 1,

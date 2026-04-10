@@ -14,6 +14,8 @@ import { useAuthStore } from '@/store/auth';
 import { api } from '@/lib/api';
 import type { Order } from '@gallery/shared';
 import type { RootStackParams } from '@/navigation';
+import OrderRow from '@/components/OrderRow';
+import SignInPrompt from '@/components/SignInPrompt';
 
 export default function ProfileScreen() {
   const { token, role, logout } = useAuthStore();
@@ -38,33 +40,19 @@ export default function ProfileScreen() {
 
   if (!token) {
     return (
-      <View style={styles.centered}>
-        <Text style={styles.heading}>Sign in to view orders</Text>
-        <TouchableOpacity style={styles.loginBtn} onPress={() => navigation.navigate('Login')}>
-          <Text style={styles.loginBtnText}>Sign In</Text>
-        </TouchableOpacity>
-      </View>
+      <SignInPrompt message="Sign in to view orders" onPress={() => navigation.navigate('Login')} />
     );
   }
 
+  const handleOrderPress = useCallback(
+    (order: Order) => {
+      navigation.navigate('OrderDetail', { orderId: order.id, accessToken: order.accessToken });
+    },
+    [navigation],
+  );
+
   const renderOrder = ({ item }: { item: Order }) => (
-    <TouchableOpacity
-      style={styles.orderRow}
-      onPress={() =>
-        navigation.navigate('OrderDetail', { orderId: item.id, accessToken: item.accessToken })
-      }
-    >
-      <View>
-        <Text style={styles.orderId}>Order #{item.id}</Text>
-        <Text style={styles.orderDate}>{new Date(item.createdAt).toLocaleDateString()}</Text>
-      </View>
-      <View style={styles.orderRight}>
-        <Text style={styles.orderTotal}>${item.total}</Text>
-        <View style={[styles.badge, statusColor(item.status)]}>
-          <Text style={styles.badgeText}>{item.status}</Text>
-        </View>
-      </View>
-    </TouchableOpacity>
+    <OrderRow order={item} onPress={handleOrderPress} />
   );
 
   return (
@@ -94,30 +82,10 @@ export default function ProfileScreen() {
   );
 }
 
-function statusColor(status: string) {
-  switch (status) {
-    case 'paid':
-      return { backgroundColor: '#e6f4ea' };
-    case 'completed':
-      return { backgroundColor: '#d4edda' };
-    case 'expired':
-      return { backgroundColor: '#fce4e4' };
-    default:
-      return { backgroundColor: '#fff3cd' };
-  }
-}
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    padding: 24,
   },
   header: {
     flexDirection: 'row',
@@ -137,18 +105,6 @@ const styles = StyleSheet.create({
     color: '#e00',
     fontWeight: '600',
   },
-  loginBtn: {
-    marginTop: 16,
-    backgroundColor: '#000',
-    paddingHorizontal: 32,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  loginBtnText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '700',
@@ -164,44 +120,5 @@ const styles = StyleSheet.create({
     color: '#999',
     fontSize: 14,
     marginTop: 24,
-  },
-  orderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#e0e0e0',
-  },
-  orderId: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#000',
-  },
-  orderDate: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 2,
-  },
-  orderRight: {
-    alignItems: 'flex-end',
-  },
-  orderTotal: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#000',
-  },
-  badge: {
-    marginTop: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  badgeText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#333',
-    textTransform: 'capitalize',
   },
 });

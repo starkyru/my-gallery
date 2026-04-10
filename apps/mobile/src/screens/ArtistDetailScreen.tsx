@@ -1,22 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Dimensions,
-  FlatList,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { api } from '@/lib/api';
-import ImageCard from '@/components/ImageCard';
+import ImageGrid from '@/components/ImageGrid';
 import type { GalleryImage } from '@gallery/shared';
 import type { ArtistsStackParams } from '@/navigation';
-
-const SCREEN_WIDTH = Dimensions.get('window').width;
-const NUM_COLUMNS = 2;
-const ITEM_SIZE = (SCREEN_WIDTH - 2) / NUM_COLUMNS;
 
 type Props = NativeStackScreenProps<ArtistsStackParams, 'ArtistDetail'>;
 
@@ -46,13 +34,6 @@ export default function ArtistDetailScreen({ route, navigation }: Props) {
     [navigation],
   );
 
-  const renderItem = useCallback(
-    ({ item }: { item: GalleryImage }) => (
-      <ImageCard image={item} size={ITEM_SIZE} onPress={onImagePress} />
-    ),
-    [onImagePress],
-  );
-
   if (loading && images.length === 0) {
     return (
       <View style={styles.loader}>
@@ -70,24 +51,16 @@ export default function ArtistDetailScreen({ route, navigation }: Props) {
   }
 
   return (
-    <FlatList
-      style={styles.container}
-      data={images}
-      renderItem={renderItem}
-      keyExtractor={(item) => String(item.id)}
-      numColumns={NUM_COLUMNS}
-      refreshControl={
-        <RefreshControl refreshing={loading} onRefresh={fetchImages} tintColor="#000" />
-      }
+    <ImageGrid
+      images={images}
+      refreshing={loading}
+      onRefresh={fetchImages}
+      onImagePress={onImagePress}
     />
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
   loader: {
     flex: 1,
     justifyContent: 'center',
