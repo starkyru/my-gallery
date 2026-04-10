@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { Dimensions, FlatList, Platform, RefreshControl, StyleSheet } from 'react-native';
 import ImageCard from '@/components/ImageCard';
+import type { SourceRect } from '@/lib/shared-transition';
 import type { GalleryImage } from '@gallery/shared';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -11,7 +12,7 @@ interface ImageGridProps {
   images: GalleryImage[];
   refreshing: boolean;
   onRefresh: () => void;
-  onImagePress: (image: GalleryImage) => void;
+  onImagePress: (image: GalleryImage, sourceRect: SourceRect) => void;
 }
 
 export default function ImageGrid({ images, refreshing, onRefresh, onImagePress }: ImageGridProps) {

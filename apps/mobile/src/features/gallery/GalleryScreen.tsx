@@ -3,6 +3,8 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useGalleryStore } from '@/store/gallery';
 import { useConfigStore } from '@/store/config';
+import { uploadUrl } from '@/lib/api';
+import { useSharedTransition, type SourceRect } from '@/lib/shared-transition';
 import ImageGrid from '@/components/ImageGrid';
 import FilterChips from './components/FilterChips';
 import type { GalleryImage } from '@gallery/shared';
@@ -14,6 +16,7 @@ export default function GalleryScreen({ navigation }: Props) {
   const { images, categories, filters, loading, setFilters, fetchImages, fetchCategories } =
     useGalleryStore();
   const galleryName = useConfigStore((s) => s.config.galleryName);
+  const startTransition = useSharedTransition((s) => s.start);
 
   useEffect(() => {
     fetchCategories();
@@ -24,10 +27,13 @@ export default function GalleryScreen({ navigation }: Props) {
   }, [navigation, galleryName]);
 
   const onImagePress = useCallback(
-    (image: GalleryImage) => {
+    (image: GalleryImage, sourceRect: SourceRect) => {
+      if (sourceRect.width > 0 && sourceRect.height > 0) {
+        startTransition(sourceRect, uploadUrl(image.watermarkPath), image.height / image.width);
+      }
       navigation.navigate('ImageDetail', { imageId: image.id, image });
     },
-    [navigation],
+    [navigation, startTransition],
   );
 
   const categoryChips = categories.map((c) => ({

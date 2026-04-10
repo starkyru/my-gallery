@@ -10,7 +10,11 @@ export default function GalleryNavigator() {
   return (
     <Stack.Navigator>
       <Stack.Screen name="Gallery" component={GalleryScreen} />
-      <Stack.Screen name="ImageDetail" component={ImageDetailScreen} options={{ title: '' }} />
+      <Stack.Screen
+        name="ImageDetail"
+        component={ImageDetailScreen}
+        options={{ title: '', animation: 'fade', animationDuration: 300 }}
+      />
     </Stack.Navigator>
   );
 }

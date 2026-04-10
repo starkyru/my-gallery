@@ -3,6 +3,7 @@ import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'rea
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import RootNavigator from '@/navigation';
+import SharedTransitionOverlay from '@/components/SharedTransitionOverlay';
 import { useAuthStore } from '@/store/auth';
 import { useConfigStore } from '@/store/config';
 import { useGalleryStore } from '@/store/gallery';
@@ -59,6 +60,7 @@ export default function App() {
       <NavigationContainer>
         <RootNavigator />
       </NavigationContainer>
+      <SharedTransitionOverlay />
     </SafeAreaProvider>
   );
 }

@@ -1,20 +1,30 @@
-import React, { memo } from 'react';
+import React, { memo, useCallback, useRef } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import { uploadUrl } from '@/lib/api';
+import type { SourceRect } from '@/lib/shared-transition';
 import type { GalleryImage } from '@gallery/shared';
 
 interface Props {
   image: GalleryImage;
   size: number;
-  onPress: (image: GalleryImage) => void;
+  onPress: (image: GalleryImage, sourceRect: SourceRect) => void;
 }
 
 function ImageCard({ image, size, onPress }: Props) {
+  const viewRef = useRef<View>(null);
+
+  const handlePress = useCallback(() => {
+    viewRef.current?.measureInWindow((x, y, width, height) => {
+      onPress(image, { x, y, width, height });
+    });
+  }, [image, onPress]);
+
   return (
     <TouchableOpacity
+      ref={viewRef}
       style={[styles.container, { width: size, height: size }]}
-      onPress={() => onPress(image)}
+      onPress={handlePress}
       activeOpacity={0.8}
     >
       <FastImage
