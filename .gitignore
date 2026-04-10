@@ -22,3 +22,4 @@ android/build/
 *.jks
 *.keystore
 *.hprof
+apps/mobile/ios/Pods/*
