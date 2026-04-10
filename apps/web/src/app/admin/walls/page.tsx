@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
@@ -24,16 +24,16 @@ export default function AdminWallsPage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const previewRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    loadData();
-  }, [token]); // loadData is stable
-
-  async function loadData() {
+  const loadData = useCallback(async () => {
     if (!token) return;
     const [w, f] = await Promise.all([api.walls.list(), api.walls.framesAll(token)]);
     setWalls(w);
     setFrames(f);
-  }
+  }, [token]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   function handleFileChange(f: File | null) {
     setFile(f);

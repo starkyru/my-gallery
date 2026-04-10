@@ -9,24 +9,43 @@ interface CartState {
   removeItem: (imageId: number, type: OrderItemType, printSku: string | null) => void;
   removeByImageId: (imageId: number) => void;
   clear: () => void;
-  total: () => number;
-  hasPrintItems: () => boolean;
 }
 
 function cartItemKey(item: { imageId: number; type: string; printSku: string | null }) {
   return `${item.imageId}-${item.type}-${item.printSku || ''}`;
 }
 
+function normalizePrice(price: unknown) {
+  if (typeof price === 'number') {
+    return Number.isFinite(price) ? price : 0;
+  }
+
+  if (typeof price === 'string') {
+    const parsed = Number(price);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  return 0;
+}
+
+function normalizeItem(item: CartItem): CartItem {
+  return {
+    ...item,
+    price: normalizePrice(item.price),
+  };
+}
+
 export const useCartStore = create<CartState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       items: [],
       addItem: (item) =>
         set((state) => {
           if (state.items.length >= 50) return state;
-          const key = cartItemKey(item);
+          const normalizedItem = normalizeItem(item);
+          const key = cartItemKey(normalizedItem);
           if (state.items.some((i) => cartItemKey(i) === key)) return state;
-          return { items: [...state.items, item] };
+          return { items: [...state.items, normalizedItem] };
         }),
       removeItem: (imageId, type, printSku) =>
         set((state) => ({
@@ -39,12 +58,15 @@ export const useCartStore = create<CartState>()(
           items: state.items.filter((i) => i.imageId !== imageId),
         })),
       clear: () => set({ items: [] }),
-      total: () => get().items.reduce((sum, item) => sum + item.price, 0),
-      hasPrintItems: () => get().items.some((i) => i.type === 'print'),
     }),
     {
       name: 'gallery-cart',
       storage: createJSONStorage(() => AsyncStorage),
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          state.items = state.items.map(normalizeItem);
+        }
+      },
     },
   ),
 );

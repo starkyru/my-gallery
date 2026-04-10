@@ -86,7 +86,13 @@ export const useGalleryStore = create<GalleryState>()((set, get) => ({
   },
 
   refreshAll: async () => {
-    const state = get();
-    await Promise.all([state.fetchImages(), state.fetchCategories(), state.fetchArtists()]);
+    // fetchImages is critical — let it throw so the loading screen can catch it.
+    // Categories and artists are non-critical metadata.
+    set({ loading: true, error: null });
+    const images = await api.images.list(buildParams(get().filters));
+    set({ images, loading: false });
+    // Fire-and-forget for metadata
+    get().fetchCategories();
+    get().fetchArtists();
   },
 }));

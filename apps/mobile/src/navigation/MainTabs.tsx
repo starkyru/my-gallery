@@ -62,6 +62,8 @@ export default function MainTabs() {
         name="CartTab"
         component={CartScreen}
         options={{
+          headerShown: true,
+          title: 'Cart',
           tabBarLabel: 'Cart',
           tabBarIcon: ({ color, size }) => (
             <View>
@@ -75,6 +77,8 @@ export default function MainTabs() {
         name="ProfileTab"
         component={ProfileScreen}
         options={{
+          headerShown: true,
+          title: 'Profile',
           tabBarLabel: 'Profile',
           tabBarIcon: ({ color, size }) => <Icon name="person-outline" size={size} color={color} />,
         }}

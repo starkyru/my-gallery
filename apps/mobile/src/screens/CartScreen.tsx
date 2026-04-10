@@ -9,7 +9,7 @@ import type { CartItem } from '@gallery/shared';
 import type { RootStackParams } from '@/navigation';
 
 export default function CartScreen() {
-  const items = useCartStore((s) => s.items);
+  const items = useCartStore((s) => s.items ?? []);
   const removeItem = useCartStore((s) => s.removeItem);
   const clear = useCartStore((s) => s.clear);
   const total = items.reduce((sum, item) => sum + item.price, 0);
