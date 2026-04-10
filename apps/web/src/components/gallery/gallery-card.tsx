@@ -8,6 +8,7 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import type { GalleryImage } from './types';
 import { UPLOAD_URL } from '@/config';
+import { blurhashToDataURL } from '@/lib/blurhash';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -15,6 +16,7 @@ export function GalleryCard({ image, index }: { image: GalleryImage; index: numb
   const [loaded, setLoaded] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const blurDataURL = image.blurHash ? blurhashToDataURL(image.blurHash) : undefined;
 
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -52,6 +54,8 @@ export function GalleryCard({ image, index }: { image: GalleryImage; index: numb
             height={image.height}
             className="w-full h-auto transition-transform duration-700 ease-out group-hover:scale-105"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            placeholder={blurDataURL ? 'blur' : 'empty'}
+            blurDataURL={blurDataURL}
             onLoad={() => setLoaded(true)}
           />
         </div>

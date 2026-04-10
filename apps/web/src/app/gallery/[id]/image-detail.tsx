@@ -15,6 +15,7 @@ import { FrameIcon } from '@/components/icons/frame-icon';
 import { CameraIcon } from '@/components/icons/camera-icon';
 import { useArSupport } from '@/hooks/useArSupport';
 import { useWalls } from '@/hooks/useWalls';
+import { blurhashToDataURL } from '@/lib/blurhash';
 
 const WallPreview = dynamic(() => import('@/components/wall-preview').then((m) => m.WallPreview), {
   ssr: false,
@@ -48,6 +49,7 @@ interface ImageDetailProps {
     place?: string | null;
     sizeWidthCm?: number | null;
     sizeHeightCm?: number | null;
+    blurHash?: string | null;
   };
 }
 
@@ -64,6 +66,7 @@ export function ImageDetail({ image }: ImageDetailProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
   const { supported: arSupported, mode: arMode } = useArSupport();
   const { walls, selectedWall, selectWall } = useWalls();
+  const blurDataURL = image.blurHash ? blurhashToDataURL(image.blurHash) : undefined;
 
   const originalInCart = items.some((i) => i.imageId === image.id && i.type === 'original');
 
@@ -138,6 +141,8 @@ export function ImageDetail({ image }: ImageDetailProps) {
             height={image.height}
             className="h-full w-full object-contain"
             priority
+            placeholder={blurDataURL ? 'blur' : 'empty'}
+            blurDataURL={blurDataURL}
             onLoad={() => setImageLoaded(true)}
           />
         </div>
