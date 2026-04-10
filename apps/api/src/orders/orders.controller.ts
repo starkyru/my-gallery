@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Put, Param, Body, Query, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Param,
+  Body,
+  Query,
+  Headers,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import {
   IsString,
   IsArray,
@@ -94,9 +105,11 @@ export class OrdersController {
   @Get(':id')
   findOne(
     @Param('id') id: string,
-    @Query('token') token?: string,
+    @Query('token') queryToken?: string,
+    @Headers('x-order-token') headerToken?: string,
     @Request() req?: { user?: { role?: string } },
   ) {
+    const token = headerToken || queryToken;
     const isAdmin = req?.user?.role === 'admin';
     return this.service.findOneSecure(+id, token, isAdmin);
   }
@@ -110,9 +123,11 @@ export class OrdersController {
   @Get(':id/downloads')
   getDownloads(
     @Param('id') id: string,
-    @Query('token') token?: string,
+    @Query('token') queryToken?: string,
+    @Headers('x-order-token') headerToken?: string,
     @Request() req?: { user?: { role?: string } },
   ) {
+    const token = headerToken || queryToken;
     const isAdmin = req?.user?.role === 'admin';
     return this.service.getDownloadLinks(+id, token, isAdmin);
   }

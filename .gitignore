@@ -12,3 +12,13 @@ coverage/
 .DS_Store
 .claude/
 .claude/agent-memory/security-vuln-checker/MEMORY.md
+
+# React Native
+ios/Pods/
+ios/build/
+android/.gradle/
+android/app/build/
+android/build/
+*.jks
+*.keystore
+*.hprof
