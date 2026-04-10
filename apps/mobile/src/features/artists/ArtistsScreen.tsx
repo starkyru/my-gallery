@@ -1,10 +1,17 @@
-import React, { useCallback, useEffect } from 'react';
-import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo } from 'react';
+import {
+  ActivityIndicator,
+  FlatList,
+  Platform,
+  RefreshControl,
+  StyleSheet,
+  View,
+} from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useGalleryStore } from '@/store/gallery';
 import type { Artist } from '@gallery/shared';
 import type { ArtistsStackParams } from '@/navigation';
-import ArtistRow from '@/components/ArtistRow';
+import ArtistRow from './components/ArtistRow';
 
 type Props = NativeStackScreenProps<ArtistsStackParams, 'Artists'>;
 
@@ -27,7 +34,17 @@ export default function ArtistsScreen({ navigation }: Props) {
     [handleArtistPress],
   );
 
-  const keyExtractor = useCallback((item: Artist) => item.id.toString(), []);
+  const keyExtractor = useCallback((item: Artist) => String(item.id), []);
+
+  const getItemLayout = useCallback(
+    (_: unknown, index: number) => ({ length: 80, offset: 80 * index, index }),
+    [],
+  );
+
+  const refreshControl = useMemo(
+    () => <RefreshControl refreshing={loading} onRefresh={fetchArtists} tintColor="#000" />,
+    [loading, fetchArtists],
+  );
 
   if (loading && artists.length === 0) {
     return (
@@ -43,9 +60,10 @@ export default function ArtistsScreen({ navigation }: Props) {
       data={artists}
       renderItem={renderItem}
       keyExtractor={keyExtractor}
-      refreshControl={
-        <RefreshControl refreshing={loading} onRefresh={fetchArtists} tintColor="#000" />
-      }
+      getItemLayout={getItemLayout}
+      refreshControl={refreshControl}
+      removeClippedSubviews={Platform.OS !== 'ios'}
+      initialNumToRender={12}
     />
   );
 }

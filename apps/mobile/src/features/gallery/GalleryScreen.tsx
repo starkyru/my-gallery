@@ -4,7 +4,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useGalleryStore } from '@/store/gallery';
 import { useConfigStore } from '@/store/config';
 import ImageGrid from '@/components/ImageGrid';
-import FilterChips from '@/components/FilterChips';
+import FilterChips from './components/FilterChips';
 import type { GalleryImage } from '@gallery/shared';
 import type { GalleryStackParams } from '@/navigation';
 

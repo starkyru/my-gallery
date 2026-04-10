@@ -1,7 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import GalleryScreen from '@/screens/GalleryScreen';
-import ImageDetailScreen from '@/screens/ImageDetailScreen';
+import GalleryScreen from '@/features/gallery/GalleryScreen';
+import ImageDetailScreen from '@/features/gallery/ImageDetailScreen';
 import type { GalleryStackParams } from './types';
 
 const Stack = createNativeStackNavigator<GalleryStackParams>();

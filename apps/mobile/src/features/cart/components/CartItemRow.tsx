@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import { uploadUrl } from '@/lib/api';
@@ -9,7 +9,7 @@ interface Props {
   onRemove: (imageId: number, type: OrderItemType, printSku: string | null) => void;
 }
 
-export default function CartItemRow({ item, onRemove }: Props) {
+function CartItemRow({ item, onRemove }: Props) {
   return (
     <View style={styles.row}>
       <FastImage
@@ -38,6 +38,8 @@ export default function CartItemRow({ item, onRemove }: Props) {
     </View>
   );
 }
+
+export default memo(CartItemRow);
 
 const styles = StyleSheet.create({
   row: {

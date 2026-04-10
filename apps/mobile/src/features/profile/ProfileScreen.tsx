@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -14,8 +14,8 @@ import { useAuthStore } from '@/store/auth';
 import { api } from '@/lib/api';
 import type { Order } from '@gallery/shared';
 import type { RootStackParams } from '@/navigation';
-import OrderRow from '@/components/OrderRow';
-import SignInPrompt from '@/components/SignInPrompt';
+import OrderRow from './components/OrderRow';
+import SignInPrompt from '@/features/auth/components/SignInPrompt';
 
 export default function ProfileScreen() {
   const { token, role, logout } = useAuthStore();
@@ -51,8 +51,16 @@ export default function ProfileScreen() {
     [navigation],
   );
 
-  const renderOrder = ({ item }: { item: Order }) => (
-    <OrderRow order={item} onPress={handleOrderPress} />
+  const renderOrder = useCallback(
+    ({ item }: { item: Order }) => <OrderRow order={item} onPress={handleOrderPress} />,
+    [handleOrderPress],
+  );
+
+  const keyExtractor = useCallback((item: Order) => String(item.id), []);
+
+  const refreshControl = useMemo(
+    () => <RefreshControl refreshing={loading} onRefresh={fetchOrders} tintColor="#000" />,
+    [loading, fetchOrders],
   );
 
   return (
@@ -72,10 +80,9 @@ export default function ProfileScreen() {
         <FlatList
           data={orders}
           renderItem={renderOrder}
-          keyExtractor={(item) => String(item.id)}
-          refreshControl={
-            <RefreshControl refreshing={loading} onRefresh={fetchOrders} tintColor="#000" />
-          }
+          keyExtractor={keyExtractor}
+          refreshControl={refreshControl}
+          initialNumToRender={10}
         />
       )}
     </View>

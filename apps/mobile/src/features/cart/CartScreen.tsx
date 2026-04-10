@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCartStore } from '@/store/cart';
 import { useAuthStore } from '@/store/auth';
-import CartItemRow from '@/components/CartItemRow';
+import CartItemRow from './components/CartItemRow';
 import type { CartItem } from '@gallery/shared';
 import type { RootStackParams } from '@/navigation';
 
@@ -24,6 +24,16 @@ export default function CartScreen() {
     );
   }
 
+  const renderItem = useCallback(
+    ({ item }: { item: CartItem }) => <CartItemRow item={item} onRemove={removeItem} />,
+    [removeItem],
+  );
+
+  const keyExtractor = useCallback(
+    (item: CartItem) => `${item.imageId}-${item.type}-${item.printSku || ''}`,
+    [],
+  );
+
   const handleCheckout = () => {
     if (!token) {
       navigation.navigate('Login');
@@ -34,13 +44,7 @@ export default function CartScreen() {
 
   return (
     <View style={styles.container}>
-      <FlatList
-        data={items}
-        renderItem={({ item }: { item: CartItem }) => (
-          <CartItemRow item={item} onRemove={removeItem} />
-        )}
-        keyExtractor={(item) => `${item.imageId}-${item.type}-${item.printSku || ''}`}
-      />
+      <FlatList data={items} renderItem={renderItem} keyExtractor={keyExtractor} />
       <View style={styles.footer}>
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>Total</Text>

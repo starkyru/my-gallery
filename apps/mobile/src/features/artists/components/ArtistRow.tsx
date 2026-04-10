@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import { uploadUrl } from '@/lib/api';
@@ -9,7 +9,7 @@ interface ArtistRowProps {
   onPress: (artist: Artist) => void;
 }
 
-export default function ArtistRow({ artist, onPress }: ArtistRowProps) {
+function ArtistRow({ artist, onPress }: ArtistRowProps) {
   return (
     <TouchableOpacity style={styles.row} onPress={() => onPress(artist)} activeOpacity={0.7}>
       {artist.portraitPath ? (
@@ -34,6 +34,8 @@ export default function ArtistRow({ artist, onPress }: ArtistRowProps) {
     </TouchableOpacity>
   );
 }
+
+export default memo(ArtistRow);
 
 const styles = StyleSheet.create({
   row: {

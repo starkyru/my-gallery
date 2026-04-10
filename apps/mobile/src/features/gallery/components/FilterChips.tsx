@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo, useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
 
 interface ChipItem {
@@ -12,8 +12,8 @@ interface Props {
   onSelect: (value: string | undefined) => void;
 }
 
-export default function FilterChips({ items, selected, onSelect }: Props) {
-  const sorted = [...items].sort((a, b) => a.label.localeCompare(b.label));
+function FilterChips({ items, selected, onSelect }: Props) {
+  const sorted = useMemo(() => [...items].sort((a, b) => a.label.localeCompare(b.label)), [items]);
   return (
     <ScrollView
       horizontal
@@ -41,6 +41,8 @@ export default function FilterChips({ items, selected, onSelect }: Props) {
     </ScrollView>
   );
 }
+
+export default memo(FilterChips);
 
 const styles = StyleSheet.create({
   scroll: {

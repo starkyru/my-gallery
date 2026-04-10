@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { statusColor } from '@/lib/status-color';
 import type { Order } from '@gallery/shared';
 
 interface OrderRowProps {
@@ -7,20 +8,7 @@ interface OrderRowProps {
   onPress: (order: Order) => void;
 }
 
-function statusColor(status: string) {
-  switch (status) {
-    case 'paid':
-      return { backgroundColor: '#e6f4ea' };
-    case 'completed':
-      return { backgroundColor: '#d4edda' };
-    case 'expired':
-      return { backgroundColor: '#fce4e4' };
-    default:
-      return { backgroundColor: '#fff3cd' };
-  }
-}
-
-export default function OrderRow({ order, onPress }: OrderRowProps) {
+function OrderRow({ order, onPress }: OrderRowProps) {
   return (
     <TouchableOpacity style={styles.orderRow} onPress={() => onPress(order)}>
       <View>
@@ -36,6 +24,8 @@ export default function OrderRow({ order, onPress }: OrderRowProps) {
     </TouchableOpacity>
   );
 }
+
+export default memo(OrderRow);
 
 const styles = StyleSheet.create({
   orderRow: {

@@ -3,6 +3,7 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-nat
 import FastImage from 'react-native-fast-image';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { api, uploadUrl } from '@/lib/api';
+import { statusColor } from '@/lib/status-color';
 import type { Order } from '@gallery/shared';
 import type { RootStackParams } from '@/navigation';
 
@@ -86,19 +87,6 @@ export default function OrderDetailScreen({ route }: Props) {
       </View>
     </ScrollView>
   );
-}
-
-function statusColor(status: string) {
-  switch (status) {
-    case 'paid':
-      return { backgroundColor: '#e6f4ea' };
-    case 'completed':
-      return { backgroundColor: '#d4edda' };
-    case 'expired':
-      return { backgroundColor: '#fce4e4' };
-    default:
-      return { backgroundColor: '#fff3cd' };
-  }
 }
 
 const styles = StyleSheet.create({

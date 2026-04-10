@@ -1,7 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import LoginScreen from '@/screens/LoginScreen';
-import OrderDetailScreen from '@/screens/OrderDetailScreen';
+import LoginScreen from '@/features/auth/LoginScreen';
+import OrderDetailScreen from '@/features/profile/OrderDetailScreen';
 import MainTabs from './MainTabs';
 import type { RootStackParams } from './types';
 

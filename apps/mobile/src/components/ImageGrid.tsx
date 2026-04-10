@@ -1,5 +1,5 @@
-import React, { useCallback } from 'react';
-import { Dimensions, FlatList, RefreshControl, StyleSheet } from 'react-native';
+import React, { useCallback, useMemo } from 'react';
+import { Dimensions, FlatList, Platform, RefreshControl, StyleSheet } from 'react-native';
 import ImageCard from '@/components/ImageCard';
 import type { GalleryImage } from '@gallery/shared';
 
@@ -24,6 +24,11 @@ export default function ImageGrid({ images, refreshing, onRefresh, onImagePress 
 
   const keyExtractor = useCallback((item: GalleryImage) => String(item.id), []);
 
+  const refreshControl = useMemo(
+    () => <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#000" />,
+    [refreshing, onRefresh],
+  );
+
   return (
     <FlatList
       style={styles.container}
@@ -31,10 +36,12 @@ export default function ImageGrid({ images, refreshing, onRefresh, onImagePress 
       renderItem={renderItem}
       keyExtractor={keyExtractor}
       numColumns={NUM_COLUMNS}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#000" />
-      }
+      refreshControl={refreshControl}
       contentContainerStyle={styles.grid}
+      removeClippedSubviews={Platform.OS !== 'ios'}
+      windowSize={5}
+      maxToRenderPerBatch={8}
+      initialNumToRender={6}
     />
   );
 }
