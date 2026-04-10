@@ -88,8 +88,16 @@ export default function ImageDetailScreen({ route, navigation }: Props) {
 
         <View style={styles.priceRow}>
           <Text style={styles.price}>${image.price}</Text>
-          <TouchableOpacity style={styles.button} onPress={() => addToCart()}>
-            <Text style={styles.buttonText}>Add Original</Text>
+          <TouchableOpacity
+            style={[styles.button, Number(image.price) === 0 && styles.addBtnDisabled]}
+            onPress={() => addToCart()}
+            disabled={Number(image.price) === 0}
+          >
+            <Text
+              style={[styles.buttonText, Number(image.price) === 0 && styles.addBtnTextDisabled]}
+            >
+              Add Original
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -108,11 +116,19 @@ export default function ImageDetailScreen({ route, navigation }: Props) {
                   </View>
                   <Text style={styles.printPrice}>${option.price}</Text>
                   <TouchableOpacity
-                    style={[styles.addBtn, soldOut && styles.addBtnDisabled]}
+                    style={[
+                      styles.addBtn,
+                      (soldOut || Number(option.price) === 0) && styles.addBtnDisabled,
+                    ]}
                     onPress={() => addToCart(option)}
-                    disabled={soldOut}
+                    disabled={soldOut || Number(option.price) === 0}
                   >
-                    <Text style={[styles.addBtnText, soldOut && styles.addBtnTextDisabled]}>
+                    <Text
+                      style={[
+                        styles.addBtnText,
+                        (soldOut || Number(option.price) === 0) && styles.addBtnTextDisabled,
+                      ]}
+                    >
                       {soldOut ? 'Sold out' : 'Add'}
                     </Text>
                   </TouchableOpacity>

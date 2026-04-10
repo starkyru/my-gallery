@@ -25,6 +25,15 @@ interface GalleryState {
   refreshAll: () => Promise<void>;
 }
 
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 function buildParams(filters: GalleryFilters): string {
   const params = new URLSearchParams();
   if (filters.category) params.set('category', filters.category);
@@ -51,7 +60,7 @@ export const useGalleryStore = create<GalleryState>()((set, get) => ({
   fetchImages: async () => {
     set({ loading: true, error: null });
     try {
-      const images = await api.images.list(buildParams(get().filters));
+      const images = shuffle(await api.images.list(buildParams(get().filters)));
       set({ images, loading: false });
     } catch (err) {
       set({ error: (err as Error).message, loading: false });
@@ -89,7 +98,7 @@ export const useGalleryStore = create<GalleryState>()((set, get) => ({
     // fetchImages is critical — let it throw so the loading screen can catch it.
     // Categories and artists are non-critical metadata.
     set({ loading: true, error: null });
-    const images = await api.images.list(buildParams(get().filters));
+    const images = shuffle(await api.images.list(buildParams(get().filters)));
     set({ images, loading: false });
     // Fire-and-forget for metadata
     get().fetchCategories();

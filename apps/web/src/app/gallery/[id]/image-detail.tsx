@@ -341,7 +341,7 @@ export function ImageDetail({ image }: ImageDetailProps) {
                     printDescription: null,
                   })
                 }
-                disabled={originalInCart}
+                disabled={originalInCart || Number(image.price) === 0}
                 className="w-full px-6 py-2.5 bg-gallery-accent text-gallery-black font-medium rounded-lg hover:bg-gallery-accent-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
               >
                 {originalInCart ? 'In Cart' : 'Add to Cart'}
@@ -417,7 +417,12 @@ export function ImageDetail({ image }: ImageDetailProps) {
                         printDescription: selectedPrintOption.description,
                       });
                     }}
-                    disabled={!selectedSku || printInCart || selectedOptionSoldOut}
+                    disabled={
+                      !selectedSku ||
+                      printInCart ||
+                      selectedOptionSoldOut ||
+                      Number(selectedPrintOption?.price) === 0
+                    }
                     className="w-full px-6 py-2.5 bg-white/10 text-white font-medium rounded-lg hover:bg-white/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm border border-white/10"
                   >
                     {printInCart ? 'In Cart' : 'Add Print to Cart'}
