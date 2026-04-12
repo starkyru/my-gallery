@@ -151,7 +151,6 @@ export class ImagesService {
     mediaTypes?: string[];
     paintTypes?: string[];
     search?: string[][];
-    condition?: 'AND' | 'OR';
   }) {
     const qb = this.repo
       .createQueryBuilder('image')
@@ -184,7 +183,6 @@ export class ImagesService {
     }
     const hasTagFilter = query?.tags && query.tags.length > 0;
     const hasSearch = !!query?.search;
-    const useOr = query?.condition === 'OR';
 
     // Build keyword search — each group is OR (synonyms), groups are ANDed (concepts)
     // e.g. [["dog","puppy"],["hat","cap"]] => (dog OR puppy) AND (hat OR cap)
@@ -202,12 +200,12 @@ export class ImagesService {
     };
 
     if (hasTagFilter && hasSearch) {
+      // Always OR between tags and keywords — they are complementary discovery paths
       const tagSql =
         'image.id IN (SELECT it.image_id FROM image_tags it INNER JOIN tags t ON t.id = it.tag_id WHERE t.slug IN (:...tagSlugs))';
       const params: Record<string, unknown> = { tagSlugs: query.tags };
       const searchSql = buildSearchSql(searchGroups, params);
-      const joiner = useOr ? 'OR' : 'AND';
-      qb.andWhere(`(${tagSql} ${joiner} (${searchSql}))`, params);
+      qb.andWhere(`(${tagSql} OR (${searchSql}))`, params);
     } else if (hasTagFilter) {
       qb.andWhere(
         'image.id IN (SELECT it.image_id FROM image_tags it INNER JOIN tags t ON t.id = it.tag_id WHERE t.slug IN (:...tagSlugs))',

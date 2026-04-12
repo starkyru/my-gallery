@@ -53,6 +53,33 @@ Existing providers: PayPal (inline capture), BTCPay (redirect + webhook), Stripe
 
 Webhook endpoint for all providers: `POST /api/payments/<provider>/webhook`. Requires `rawBody` access (enabled in `main.ts`).
 
+## Print Options: Per-Option Limits
+
+Print edition limits can be tracked at two levels:
+
+1. **Image-level** (default): `images.print_limit` / `images.prints_sold` — shared across all print options
+2. **Per-option**: `image_print_options.print_limit` / `image_print_options.sold_count` — each SKU has its own limit
+
+Toggle via `images.per_option_limits` (boolean). When per-option is enabled, the image-level fields are ignored. The `soldCount` is preserved across saves by matching on SKU.
+
+Key files:
+
+- `images.service.ts` — `incrementPrintsSold()` (image-level) and `incrementOptionSoldCount()` (per-option), both use atomic SQL updates
+- `orders.service.ts` — validates sold-out status at order creation
+- `payments.service.ts` — increments the correct counter after payment
+
+## Print Options: SKU Catalog Dimensions
+
+Fulfillment provider SKU catalogs (`service_configs.skus` JSONB) support `widthCm` / `heightCm`. When an admin selects a SKU on a print option, dimensions auto-fill and lock (read-only). Configured in admin settings per provider.
+
+## Images: Physical Size
+
+Images have optional physical dimensions (`size_width_cm`, `size_height_cm`). Admin enters in inches (converted to cm for storage). Displayed on the frontend detail page in inches when both values are set.
+
+## Chat: Multi-Turn Conversation
+
+The chat service (`chat.service.ts`) sends full conversation history (user + assistant messages) to the AI, preserving proper role alternation. The `callAi` method accepts `{ role, content }[]` — do not strip assistant messages.
+
 ## Security: Post-Change Security Audit
 
 After **any** code changes, run the `security-vuln-checker` agent to assess security risks. This applies to all changes — new features, bug fixes, refactors, dependency updates, etc.

@@ -99,9 +99,7 @@ Rules:
 - If you're not able to generate keywords, tags or categories, ask a clarifying question (no search)
 - Respond ONLY with valid JSON, no markdown formatting`;
 
-    const userMessages = messages.filter((m) => m.role === 'user').map((m) => m.content);
-
-    const aiResult = await this.callAi(systemPrompt, userMessages);
+    const aiResult = await this.callAi(systemPrompt, messages);
     if (!aiResult) {
       return {
         message: "I'm sorry, I had trouble understanding. Could you try rephrasing?",
@@ -118,38 +116,28 @@ Rules:
     const validCategorySlugs = new Set(categories.map((c) => c.slug));
     const validTagSlugs = new Set(tags.map((t) => t.slug));
 
-    const condition = search.condition ?? 'AND';
-    let images = await this.searchImages(search, validCategorySlugs, validTagSlugs, condition);
+    let images = await this.searchImages(search, validCategorySlugs, validTagSlugs);
 
-    // Fallback 1: switch AND to OR between tags and keywords
-    if (images.length === 0 && condition === 'AND') {
-      images = await this.searchImages(search, validCategorySlugs, validTagSlugs, 'OR');
-    }
-
-    // Fallback 2: drop category filter entirely
+    // Fallback 1: drop category filter
     if (images.length === 0 && search.category) {
       const withoutCategory = { ...search, category: undefined };
-      images = await this.searchImages(withoutCategory, validCategorySlugs, validTagSlugs, 'OR');
+      images = await this.searchImages(withoutCategory, validCategorySlugs, validTagSlugs);
     }
 
-    // Fallback 3: if still nothing and multi-turn, retry with only the last message
-    // (user may have changed topic and AI mixed old + new concepts)
+    // Fallback 2: if still nothing and multi-turn, retry with only the last message
+    const userMessages = messages.filter((m) => m.role === 'user');
     if (images.length === 0 && userMessages.length > 1) {
-      const retryResult = await this.callAi(systemPrompt, [userMessages[userMessages.length - 1]]);
+      const lastUserMsg = userMessages[userMessages.length - 1];
+      const retryResult = await this.callAi(systemPrompt, [
+        { role: 'user' as const, content: lastUserMsg.content },
+      ]);
       if (retryResult?.search) {
-        images = await this.searchImages(
-          retryResult.search,
-          validCategorySlugs,
-          validTagSlugs,
-          retryResult.search.condition ?? 'AND',
-        );
-        if (images.length === 0) {
-          // Also try OR + no category on the retried search
+        images = await this.searchImages(retryResult.search, validCategorySlugs, validTagSlugs);
+        if (images.length === 0 && retryResult.search.category) {
           images = await this.searchImages(
             { ...retryResult.search, category: undefined },
             validCategorySlugs,
             validTagSlugs,
-            'OR',
           );
         }
         if (images.length > 0) {
@@ -175,7 +163,6 @@ Rules:
     },
     validCategorySlugs: Set<string>,
     validTagSlugs: Set<string>,
-    condition: 'AND' | 'OR',
   ): Promise<ChatImage[]> {
     const category =
       search.category && validCategorySlugs.has(search.category) ? search.category : undefined;
@@ -187,7 +174,6 @@ Rules:
       tags: filteredTags.length > 0 ? filteredTags : undefined,
       search: keywords,
       featured: search.featured,
-      condition,
     });
 
     if (allImages.length > 3) {
@@ -214,14 +200,14 @@ Rules:
 
   private async callAi(
     systemPrompt: string,
-    userMessages: string[],
+    chatMessages: { role: 'user' | 'assistant'; content: string }[],
   ): Promise<z.infer<typeof ChatAiResponseSchema> | null> {
     try {
       const response = await this.client.messages.create({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 300,
         system: systemPrompt,
-        messages: userMessages.map((content) => ({ role: 'user' as const, content })),
+        messages: chatMessages.map((m) => ({ role: m.role, content: m.content })),
       });
 
       const raw = response.content[0].type === 'text' ? response.content[0].text : '';
