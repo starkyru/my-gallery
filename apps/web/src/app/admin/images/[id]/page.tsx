@@ -56,6 +56,8 @@ interface ImageData {
   originalFileName?: string | null;
   sizeWidthCm?: number | null;
   sizeHeightCm?: number | null;
+  originalAvailable?: boolean;
+  weightGrams?: number | null;
   updatedAt: string;
 }
 
@@ -75,6 +77,8 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
     artistId: number;
     projectId: number | null;
     allowDownloadOriginal: boolean;
+    originalAvailable: boolean;
+    weightGrams: number | null;
     printEnabled: boolean;
     printLimit: number | null;
     perOptionLimits: boolean;
@@ -91,6 +95,8 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
     artistId: 0,
     projectId: null,
     allowDownloadOriginal: false,
+    originalAvailable: false,
+    weightGrams: null,
     printEnabled: false,
     printLimit: null,
     perOptionLimits: false,
@@ -117,6 +123,7 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
   const [aiLoading, setAiLoading] = useState(false);
   const [aiKeywordsLoading, setAiKeywordsLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showErrors, setShowErrors] = useState(false);
   const [reuploading, setReuploading] = useState(false);
   const reuploadInputRef = useRef<HTMLInputElement>(null);
   const initialState = useRef<string>('');
@@ -145,6 +152,8 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
         artistId: data.artist.id,
         projectId: data.projectId,
         allowDownloadOriginal: data.allowDownloadOriginal ?? false,
+        originalAvailable: data.originalAvailable ?? false,
+        weightGrams: data.weightGrams != null ? Number(data.weightGrams) : null,
         printEnabled: data.printEnabled ?? false,
         printLimit: data.printLimit,
         perOptionLimits: data.perOptionLimits ?? false,
@@ -215,6 +224,13 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
 
   async function handleSave() {
     if (!token || !image) return;
+    const missingSku = printOptions.some((o) => !o.sku);
+    if (missingSku) {
+      setShowErrors(true);
+      notify.error('All print options must have a SKU selected');
+      return;
+    }
+    setShowErrors(false);
     setSaving(true);
     try {
       await api.images.update(
@@ -783,6 +799,15 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
             <label className="flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
+                checked={editData.originalAvailable}
+                onChange={(e) => setEditData({ ...editData, originalAvailable: e.target.checked })}
+                className="accent-gallery-accent"
+              />
+              Available as Physical Original
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
                 checked={editData.printEnabled}
                 onChange={(e) => setEditData({ ...editData, printEnabled: e.target.checked })}
                 className="accent-gallery-accent"
@@ -790,6 +815,32 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
               Available as Print
             </label>
           </div>
+
+          {/* Physical original settings */}
+          {editData.originalAvailable && (
+            <div className="border border-white/10 rounded-lg p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-gallery-gray whitespace-nowrap">
+                  Weight (grams)
+                </label>
+                <input
+                  value={editData.weightGrams ?? ''}
+                  onChange={(e) =>
+                    setEditData({
+                      ...editData,
+                      weightGrams: e.target.value ? +e.target.value : null,
+                    })
+                  }
+                  type="number"
+                  placeholder="Leave empty to auto-estimate"
+                  className={`${inputClass} flex-1`}
+                />
+              </div>
+              <p className="text-xs text-gallery-gray">
+                Uses the artwork price (${editData.price}). Shipping calculated at checkout.
+              </p>
+            </div>
+          )}
 
           {/* Print settings */}
           {editData.printEnabled && (
@@ -838,17 +889,18 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
                   const dimsLocked = catalogSku?.widthCm != null && catalogSku?.heightCm != null;
                   return (
                     <div key={idx} className="border border-white/5 rounded p-2 space-y-1.5">
-                      {/* Row 1: SKU dropdown, price, remove */}
+                      {/* Row 1: SKU dropdown (2/3), price (1/3), remove */}
                       <div className="flex gap-1.5 items-center">
                         <select
                           value={opt.sku}
                           onChange={(e) => updatePrintOption(idx, 'sku', e.target.value)}
-                          className={`${inputClass} flex-1`}
+                          required
+                          className={`${inputClass} flex-[2] ${showErrors && !opt.sku ? '!border-red-500' : ''}`}
                         >
-                          <option value="">Select SKU</option>
+                          <option value="">Select SKU *</option>
                           {availableSkus.map((s) => (
                             <option key={`${s.provider}-${s.sku}`} value={s.sku}>
-                              {s.description} ({s.provider})
+                              {s.description} ({s.sku})
                             </option>
                           ))}
                         </select>
@@ -858,7 +910,7 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
                           type="number"
                           step="0.01"
                           placeholder="Price"
-                          className={`${inputClass} w-24`}
+                          className={`${inputClass} flex-1`}
                         />
                         <button
                           onClick={() => removePrintOption(idx)}
@@ -867,10 +919,6 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
                           &times;
                         </button>
                       </div>
-                      {/* SKU code display */}
-                      {opt.sku && (
-                        <p className="font-mono text-xs text-gallery-gray px-0.5">{opt.sku}</p>
-                      )}
                       {/* Row 2: Dimensions cm + inches (2-column grid) */}
                       <div className="grid grid-cols-2 gap-1.5">
                         <input

@@ -207,6 +207,16 @@ class UpdateImageDto {
   @IsNumber()
   @Min(0)
   sizeHeightCm?: number | null;
+
+  @IsOptional()
+  @IsBoolean()
+  originalAvailable?: boolean;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  weightGrams?: number | null;
 }
 
 class BulkActionDto {

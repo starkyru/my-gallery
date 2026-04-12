@@ -118,6 +118,12 @@ export class ImageEntity {
   @Column({ name: 'allow_download_original', default: false })
   allowDownloadOriginal!: boolean;
 
+  @Column({ name: 'original_available', default: false })
+  originalAvailable!: boolean;
+
+  @Column({ name: 'weight_grams', type: 'int', nullable: true })
+  weightGrams!: number | null;
+
   @Column({ name: 'is_archived', default: false })
   isArchived!: boolean;
 

@@ -49,6 +49,18 @@ export class OrderEntity {
   @Column({ name: 'shipping_country', type: 'varchar', nullable: true })
   shippingCountry!: string | null;
 
+  @Column({ name: 'shipping_cost', type: 'decimal', precision: 10, scale: 2, nullable: true })
+  shippingCost!: number | null;
+
+  @Column({ name: 'shipping_carrier', type: 'varchar', nullable: true })
+  shippingCarrier!: string | null;
+
+  @Column({ name: 'shipping_service', type: 'varchar', nullable: true })
+  shippingService!: string | null;
+
+  @Column({ name: 'shipping_rate_id', type: 'varchar', nullable: true })
+  shippingRateId!: string | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 }

@@ -40,6 +40,7 @@ import { ImageMediaTypeEntity } from './media-types/image-media-type.entity';
 import { PaintTypesModule } from './paint-types/paint-types.module';
 import { PaintTypeEntity } from './paint-types/paint-type.entity';
 import { ImagePaintTypeEntity } from './paint-types/image-paint-type.entity';
+import { ShippingModule } from './shipping/shipping.module';
 
 @Module({
   imports: [
@@ -97,6 +98,7 @@ import { ImagePaintTypeEntity } from './paint-types/image-paint-type.entity';
     ContactsModule,
     ChatModule,
     WallsModule,
+    ShippingModule,
   ],
 })
 export class AppModule {}

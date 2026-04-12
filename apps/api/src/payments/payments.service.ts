@@ -62,6 +62,7 @@ export class PaymentsService {
       await this.ordersService.updateStatus(orderId, OrderStatus.Paid);
       const order = await this.ordersService.findOne(orderId);
       await this.fulfillPrintItems(order);
+      await this.markPhysicalOriginalsSold(order);
       this.notifyAdminsOfOrder(order).catch((err) =>
         this.logger.error('Failed to send order notification emails', err),
       );
@@ -86,6 +87,7 @@ export class PaymentsService {
       await this.ordersService.updateStatus(result.orderId, OrderStatus.Paid);
       const order = await this.ordersService.findOne(result.orderId);
       await this.fulfillPrintItems(order);
+      await this.markPhysicalOriginalsSold(order);
       this.notifyAdminsOfOrder(order).catch((err) =>
         this.logger.error('Failed to send order notification emails', err),
       );
@@ -185,6 +187,31 @@ export class PaymentsService {
     }
   }
 
+  private async markPhysicalOriginalsSold(order: OrderEntity) {
+    const physicalItems = order.items.filter(
+      (item) => item.type === OrderItemType.PhysicalOriginal,
+    );
+    for (const item of physicalItems) {
+      try {
+        const sold = await this.imagesService.markOriginalSold(item.imageId);
+        if (sold) {
+          this.logger.log(
+            `Marked image ${item.imageId} as sold (physical original) for order ${order.id}`,
+          );
+        } else {
+          this.logger.error(
+            `Image ${item.imageId} was already sold — possible double-sale for order ${order.id}`,
+          );
+        }
+      } catch (error) {
+        this.logger.error(
+          `Failed to mark image ${item.imageId} as sold for order ${order.id}`,
+          error,
+        );
+      }
+    }
+  }
+
   private escapeHtml(str: string): string {
     return str
       .replace(/&/g, '&amp;')
@@ -202,7 +229,9 @@ export class PaymentsService {
         const type =
           item.type === OrderItemType.Print
             ? `Print (${this.escapeHtml(item.printSku || '')})`
-            : 'Original';
+            : item.type === OrderItemType.PhysicalOriginal
+              ? 'Physical Original'
+              : 'Digital Original';
         return `<tr><td style="padding:4px 8px">#${item.imageId}</td><td style="padding:4px 8px">${type}</td><td style="padding:4px 8px">$${item.price}</td></tr>`;
       })
       .join('');

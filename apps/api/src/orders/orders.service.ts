@@ -11,6 +11,7 @@ import { OrderEntity } from './order.entity';
 import { OrderItemEntity } from './order-item.entity';
 import { ImagesService } from '../images/images.service';
 import { OrderStatus, OrderItemType, ShippingAddress } from '@gallery/shared';
+import { ShippingService } from '../shipping/shipping.service';
 
 @Injectable()
 export class OrdersService {
@@ -20,12 +21,19 @@ export class OrdersService {
     @InjectRepository(OrderItemEntity)
     private readonly itemRepo: Repository<OrderItemEntity>,
     private readonly imagesService: ImagesService,
+    private readonly shippingService: ShippingService,
   ) {}
 
   async create(
     customerEmail: string,
     items: { imageId: number; type: OrderItemType; printSku?: string }[],
     shippingAddress?: ShippingAddress,
+    shippingInfo?: {
+      shippingRateId?: string;
+      shippingCost?: number;
+      shippingCarrier?: string;
+      shippingService?: string;
+    },
   ) {
     const orderItems: Partial<OrderItemEntity>[] = [];
     let total = 0;
@@ -65,6 +73,18 @@ export class OrdersService {
           }),
         );
         total += Number(printOption.price);
+      } else if (item.type === OrderItemType.PhysicalOriginal) {
+        if (!image.originalAvailable) {
+          throw new BadRequestException(`Physical original not available for "${image.title}"`);
+        }
+        orderItems.push(
+          this.itemRepo.create({
+            imageId: image.id,
+            price: image.price,
+            type: OrderItemType.PhysicalOriginal,
+          }),
+        );
+        total += Number(image.price);
       } else {
         if (!image.allowDownloadOriginal) {
           throw new BadRequestException(`Digital original not available for "${image.title}"`);
@@ -80,10 +100,38 @@ export class OrdersService {
       }
     }
 
-    const hasPrintItems = items.some((i) => i.type === OrderItemType.Print);
-    if (hasPrintItems && !shippingAddress) {
-      throw new BadRequestException('Shipping address required for print orders');
+    const needsShipping = items.some(
+      (i) => i.type === OrderItemType.Print || i.type === OrderItemType.PhysicalOriginal,
+    );
+    if (needsShipping && !shippingAddress) {
+      throw new BadRequestException('Shipping address required for physical items');
     }
+
+    // Verify shipping rate server-side (never trust client-provided cost)
+    let shippingCost = 0;
+    let verifiedCarrier: string | null = null;
+    let verifiedService: string | null = null;
+    let verifiedRateId: string | null = null;
+
+    const hasPhysicalOriginals = items.some((i) => i.type === OrderItemType.PhysicalOriginal);
+    if (hasPhysicalOriginals && shippingInfo?.shippingRateId) {
+      const verifiedRate = this.shippingService.getVerifiedRate(shippingInfo.shippingRateId);
+      if (!verifiedRate) {
+        throw new BadRequestException(
+          'Shipping rate has expired. Please recalculate shipping rates.',
+        );
+      }
+      shippingCost = verifiedRate.rate;
+      verifiedCarrier = verifiedRate.carrier;
+      verifiedService = verifiedRate.service;
+      verifiedRateId = verifiedRate.rateId;
+    } else if (hasPhysicalOriginals) {
+      throw new BadRequestException(
+        'Shipping rate selection is required for physical original items',
+      );
+    }
+
+    total += shippingCost;
 
     const order = this.orderRepo.create({
       customerEmail,
@@ -99,6 +147,12 @@ export class OrdersService {
         shippingState: shippingAddress.state,
         shippingPostalCode: shippingAddress.postalCode,
         shippingCountry: shippingAddress.country,
+      }),
+      ...(shippingCost > 0 && {
+        shippingCost,
+        shippingCarrier: verifiedCarrier,
+        shippingService: verifiedService,
+        shippingRateId: verifiedRateId,
       }),
     });
 
@@ -163,6 +217,14 @@ export class OrdersService {
           fulfillmentOrderId: item.fulfillmentOrderId,
           fulfillmentProvider: item.fulfillmentProvider,
           status: item.fulfillmentOrderId ? 'Print order submitted' : 'Processing',
+        };
+      }
+      if (item.type === OrderItemType.PhysicalOriginal) {
+        return {
+          imageId: item.imageId,
+          title: item.image?.title,
+          type: OrderItemType.PhysicalOriginal,
+          status: 'Artwork will be shipped',
         };
       }
       return {

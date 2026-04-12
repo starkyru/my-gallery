@@ -68,7 +68,9 @@ export default function CartPage() {
               <p className="text-gallery-gray text-sm">
                 {item.type === 'print'
                   ? `Print \u2014 ${item.printDescription}`
-                  : 'Digital Download'}
+                  : item.type === 'physical_original'
+                    ? 'Physical Original \u2014 Shipping at checkout'
+                    : 'Digital Download'}
               </p>
               <p className="text-gallery-gray">${item.price}</p>
             </div>

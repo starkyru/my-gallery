@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/store/cart';
 import { api } from '@/lib/api';
-import type { EnabledPayment } from '@gallery/shared';
+import type { EnabledPayment, ShippingRate } from '@gallery/shared';
 
 const inputClass =
   'w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-gallery-gray focus:outline-none focus:border-gallery-accent';
@@ -16,13 +16,13 @@ const PROVIDER_STYLES: Record<string, { bg: string; hover: string; label: string
 };
 
 export default function CheckoutPage() {
-  const { items, total, clear, hasPrintItems, removeByImageId } = useCartStore();
+  const { items, total, clear, hasShippableItems, removeByImageId } = useCartStore();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [enabledPayments, setEnabledPayments] = useState<EnabledPayment[]>([]);
-  const needsShipping = hasPrintItems();
+  const needsShipping = hasShippableItems();
   const validatedRef = useRef<Set<number>>(new Set());
 
   const [shipping, setShipping] = useState({
@@ -34,6 +34,66 @@ export default function CheckoutPage() {
     postalCode: '',
     country: '',
   });
+
+  // Shipping rate state
+  const [shippingRates, setShippingRates] = useState<ShippingRate[]>([]);
+  const [selectedRateId, setSelectedRateId] = useState<string>('');
+  const [ratesLoading, setRatesLoading] = useState(false);
+  const [ratesError, setRatesError] = useState('');
+  const ratesFetchedForRef = useRef('');
+
+  const hasPhysicalOriginals = items.some((i) => i.type === 'physical_original');
+
+  const selectedRate = shippingRates.find((r) => r.rateId === selectedRateId);
+  const shippingCost = selectedRate?.rate ?? 0;
+
+  const shippingAddressFilled =
+    shipping.name &&
+    shipping.address1 &&
+    shipping.city &&
+    shipping.state &&
+    shipping.postalCode &&
+    shipping.country;
+
+  const fetchShippingRates = useCallback(async () => {
+    if (!hasPhysicalOriginals || !shippingAddressFilled) return;
+
+    const addressKey = JSON.stringify(shipping);
+    if (ratesFetchedForRef.current === addressKey) return;
+
+    const physicalImageIds = items
+      .filter((i) => i.type === 'physical_original')
+      .map((i) => i.imageId);
+
+    setRatesLoading(true);
+    setRatesError('');
+    setShippingRates([]);
+    setSelectedRateId('');
+
+    try {
+      const rates = await api.shipping.getRates({
+        imageIds: physicalImageIds,
+        toAddress: {
+          name: shipping.name,
+          address1: shipping.address1,
+          ...(shipping.address2 && { address2: shipping.address2 }),
+          city: shipping.city,
+          state: shipping.state,
+          postalCode: shipping.postalCode,
+          country: shipping.country,
+        },
+      });
+      setShippingRates(rates);
+      ratesFetchedForRef.current = addressKey;
+      if (rates.length > 0) {
+        setSelectedRateId(rates[0].rateId);
+      }
+    } catch (e: unknown) {
+      setRatesError(e instanceof Error ? e.message : 'Failed to fetch shipping rates');
+    } finally {
+      setRatesLoading(false);
+    }
+  }, [hasPhysicalOriginals, shippingAddressFilled, shipping, items]);
 
   useEffect(() => {
     if (items.length === 0) router.push('/cart');
@@ -64,16 +124,22 @@ export default function CheckoutPage() {
     });
   }, [items, removeByImageId]);
 
+  // Reset rates when address changes
+  useEffect(() => {
+    const addressKey = JSON.stringify(shipping);
+    if (ratesFetchedForRef.current && ratesFetchedForRef.current !== addressKey) {
+      ratesFetchedForRef.current = '';
+      setShippingRates([]);
+      setSelectedRateId('');
+    }
+  }, [shipping]);
+
   if (items.length === 0) return null;
 
   const shippingValid =
-    !needsShipping ||
-    (shipping.name &&
-      shipping.address1 &&
-      shipping.city &&
-      shipping.state &&
-      shipping.postalCode &&
-      shipping.country);
+    !needsShipping || (shippingAddressFilled && (!hasPhysicalOriginals || selectedRateId));
+
+  const displayTotal = total() + shippingCost;
 
   function buildOrderData() {
     return {
@@ -94,6 +160,12 @@ export default function CheckoutPage() {
           country: shipping.country,
         },
       }),
+      ...(selectedRate && {
+        shippingRateId: selectedRate.rateId,
+        shippingCost: selectedRate.rate,
+        shippingCarrier: selectedRate.carrier,
+        shippingService: selectedRate.service,
+      }),
     };
   }
 
@@ -106,7 +178,6 @@ export default function CheckoutPage() {
       const result = await api.payments.create(order.id, provider);
 
       if (provider === 'paypal') {
-        // PayPal requires capture
         const captureResult = await api.payments.capture(order.id, provider, {
           paypalOrderId: result.paymentId,
         });
@@ -115,7 +186,6 @@ export default function CheckoutPage() {
           router.push(`/orders/${order.id}/success?token=${orderToken}`);
         }
       } else if (result.checkoutLink) {
-        // BTCPay and similar: redirect to external checkout
         window.location.href = result.checkoutLink;
       } else {
         clear();
@@ -134,7 +204,14 @@ export default function CheckoutPage() {
 
       <div className="mb-8 p-4 border border-white/10 rounded-lg">
         <p className="text-gallery-gray mb-1">{items.length} item(s)</p>
-        <p className="text-2xl font-serif">${total()}</p>
+        <p className="text-2xl font-serif">
+          ${displayTotal.toFixed(2)}
+          {shippingCost > 0 && (
+            <span className="text-sm text-gallery-gray ml-2">
+              (incl. ${shippingCost.toFixed(2)} shipping)
+            </span>
+          )}
+        </p>
       </div>
 
       <div className="mb-6">
@@ -197,6 +274,63 @@ export default function CheckoutPage() {
               className={inputClass}
             />
           </div>
+        </div>
+      )}
+
+      {/* Shipping rate selection for physical originals */}
+      {hasPhysicalOriginals && shippingAddressFilled && (
+        <div className="mb-6 space-y-3">
+          <h2 className="font-serif text-xl">Shipping Method</h2>
+
+          {!ratesFetchedForRef.current && !ratesLoading && (
+            <button
+              onClick={fetchShippingRates}
+              className="w-full px-4 py-3 border border-gallery-accent text-gallery-accent rounded-lg hover:bg-gallery-accent hover:text-gallery-black transition-colors text-sm"
+            >
+              Calculate Shipping Rates
+            </button>
+          )}
+
+          {ratesLoading && (
+            <p className="text-gallery-gray text-sm py-3">Calculating shipping rates...</p>
+          )}
+
+          {ratesError && <p className="text-red-400 text-sm">{ratesError}</p>}
+
+          {shippingRates.length > 0 && (
+            <div className="space-y-2">
+              {shippingRates.map((rate) => (
+                <label
+                  key={rate.rateId}
+                  className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
+                    selectedRateId === rate.rateId
+                      ? 'border-gallery-accent bg-gallery-accent/10'
+                      : 'border-white/10 hover:border-white/30'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="shippingRate"
+                    value={rate.rateId}
+                    checked={selectedRateId === rate.rateId}
+                    onChange={() => setSelectedRateId(rate.rateId)}
+                    className="accent-gallery-accent"
+                  />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">
+                      {rate.carrier} {rate.service}
+                    </p>
+                    {rate.deliveryDays && (
+                      <p className="text-xs text-gallery-gray">
+                        Est. {rate.deliveryDays} business day{rate.deliveryDays !== 1 ? 's' : ''}
+                      </p>
+                    )}
+                  </div>
+                  <p className="text-sm font-medium">${rate.rate.toFixed(2)}</p>
+                </label>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

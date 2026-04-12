@@ -5,9 +5,10 @@ import { OrderItemEntity } from './order-item.entity';
 import { OrdersService } from './orders.service';
 import { OrdersController } from './orders.controller';
 import { ImagesModule } from '../images/images.module';
+import { ShippingModule } from '../shipping/shipping.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([OrderEntity, OrderItemEntity]), ImagesModule],
+  imports: [TypeOrmModule.forFeature([OrderEntity, OrderItemEntity]), ImagesModule, ShippingModule],
   controllers: [OrdersController],
   providers: [OrdersService],
   exports: [OrdersService],

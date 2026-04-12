@@ -12,16 +12,17 @@ interface CartState {
   clear: () => void;
   total: () => number;
   hasPrintItems: () => boolean;
+  hasShippableItems: () => boolean;
 }
 
 function cartItemKey(item: { imageId: number; type: string; printSku: string | null }) {
   return `${item.imageId}-${item.type}-${item.printSku || ''}`;
 }
 
-function migrateItem(item: any): CartItem {
+function migrateItem(item: CartItem): CartItem {
   return {
     ...item,
-    type: item.type || 'original',
+    type: item.type || ('original' as CartItem['type']),
     printSku: item.printSku ?? null,
     printDescription: item.printDescription ?? null,
   };
@@ -51,6 +52,8 @@ export const useCartStore = create<CartState>()(
       clear: () => set({ items: [] }),
       total: () => get().items.reduce((sum, item) => sum + item.price, 0),
       hasPrintItems: () => get().items.some((i) => i.type === 'print'),
+      hasShippableItems: () =>
+        get().items.some((i) => i.type === 'print' || i.type === 'physical_original'),
     }),
     {
       name: 'gallery-cart',

@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
+    "@easypost/api": "^8.8.0",
     "@gallery/shared": "workspace:*",
     "@nestjs/common": "^11.0.0",
     "@nestjs/config": "^4.0.0",

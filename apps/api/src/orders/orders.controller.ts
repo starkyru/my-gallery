@@ -18,6 +18,7 @@ import {
   IsEmail,
   ValidateNested,
   IsNumber,
+  MaxLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -39,25 +40,32 @@ class OrderItemDto {
 
 class ShippingAddressDto {
   @IsString()
+  @MaxLength(200)
   name!: string;
 
   @IsString()
+  @MaxLength(500)
   address1!: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(500)
   address2?: string;
 
   @IsString()
+  @MaxLength(200)
   city!: string;
 
   @IsString()
+  @MaxLength(100)
   state!: string;
 
   @IsString()
+  @MaxLength(20)
   postalCode!: string;
 
   @IsString()
+  @MaxLength(2)
   country!: string;
 }
 
@@ -74,6 +82,23 @@ class CreateOrderDto {
   @ValidateNested()
   @Type(() => ShippingAddressDto)
   shippingAddress?: ShippingAddressDto;
+
+  @IsOptional()
+  @IsString()
+  shippingRateId?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  shippingCost?: number;
+
+  @IsOptional()
+  @IsString()
+  shippingCarrier?: string;
+
+  @IsOptional()
+  @IsString()
+  shippingService?: string;
 }
 
 class UpdateOrderStatusDto {
@@ -87,7 +112,12 @@ export class OrdersController {
 
   @Post()
   create(@Body() dto: CreateOrderDto) {
-    return this.service.create(dto.customerEmail, dto.items, dto.shippingAddress);
+    return this.service.create(dto.customerEmail, dto.items, dto.shippingAddress, {
+      shippingRateId: dto.shippingRateId,
+      shippingCost: dto.shippingCost,
+      shippingCarrier: dto.shippingCarrier,
+      shippingService: dto.shippingService,
+    });
   }
 
   @Get()

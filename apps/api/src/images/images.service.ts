@@ -36,6 +36,8 @@ interface UpdateImageData {
   place?: string | null;
   sizeWidthCm?: number | null;
   sizeHeightCm?: number | null;
+  originalAvailable?: boolean;
+  weightGrams?: number | null;
   perOptionLimits?: boolean;
   printOptions?: {
     sku: string;
@@ -350,6 +352,8 @@ export class ImagesService {
         'image.sizeWidthCm',
         'image.sizeHeightCm',
         'image.allowDownloadOriginal',
+        'image.originalAvailable',
+        'image.weightGrams',
         'image.isArchived',
         'image.createdAt',
         'image.updatedAt',
@@ -366,6 +370,29 @@ export class ImagesService {
       .getOne();
     if (!image) throw new NotFoundException('Image not found');
     return this.mapRelations(image);
+  }
+
+  async markOriginalSold(imageId: number): Promise<boolean> {
+    const result = await this.repo
+      .createQueryBuilder()
+      .update()
+      .set({ originalAvailable: false })
+      .where('id = :id AND original_available = true', { id: imageId })
+      .execute();
+    return (result.affected ?? 0) > 0;
+  }
+
+  /**
+   * Estimate weight in grams from canvas dimensions.
+   * Assumes stretched canvas: ~350 g/m² for canvas + frame overhead.
+   */
+  estimateWeightGrams(widthCm: number | null, heightCm: number | null): number {
+    if (!widthCm || !heightCm) return 1000; // default 1kg
+    const areaCm2 = widthCm * heightCm;
+    const areaM2 = areaCm2 / 10000;
+    // Canvas weight ~350g/m² + frame/stretcher bars ~600g base + 50g per 10cm perimeter
+    const perimeter = 2 * (widthCm + heightCm);
+    return Math.round(areaM2 * 350 + 600 + perimeter * 5);
   }
 
   private async validateAndProcessFile(file: Express.Multer.File): Promise<{

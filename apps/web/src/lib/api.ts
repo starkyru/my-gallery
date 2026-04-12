@@ -16,6 +16,8 @@ import type {
   ContactInquiry,
   WallBackground,
   FramePreset,
+  ShippingRate,
+  ShippingAddress,
 } from '@gallery/shared';
 
 interface CatalogueProductSummary {
@@ -331,15 +333,11 @@ export const api = {
     create: (data: {
       customerEmail: string;
       items: { imageId: number; type: string; printSku?: string }[];
-      shippingAddress?: {
-        name: string;
-        address1: string;
-        address2?: string;
-        city: string;
-        state: string;
-        postalCode: string;
-        country: string;
-      };
+      shippingAddress?: ShippingAddress;
+      shippingRateId?: string;
+      shippingCost?: number;
+      shippingCarrier?: string;
+      shippingService?: string;
     }) => request<Order>('/orders', { method: 'POST', body: JSON.stringify(data) }),
     list: (token: string, status?: string) =>
       request<Order[]>(`/orders${status ? `?status=${status}` : ''}`, {
@@ -433,6 +431,13 @@ export const api = {
         method: 'PUT',
         body: JSON.stringify(data),
         headers: { ...authHeaders(token), 'Content-Type': 'application/json' },
+      }),
+  },
+  shipping: {
+    getRates: (data: { imageIds: number[]; toAddress: ShippingAddress }) =>
+      request<ShippingRate[]>('/shipping/rates', {
+        method: 'POST',
+        body: JSON.stringify(data),
       }),
   },
   chat: {

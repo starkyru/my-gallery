@@ -49,6 +49,7 @@ interface ImageDetailProps {
     place?: string | null;
     sizeWidthCm?: number | null;
     sizeHeightCm?: number | null;
+    originalAvailable?: boolean;
     blurHash?: string | null;
   };
 }
@@ -69,6 +70,9 @@ export function ImageDetail({ image }: ImageDetailProps) {
   const blurDataURL = image.blurHash ? blurhashToDataURL(image.blurHash) : undefined;
 
   const originalInCart = items.some((i) => i.imageId === image.id && i.type === 'original');
+  const physicalOriginalInCart = items.some(
+    (i) => i.imageId === image.id && i.type === 'physical_original',
+  );
 
   const selectedPrintOption = image.printOptions?.find((o) => o.sku === selectedSku);
   const printInCart = selectedSku
@@ -92,7 +96,9 @@ export function ImageDetail({ image }: ImageDetailProps) {
       : null;
 
   const hasBuyOptions =
-    image.allowDownloadOriginal || (image.printEnabled && image.printOptions?.length > 0);
+    image.allowDownloadOriginal ||
+    image.originalAvailable ||
+    (image.printEnabled && image.printOptions?.length > 0);
 
   const printOptionsWithDimensions = (image.printOptions ?? []).filter(
     (o) => Number(o.widthCm) > 0 && Number(o.heightCm) > 0,
@@ -350,6 +356,48 @@ export function ImageDetail({ image }: ImageDetailProps) {
                 className="w-full px-6 py-2.5 bg-gallery-accent text-gallery-black font-medium rounded-lg hover:bg-gallery-accent-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
               >
                 {originalInCart ? 'In Cart' : 'Add to Cart'}
+              </button>
+            </div>
+          )}
+
+          {/* Physical Original */}
+          {image.originalAvailable && (
+            <div className="p-4 border border-white/10 rounded-lg">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <p className="font-medium">Physical Original</p>
+                  <p className="text-gallery-gray text-sm">
+                    Original artwork
+                    {image.sizeWidthCm && image.sizeHeightCm && (
+                      <>
+                        {' '}
+                        &mdash; {+(Number(image.sizeWidthCm) / 2.54).toFixed(1)}&times;
+                        {+(Number(image.sizeHeightCm) / 2.54).toFixed(1)}&Prime;
+                      </>
+                    )}
+                  </p>
+                  <p className="text-gallery-accent text-xs mt-1">
+                    Shipping calculated at checkout
+                  </p>
+                </div>
+                <p className="text-2xl font-light">${image.price}</p>
+              </div>
+              <button
+                onClick={() =>
+                  addItem({
+                    imageId: image.id,
+                    title: image.title,
+                    price: image.price,
+                    thumbnailPath: image.thumbnailPath,
+                    type: 'physical_original' as OrderItemType,
+                    printSku: null,
+                    printDescription: null,
+                  })
+                }
+                disabled={physicalOriginalInCart || Number(image.price) === 0}
+                className="w-full px-6 py-2.5 bg-gallery-accent text-gallery-black font-medium rounded-lg hover:bg-gallery-accent-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              >
+                {physicalOriginalInCart ? 'In Cart' : 'Add to Cart'}
               </button>
             </div>
           )}

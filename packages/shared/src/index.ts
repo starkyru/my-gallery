@@ -19,6 +19,7 @@ export enum OrderStatus {
 export enum OrderItemType {
   Original = 'original',
   Print = 'print',
+  PhysicalOriginal = 'physical_original',
 }
 
 export interface ImagePrintOption {
@@ -96,11 +97,33 @@ export interface FulfillmentSku {
 
 export type UserRole = 'admin' | 'artist';
 
+export interface ShipFromAddress {
+  name: string;
+  company?: string;
+  street1: string;
+  street2?: string;
+  city: string;
+  state: string;
+  zip: string;
+  country: string;
+  phone?: string;
+}
+
 export interface GalleryConfig {
   galleryName: string;
   subtitle: string;
   siteUrl: string;
   aboutText: string;
+  shipFromAddress?: ShipFromAddress;
+}
+
+export interface ShippingRate {
+  rateId: string;
+  carrier: string;
+  service: string;
+  rate: number;
+  currency: string;
+  deliveryDays: number | null;
 }
 
 export interface Category {
@@ -209,6 +232,8 @@ export interface GalleryImage {
   sizeWidthCm?: number | null;
   sizeHeightCm?: number | null;
   allowDownloadOriginal: boolean;
+  originalAvailable: boolean;
+  weightGrams: number | null;
   isArchived: boolean;
   printOptions: ImagePrintOption[];
   tags?: Tag[];
@@ -242,6 +267,9 @@ export interface Order {
   shippingState: string | null;
   shippingPostalCode: string | null;
   shippingCountry: string | null;
+  shippingCost: number | null;
+  shippingCarrier: string | null;
+  shippingService: string | null;
   createdAt: Date;
 }
 
@@ -269,6 +297,10 @@ export interface CreateOrderDto {
   customerEmail: string;
   items: { imageId: number; type: OrderItemType; printSku?: string }[];
   shippingAddress?: ShippingAddress;
+  shippingRateId?: string;
+  shippingCost?: number;
+  shippingCarrier?: string;
+  shippingService?: string;
 }
 
 export interface ShippingAddress {
