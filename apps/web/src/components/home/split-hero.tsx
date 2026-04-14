@@ -34,7 +34,7 @@ function HeroPanel({
           src={`${UPLOAD_URL}/${image.watermarkPath}`}
           alt={label}
           fill
-          className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+          className="object-cover grayscale group-hover:grayscale-0 group-active:grayscale-0 transition-all duration-700 ease-out group-hover:scale-105"
           sizes="(max-width: 768px) 100vw, 50vw"
           placeholder={blurDataURL ? 'blur' : 'empty'}
           blurDataURL={blurDataURL}

@@ -36,7 +36,7 @@ function CategoryCard({
         src={`${UPLOAD_URL}/${tall ? image.watermarkPath : image.thumbnailPath}`}
         alt={category.name}
         fill
-        className="object-cover object-top transition-transform duration-500 ease-out group-hover:scale-105 origin-top"
+        className="object-cover object-top grayscale group-hover/side:grayscale-0 group-active/side:grayscale-0 transition-all duration-500 ease-out group-hover:scale-105 origin-top"
         sizes={
           tall
             ? '(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw'
@@ -121,7 +121,7 @@ export function CategoryBoxes({
         {sides.map(({ artist, categories: cats }) => (
           <div
             key={artist.id}
-            className="flex-1 grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 md:h-full"
+            className="flex-1 grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 md:h-full group/side"
             style={{ gridAutoFlow: 'dense', gridAutoRows: 'minmax(100px, 1fr)' }}
           >
             {cats.map(({ category, image, tall }) => (
