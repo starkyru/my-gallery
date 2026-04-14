@@ -141,11 +141,13 @@ export function ArtistDetail({ artist, images }: ArtistDetailProps) {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     if (!gridRef.current) return;
 
+    let ctx: gsap.Context | undefined;
+
     const timeout = setTimeout(() => {
       const cards = gridRef.current?.querySelectorAll('.gallery-card');
       if (!cards) return;
 
-      const ctx = gsap.context(() => {
+      ctx = gsap.context(() => {
         cards.forEach((card, i) => {
           gsap.from(card, {
             scrollTrigger: {
@@ -161,11 +163,12 @@ export function ArtistDetail({ artist, images }: ArtistDetailProps) {
           });
         });
       }, gridRef);
-
-      return () => ctx.revert();
     }, 50);
 
-    return () => clearTimeout(timeout);
+    return () => {
+      clearTimeout(timeout);
+      ctx?.revert();
+    };
   }, [filtered]);
 
   return (

@@ -1,5 +1,17 @@
 export type ImageType = 'photo' | 'painting';
 
+/** Pick a single random element from an array, or undefined if empty. */
+export function pickRandom<T>(arr: T[]): T | undefined {
+  if (arr.length === 0) return undefined;
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+/** Return a shuffled copy of the array, optionally limited to `count` items. */
+export function shuffleArray<T>(arr: T[], count?: number): T[] {
+  const shuffled = [...arr].sort(() => Math.random() - 0.5);
+  return count !== undefined ? shuffled.slice(0, count) : shuffled;
+}
+
 export enum ImageCategory {
   Landscape = 'landscape',
   Portrait = 'portrait',

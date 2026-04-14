@@ -4,11 +4,7 @@ import { useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { GalleryGrid } from '@/components/gallery';
 import { useImages } from '@/hooks/useImages';
-
-function pickRandom<T>(arr: T[], count: number): T[] {
-  const shuffled = [...arr].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, count);
-}
+import { shuffleArray } from '@gallery/shared';
 
 export default function PhotographsPage() {
   const { images, loading } = useImages({ type: 'photo' });
@@ -19,7 +15,7 @@ export default function PhotographsPage() {
     return tagsParam ? tagsParam.split(',').filter(Boolean) : undefined;
   }, [searchParams]);
 
-  const shuffled = useMemo(() => pickRandom(images, images.length), [images]);
+  const shuffled = useMemo(() => shuffleArray(images), [images]);
 
   return (
     <div className="pt-20">

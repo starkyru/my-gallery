@@ -8,12 +8,8 @@ import { useImageCache } from '@/hooks/useImageCache';
 import { CategoryBoxes } from '@/components/home/category-boxes';
 import { HomeAbout } from '@/components/home/home-about';
 import { api } from '@/lib/api';
+import { shuffleArray } from '@gallery/shared';
 import type { Artist, Category } from '@gallery/shared';
-
-function pickRandom<T>(arr: T[], count: number): T[] {
-  const shuffled = [...arr].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, count);
-}
 
 export default function HomePage() {
   const { images, loading: imagesLoading } = useImages();
@@ -51,7 +47,7 @@ export default function HomePage() {
     return tagsParam ? tagsParam.split(',').filter(Boolean) : undefined;
   }, [searchParams]);
 
-  const shuffled = useMemo(() => pickRandom(images, images.length), [images]);
+  const shuffled = useMemo(() => shuffleArray(images), [images]);
 
   if (loading) {
     return null;

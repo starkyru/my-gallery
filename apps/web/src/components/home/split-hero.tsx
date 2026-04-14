@@ -4,14 +4,10 @@ import { useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { GalleryImage } from '@/components/gallery';
+import { pickRandom } from '@gallery/shared';
 import type { Artist } from '@gallery/shared';
 import { UPLOAD_URL } from '@/config';
 import { blurhashToDataURL } from '@/lib/blurhash';
-
-function pickRandom<T>(arr: T[]): T | undefined {
-  if (arr.length === 0) return undefined;
-  return arr[Math.floor(Math.random() * arr.length)];
-}
 
 function HeroPanel({
   image,

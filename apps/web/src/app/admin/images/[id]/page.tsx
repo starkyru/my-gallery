@@ -655,7 +655,7 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
                       setEditData({ ...editData, shotDate: e.target.value });
                     }
                   }}
-                  className="absolute right-0 top-0 h-full w-10 cursor-pointer opacity-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                  className="absolute right-0 top-0 z-10 h-full w-12 cursor-pointer opacity-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                   title="Pick a date"
                 />
                 <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gallery-gray">
@@ -679,8 +679,9 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
               <label className="block text-xs text-gallery-gray mb-1">Physical Size (inches)</label>
               <div className="grid grid-cols-2 gap-1.5">
                 <input
-                  value={editData.sizeWidthCm ? cmToInch(editData.sizeWidthCm) : ''}
-                  onChange={(e) =>
+                  defaultValue={editData.sizeWidthCm ? cmToInch(editData.sizeWidthCm) : ''}
+                  key={`w-${image.id}`}
+                  onBlur={(e) =>
                     setEditData({
                       ...editData,
                       sizeWidthCm: e.target.value ? inchToCm(+e.target.value) : null,
@@ -692,8 +693,9 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
                   className={inputClass}
                 />
                 <input
-                  value={editData.sizeHeightCm ? cmToInch(editData.sizeHeightCm) : ''}
-                  onChange={(e) =>
+                  defaultValue={editData.sizeHeightCm ? cmToInch(editData.sizeHeightCm) : ''}
+                  key={`h-${image.id}`}
+                  onBlur={(e) =>
                     setEditData({
                       ...editData,
                       sizeHeightCm: e.target.value ? inchToCm(+e.target.value) : null,
