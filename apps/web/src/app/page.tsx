@@ -5,7 +5,6 @@ import { useSearchParams } from 'next/navigation';
 import { GalleryGrid } from '@/components/gallery';
 import { useImages } from '@/hooks/useImages';
 import { useImageCache } from '@/hooks/useImageCache';
-import { SplitHero } from '@/components/home/split-hero';
 import { CategoryBoxes } from '@/components/home/category-boxes';
 import { HomeAbout } from '@/components/home/home-about';
 import { api } from '@/lib/api';
@@ -60,7 +59,6 @@ export default function HomePage() {
 
   return (
     <>
-      <SplitHero images={images} artists={artists} />
       <CategoryBoxes images={images} categories={categories} artists={artists} />
       <HomeAbout />
       <GalleryGrid images={shuffled} initialTags={initialTags} />
