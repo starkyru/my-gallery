@@ -84,9 +84,10 @@ function collectCategories(
 ): Omit<CategoryWithImage, 'tall'>[] {
   const items: Omit<CategoryWithImage, 'tall'>[] = [];
   for (const cat of categories) {
-    const match = filteredImages.find((img) => img.category === cat.slug);
-    if (match) {
-      items.push({ category: cat, image: match });
+    const matches = filteredImages.filter((img) => img.category === cat.slug);
+    if (matches.length > 0) {
+      const image = matches[Math.floor(Math.random() * matches.length)];
+      items.push({ category: cat, image });
     }
   }
   return items;
@@ -121,11 +122,7 @@ export function CategoryBoxes({
         {sides.map(({ artist, categories: cats }, sideIndex) => (
           <div key={artist.id} className="relative flex-1 md:h-full group/side">
             <span
-              className={`absolute top-20 md:top-24 z-20 px-4 py-2 font-serif italic text-2xl md:text-4xl lg:text-5xl pointer-events-none backdrop-blur-sm ${
-                sideIndex === 0
-                  ? 'left-3 text-black drop-shadow-[0_1px_4px_rgba(255,255,255,0.8)]'
-                  : 'right-3 text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]'
-              }`}
+              className={`absolute top-20 md:top-24 left-1/2 -translate-x-1/2 z-20 px-30 py-2 font-serif italic text-2xl md:text-4xl lg:text-5xl whitespace-nowrap pointer-events-none backdrop-blur-sm text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]`}
             >
               {`${ART_BY[sideIndex % ART_BY.length]}${artist.name}`}
             </span>
