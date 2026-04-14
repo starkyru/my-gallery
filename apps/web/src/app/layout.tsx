@@ -5,6 +5,7 @@ import { Footer } from '@/components/footer';
 import { LenisProvider } from '@/components/lenis-provider';
 import { ConfigProvider } from '@/components/config-provider';
 import { ChatWidget } from '@/components/chat/chat-widget';
+import { ImageCacheProvider } from '@/hooks/useImageCache';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
@@ -63,12 +64,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         suppressHydrationWarning
       >
         <LenisProvider>
-          <ConfigProvider>
-            <Header />
-            <main className="min-h-screen">{children}</main>
-            <Footer />
-            <ChatWidget />
-          </ConfigProvider>
+          <ImageCacheProvider>
+            <ConfigProvider>
+              <Header />
+              <main className="min-h-screen">{children}</main>
+              <Footer />
+              <ChatWidget />
+            </ConfigProvider>
+          </ImageCacheProvider>
         </LenisProvider>
       </body>
     </html>

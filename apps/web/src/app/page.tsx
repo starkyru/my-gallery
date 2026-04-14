@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { GalleryGrid } from '@/components/gallery';
 import { useImages } from '@/hooks/useImages';
+import { useImageCache } from '@/hooks/useImageCache';
 import { SplitHero } from '@/components/home/split-hero';
 import { CategoryBoxes } from '@/components/home/category-boxes';
 import { HomeAbout } from '@/components/home/home-about';
@@ -17,6 +18,7 @@ function pickRandom<T>(arr: T[], count: number): T[] {
 
 export default function HomePage() {
   const { images, loading: imagesLoading } = useImages();
+  const imageCache = useImageCache();
   const searchParams = useSearchParams();
   const [categories, setCategories] = useState<Category[]>([]);
   const [artists, setArtists] = useState<Artist[]>([]);
@@ -37,6 +39,13 @@ export default function HomePage() {
   }, []);
 
   const loading = imagesLoading || sideDataLoading;
+
+  // Populate cache so artist pages can reuse the data
+  useEffect(() => {
+    if (!imagesLoading && images.length > 0) {
+      imageCache.setAll(images);
+    }
+  }, [imagesLoading, images, imageCache]);
 
   const initialTags = useMemo(() => {
     const tagsParam = searchParams.get('tags');
