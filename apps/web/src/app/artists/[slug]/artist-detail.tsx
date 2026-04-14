@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import gsap from 'gsap';
 import { FilterToolbar } from '@/components/filter-toolbar';
 import { GalleryCard } from '@/components/gallery';
@@ -21,7 +22,8 @@ interface ArtistDetailProps {
 }
 
 export function ArtistDetail({ artist, images }: ArtistDetailProps) {
-  const [filter, setFilter] = useState('');
+  const searchParams = useSearchParams();
+  const [filter, setFilter] = useState(() => searchParams.get('category') ?? '');
   const [projectFilter, setProjectFilter] = useState('');
   const [tagFilter, setTagFilter] = useState<string[]>([]);
   const [mediaTypeFilter, setMediaTypeFilter] = useState('');
@@ -52,9 +54,20 @@ export function ArtistDetail({ artist, images }: ArtistDetailProps) {
     return true;
   });
 
+  const updateCategoryUrl = useCallback((value: string) => {
+    const url = new URL(window.location.href);
+    if (value) {
+      url.searchParams.set('category', value);
+    } else {
+      url.searchParams.delete('category');
+    }
+    window.history.replaceState({}, '', url.toString());
+  }, []);
+
   const handleFilter = useCallback(
     (value: string) => {
       if (value === filter) return;
+      updateCategoryUrl(value);
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         setFilter(value);
         return;
@@ -65,7 +78,7 @@ export function ArtistDetail({ artist, images }: ArtistDetailProps) {
         requestAnimationFrame(() => setVisible(true));
       }, 300);
     },
-    [filter],
+    [filter, updateCategoryUrl],
   );
 
   const handleProjectFilter = useCallback(

@@ -6,6 +6,8 @@ import type { GalleryImage } from '@/components/gallery';
 
 interface UseImagesOptions {
   artistId?: number;
+  paintTypes?: string;
+  type?: 'photo' | 'painting';
 }
 
 export function useImages(options?: UseImagesOptions) {
@@ -19,7 +21,11 @@ export function useImages(options?: UseImagesOptions) {
     async function fetchImages() {
       try {
         setLoading(true);
-        const params = options?.artistId ? `artistId=${options.artistId}` : undefined;
+        const parts: string[] = [];
+        if (options?.artistId) parts.push(`artistId=${encodeURIComponent(options.artistId)}`);
+        if (options?.paintTypes) parts.push(`paintTypes=${encodeURIComponent(options.paintTypes)}`);
+        if (options?.type) parts.push(`type=${encodeURIComponent(options.type)}`);
+        const params = parts.length > 0 ? parts.join('&') : undefined;
         const data = await api.images.list(params);
         if (!cancelled) {
           setImages(data);
@@ -40,7 +46,7 @@ export function useImages(options?: UseImagesOptions) {
     return () => {
       cancelled = true;
     };
-  }, [options?.artistId]);
+  }, [options?.artistId, options?.paintTypes, options?.type]);
 
   return { images, loading, error };
 }

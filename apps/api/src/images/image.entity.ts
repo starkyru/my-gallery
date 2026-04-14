@@ -54,6 +54,9 @@ export class ImageEntity {
   @Column({ type: 'varchar', default: 'other' })
   category!: string;
 
+  @Column({ type: 'varchar', default: 'photo' })
+  type!: string;
+
   @Column({ name: 'is_featured', default: false })
   isFeatured!: boolean;
 

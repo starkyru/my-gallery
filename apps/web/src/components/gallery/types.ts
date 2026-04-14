@@ -7,6 +7,7 @@ export interface GalleryImage {
   width: number;
   height: number;
   category: string;
+  type: 'photo' | 'painting';
   projectId?: number | null;
   project?: { id: number; name: string; slug: string };
   blurHash?: string | null;

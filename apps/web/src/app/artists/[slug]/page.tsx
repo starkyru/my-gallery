@@ -1,14 +1,15 @@
 import { notFound } from 'next/navigation';
 import { ArtistDetail } from './artist-detail';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+const API_URL =
+  process.env.API_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 async function getArtist(slug: string) {
   try {
     const res = await fetch(`${API_URL}/api/artists/${encodeURIComponent(slug)}`, {
-      next: { revalidate: 300 },
+      next: { revalidate: 60 },
     });
     if (!res.ok) return null;
     return res.json();
@@ -20,7 +21,7 @@ async function getArtist(slug: string) {
 async function getArtistImages(artistId: number) {
   try {
     const res = await fetch(`${API_URL}/api/images?artistId=${artistId}`, {
-      next: { revalidate: 300 },
+      next: { revalidate: 60 },
     });
     if (!res.ok) return [];
     return res.json();

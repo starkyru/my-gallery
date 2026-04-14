@@ -31,6 +31,7 @@ interface ImageData {
   title: string;
   description: string;
   category: string;
+  type: string;
   price: number;
   projectId: number | null;
   allowDownloadOriginal: boolean;
@@ -73,6 +74,7 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
     title: string;
     description: string;
     category: string;
+    type: string;
     price: number;
     artistId: number;
     projectId: number | null;
@@ -91,6 +93,7 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
     title: '',
     description: '',
     category: '',
+    type: 'photo',
     price: 0,
     artistId: 0,
     projectId: null,
@@ -148,6 +151,7 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
         title: data.title,
         description: data.description ?? '',
         category: data.category ?? '',
+        type: data.type ?? 'photo',
         price: data.price,
         artistId: data.artist.id,
         projectId: data.projectId,
@@ -186,6 +190,7 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
           title: data.title,
           description: data.description ?? '',
           category: data.category ?? '',
+          type: data.type ?? 'photo',
           price: data.price,
           artistId: data.artist.id,
           projectId: data.projectId,
@@ -581,6 +586,19 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
                     {c.name}
                   </option>
                 ))}
+              </select>
+            </div>
+
+            {/* Type */}
+            <div>
+              <label className="block text-xs text-gallery-gray mb-1">Type</label>
+              <select
+                value={editData.type}
+                onChange={(e) => setEditData({ ...editData, type: e.target.value })}
+                className={inputClass}
+              >
+                <option value="photo">Photo</option>
+                <option value="painting">Painting</option>
               </select>
             </div>
 

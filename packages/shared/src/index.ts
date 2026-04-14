@@ -1,3 +1,5 @@
+export type ImageType = 'photo' | 'painting';
+
 export enum ImageCategory {
   Landscape = 'landscape',
   Portrait = 'portrait',
@@ -217,6 +219,7 @@ export interface GalleryImage {
   width: number;
   height: number;
   category: string;
+  type: ImageType;
   projectId: number | null;
   project?: Project;
   isFeatured: boolean;

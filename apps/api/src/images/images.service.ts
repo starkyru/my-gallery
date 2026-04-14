@@ -144,6 +144,7 @@ export class ImagesService {
 
   async findAll(query?: {
     category?: string;
+    type?: string;
     featured?: boolean;
     artistId?: number;
     projectId?: number;
@@ -171,6 +172,9 @@ export class ImagesService {
 
     if (query?.category) {
       qb.andWhere('image.category = :category', { category: query.category });
+    }
+    if (query?.type) {
+      qb.andWhere('image.type = :type', { type: query.type });
     }
     if (query?.featured !== undefined) {
       qb.andWhere('image.isFeatured = :featured', { featured: query.featured });

@@ -58,6 +58,11 @@ class CreateImageDto {
   category?: string;
 
   @IsOptional()
+  @IsString()
+  @IsIn(['photo', 'painting'])
+  type?: string;
+
+  @IsOptional()
   @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   isFeatured?: boolean;
@@ -121,6 +126,11 @@ class UpdateImageDto {
   @IsOptional()
   @IsString()
   category?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(['photo', 'painting'])
+  type?: string;
 
   @IsOptional()
   @IsBoolean()
@@ -247,9 +257,11 @@ export class ImagesController {
     @Query('tags') tags?: string,
     @Query('mediaTypes') mediaTypes?: string,
     @Query('paintTypes') paintTypes?: string,
+    @Query('type') type?: string,
   ) {
     return this.service.findAll({
       category,
+      type: type && ['photo', 'painting'].includes(type) ? type : undefined,
       featured: featured === undefined ? undefined : featured === 'true',
       artistId: artistId ? +artistId : undefined,
       projectId: projectId ? +projectId : undefined,
