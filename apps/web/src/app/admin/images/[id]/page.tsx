@@ -129,6 +129,7 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
   const [showErrors, setShowErrors] = useState(false);
   const [reuploading, setReuploading] = useState(false);
   const reuploadInputRef = useRef<HTMLInputElement>(null);
+  const datePickerRef = useRef<HTMLInputElement>(null);
   const initialState = useRef<string>('');
 
   const isDirty = useCallback(() => {
@@ -646,21 +647,27 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
                   value={editData.shotDate}
                   onChange={(e) => setEditData({ ...editData, shotDate: e.target.value })}
                   placeholder="e.g. 2024 or 2024-03 or 2024-03-15"
-                  className={inputClass}
+                  className={`${inputClass} pr-10`}
                 />
                 <input
+                  ref={datePickerRef}
                   type="date"
                   onChange={(e) => {
                     if (e.target.value) {
                       setEditData({ ...editData, shotDate: e.target.value });
                     }
                   }}
-                  className="absolute right-0 top-0 z-10 h-full w-12 cursor-pointer opacity-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
-                  title="Pick a date"
+                  className="sr-only"
+                  tabIndex={-1}
                 />
-                <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gallery-gray">
+                <button
+                  type="button"
+                  onClick={() => datePickerRef.current?.showPicker()}
+                  className="absolute right-0 top-0 h-full w-10 flex items-center justify-center text-gallery-gray hover:text-gallery-accent transition-colors"
+                  title="Pick a date"
+                >
                   <CalendarIcon size={16} />
-                </span>
+                </button>
               </div>
             </div>
 
