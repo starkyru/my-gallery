@@ -103,7 +103,7 @@ export function ChatWidget() {
         <button
           onClick={() => setIsOpen(true)}
           aria-label="Open chat assistant"
-          className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-gallery-accent text-gallery-black shadow-lg transition-transform hover:scale-105 active:scale-95"
+          className="fixed bottom-6 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-gallery-accent text-gallery-black shadow-lg transition-transform hover:scale-105 active:scale-95 sm:right-6"
         >
           <ChatIcon size={24} />
         </button>
@@ -114,8 +114,8 @@ export function ChatWidget() {
         <div
           className={`fixed z-40 flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-gallery-black shadow-2xl transition-all duration-300 ${
             isExpanded
-              ? 'bottom-6 right-6 top-20 w-[360px] max-w-[calc(100vw-2rem)] sm:w-[380px]'
-              : 'bottom-6 right-6 w-[360px] max-w-[calc(100vw-2rem)] sm:w-[380px]'
+              ? 'bottom-4 right-4 top-20 w-[360px] max-w-[calc(100vw-2rem)] sm:bottom-6 sm:right-6 sm:w-[380px]'
+              : 'bottom-4 right-4 w-[360px] max-w-[calc(100vw-2rem)] sm:bottom-6 sm:right-6 sm:w-[380px]'
           }`}
         >
           {/* Header */}
