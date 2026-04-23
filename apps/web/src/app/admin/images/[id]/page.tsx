@@ -593,14 +593,21 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
             {/* Type */}
             <div>
               <label className="block text-xs text-gallery-gray mb-1">Type</label>
-              <select
-                value={editData.type}
-                onChange={(e) => setEditData({ ...editData, type: e.target.value })}
-                className={inputClass}
-              >
-                <option value="photo">Photo</option>
-                <option value="painting">Painting</option>
-              </select>
+              <div className="flex gap-4 py-1.5">
+                {['photo', 'painting'].map((t) => (
+                  <label key={t} className="flex items-center gap-1.5 text-sm cursor-pointer">
+                    <input
+                      type="radio"
+                      name="image-type"
+                      value={t}
+                      checked={editData.type === t}
+                      onChange={(e) => setEditData({ ...editData, type: e.target.value })}
+                      className="accent-gallery-accent"
+                    />
+                    {t.charAt(0).toUpperCase() + t.slice(1)}
+                  </label>
+                ))}
+              </div>
             </div>
 
             {/* Project */}
