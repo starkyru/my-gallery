@@ -43,6 +43,9 @@ jobs:
             # Install dependencies (CI=true for non-interactive mode)
             CI=true pnpm install --frozen-lockfile
 
+            # Clean stale build artifacts
+            rm -rf apps/web/.next
+
             # Build all packages
             pnpm turbo build
 
