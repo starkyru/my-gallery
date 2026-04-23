@@ -9,10 +9,17 @@ export function Header() {
   const itemCount = useCartStore((s) => s.items.length);
   const pathname = usePathname();
   const isAdmin = pathname.startsWith('/admin');
+  const isImageDetail = pathname.startsWith('/gallery/');
   const galleryName = useConfigStore((s) => s.config.galleryName);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-gallery-black/80 backdrop-blur-md border-b border-white/5">
+    <header
+      className={
+        isImageDetail
+          ? 'relative z-50 bg-gallery-black border-b border-white/5'
+          : 'fixed top-0 left-0 right-0 z-50 bg-gallery-black/80 backdrop-blur-md border-b border-white/5'
+      }
+    >
       <nav className="mx-auto max-w-7xl flex items-center justify-between px-6 py-4">
         <Link href="/" className="font-serif text-xl tracking-wider text-gallery-accent">
           {galleryName}

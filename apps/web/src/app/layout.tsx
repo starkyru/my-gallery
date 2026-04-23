@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter, Playfair_Display } from 'next/font/google';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
+import { MainContent } from '@/components/main-content';
 import { LenisProvider } from '@/components/lenis-provider';
 import { ConfigProvider } from '@/components/config-provider';
 import { ChatWidget } from '@/components/chat/chat-widget';
@@ -67,7 +68,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <ImageCacheProvider>
             <ConfigProvider>
               <Header />
-              <main className="min-h-screen">{children}</main>
+              <MainContent>{children}</MainContent>
               <Footer />
               <ChatWidget />
             </ConfigProvider>

@@ -105,6 +105,13 @@ export function ImageDetail({ image }: ImageDetailProps) {
   );
 
   useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
+
+  useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
     const ctx = gsap.context(() => {
@@ -124,7 +131,7 @@ export function ImageDetail({ image }: ImageDetailProps) {
     <>
       <div
         ref={containerRef}
-        className="relative h-screen w-full transition-colors duration-300"
+        className="relative h-full w-full transition-colors duration-300"
         style={{
           backgroundColor: selectedWall ? undefined : bgColor,
           backgroundImage: selectedWall
