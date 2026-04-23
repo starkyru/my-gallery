@@ -306,6 +306,18 @@ export class ImagesService {
           .execute();
         break;
       }
+      case 'setType': {
+        if (value !== 'photo' && value !== 'painting') {
+          throw new BadRequestException('Invalid type: must be "photo" or "painting"');
+        }
+        await this.repo
+          .createQueryBuilder()
+          .update()
+          .set({ type: value })
+          .whereInIds(ids)
+          .execute();
+        break;
+      }
     }
   }
 
