@@ -50,6 +50,7 @@ export default function HomePage() {
   const initialCategory = searchParams.get('category') ?? undefined;
   const initialMediaType = searchParams.get('media') ?? undefined;
   const initialPaintType = searchParams.get('paint') ?? undefined;
+  const initialProject = searchParams.get('project') ?? undefined;
 
   const shuffled = useMemo(() => shuffleArray(images), [images]);
 
@@ -67,6 +68,7 @@ export default function HomePage() {
         initialTags={initialTags}
         initialMediaType={initialMediaType}
         initialPaintType={initialPaintType}
+        initialProject={initialProject}
       />
     </>
   );

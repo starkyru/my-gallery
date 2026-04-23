@@ -1,10 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Select from 'react-select';
 import { api } from '@/lib/api';
 import { PillGroup } from './pill-group';
-import { darkSelectStyles } from '@/lib/select-styles';
 
 interface FilterToolbarProps {
   value: string;
@@ -93,10 +91,7 @@ export function FilterToolbar({
       .list(id)
       .then((projs) => {
         if (projs.length > 0) {
-          setProjectOptions([
-            { label: 'All Projects', value: '' },
-            ...projs.map((p) => ({ label: p.name, value: String(p.id) })),
-          ]);
+          setProjectOptions(projs.map((p) => ({ label: p.name, value: String(p.id) })));
         } else {
           setProjectOptions([]);
         }
@@ -299,20 +294,23 @@ export function FilterToolbar({
         </div>
       )}
 
-      {/* Project selector */}
-      {onProjectChange && projectOptions.length > 1 && (
-        <div className="flex justify-center mt-3">
-          <div className="w-44">
-            <Select
-              options={projectOptions}
-              value={
-                projectOptions.find((o) => o.value === (projectValue ?? '')) ?? projectOptions[0]
-              }
-              onChange={(opt) => onProjectChange((opt as { value: string } | null)?.value ?? '')}
-              placeholder="All Projects"
-              styles={darkSelectStyles<{ label: string; value: string }, false>()}
-            />
-          </div>
+      {/* Project links */}
+      {onProjectChange && projectOptions.length > 0 && (
+        <div className="flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 mt-4 text-sm">
+          <span className="text-gallery-gray">Projects:</span>
+          {projectOptions.map((opt, i, arr) => (
+            <span key={opt.value}>
+              <button
+                onClick={() => onProjectChange(projectValue === opt.value ? '' : opt.value)}
+                className={`transition-colors ${
+                  projectValue === opt.value ? 'text-white' : 'text-gallery-gray hover:text-white'
+                }`}
+              >
+                {opt.label}
+              </button>
+              {i < arr.length - 1 && <span className="text-white/20 ml-1.5">/</span>}
+            </span>
+          ))}
         </div>
       )}
     </div>

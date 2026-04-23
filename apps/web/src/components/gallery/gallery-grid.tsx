@@ -17,6 +17,7 @@ export function GalleryGrid({
   initialTags,
   initialMediaType,
   initialPaintType,
+  initialProject,
 }: {
   images: GalleryImage[];
   loading?: boolean;
@@ -24,10 +25,11 @@ export function GalleryGrid({
   initialTags?: string[];
   initialMediaType?: string;
   initialPaintType?: string;
+  initialProject?: string;
 }) {
   const [filter, setFilter] = useState(initialCategory ?? '');
   const [artistFilter, setArtistFilter] = useState<string[]>([]);
-  const [projectFilter, setProjectFilter] = useState('');
+  const [projectFilter, setProjectFilter] = useState(initialProject ?? '');
   const [tagFilter, setTagFilter] = useState<string[]>(initialTags ?? []);
   const [mediaTypeFilter, setMediaTypeFilter] = useState(initialMediaType ?? '');
   const [paintTypeFilter, setPaintTypeFilter] = useState(initialPaintType ?? '');
@@ -218,7 +220,25 @@ export function GalleryGrid({
           setProjectFilter('');
         }}
         projectValue={projectFilter}
-        onProjectChange={setProjectFilter}
+        onProjectChange={(v) => {
+          setProjectFilter(v);
+          setFilter('');
+          setTagFilter([]);
+          setMediaTypeFilter('');
+          setPaintTypeFilter('');
+          // Update URL: set project, clear other filters
+          const url = new URL(window.location.href);
+          if (v) {
+            url.searchParams.set('project', v);
+          } else {
+            url.searchParams.delete('project');
+          }
+          url.searchParams.delete('category');
+          url.searchParams.delete('tags');
+          url.searchParams.delete('media');
+          url.searchParams.delete('paint');
+          window.history.replaceState({}, '', url.toString());
+        }}
         tagValues={tagFilter}
         onTagChange={handleTagFilter}
         mediaTypeValue={mediaTypeFilter}
@@ -243,6 +263,7 @@ export function GalleryGrid({
               updateUrl('category', '');
               setArtistFilter([]);
               setProjectFilter('');
+              updateUrl('project', '');
               handleTagFilter([]);
               handleMediaTypeFilter('');
               handlePaintTypeFilter('');
