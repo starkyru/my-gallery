@@ -75,6 +75,25 @@ const pendingRequests = new Map<string, Promise<unknown>>();
 const CACHE_TTL = 30_000; // 30 seconds
 const cache = new Map<string, { data: unknown; expiresAt: number }>();
 
+let redirectingToLogin = false;
+
+function handleExpiredAuth() {
+  if (typeof window === 'undefined' || redirectingToLogin) return;
+  try {
+    const stored = localStorage.getItem('gallery-auth');
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (parsed?.state?.token) {
+        redirectingToLogin = true;
+        localStorage.removeItem('gallery-auth');
+        window.location.href = '/admin/login';
+      }
+    }
+  } catch {
+    // Ignore localStorage errors
+  }
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const method = options?.method?.toUpperCase() ?? 'GET';
   const isGet = method === 'GET';
@@ -114,6 +133,9 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     });
 
     if (!res.ok) {
+      if (res.status === 401 || res.status === 403) {
+        handleExpiredAuth();
+      }
       const error = await res.json().catch(() => ({ message: res.statusText }));
       const err = new Error(error.message || 'API error') as Error & { status: number };
       err.status = res.status;
@@ -159,6 +181,9 @@ async function uploadRequest<T>(
   });
 
   if (!res.ok) {
+    if (res.status === 401 || res.status === 403) {
+      handleExpiredAuth();
+    }
     const error = await res.json().catch(() => ({ message: res.statusText }));
     const err = new Error(error.message || 'Upload failed') as Error & { status: number };
     err.status = res.status;

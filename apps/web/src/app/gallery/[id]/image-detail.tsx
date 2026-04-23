@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCartStore } from '@/store/cart';
+import { useAuthStore } from '@/store/auth';
 import gsap from 'gsap';
 import type { ImagePrintOption, OrderItemType } from '@gallery/shared';
 import { UPLOAD_URL } from '@/config';
@@ -13,6 +14,7 @@ import { ShoppingBagIcon } from '@/components/icons/shopping-bag-icon';
 import { ChevronDownIcon } from '@/components/icons/chevron-down-icon';
 import { FrameIcon } from '@/components/icons/frame-icon';
 import { CameraIcon } from '@/components/icons/camera-icon';
+import { EditIcon } from '@/components/icons/edit-icon';
 import { useArSupport } from '@/hooks/useArSupport';
 import { useWalls } from '@/hooks/useWalls';
 import { blurhashToDataURL } from '@/lib/blurhash';
@@ -56,6 +58,7 @@ interface ImageDetailProps {
 
 export function ImageDetail({ image }: ImageDetailProps) {
   const { addItem, items } = useCartStore();
+  const isAdmin = useAuthStore((s) => s.role === 'admin');
   const [selectedSku, setSelectedSku] = useState<string>('');
   const [imageLoaded, setImageLoaded] = useState(false);
   const [infoOpen, setInfoOpen] = useState(true);
@@ -141,18 +144,40 @@ export function ImageDetail({ image }: ImageDetailProps) {
           backgroundPosition: 'center',
         }}
       >
+        {/* Admin edit link */}
+        {isAdmin && (
+          <a
+            href={`/admin/images/${image.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="absolute top-4 right-4 z-20 rounded-full bg-white/15 p-2.5 text-white backdrop-blur-sm hover:bg-gallery-accent hover:text-gallery-black transition-colors duration-300"
+            title="Edit image"
+          >
+            <EditIcon size={18} />
+          </a>
+        )}
+
         {/* Full-screen image */}
         <div
           className={`absolute inset-0 flex items-center justify-center transition-all duration-1000 ease-out ${
             imageLoaded ? 'blur-0 scale-100 opacity-100' : 'blur-md scale-[1.02] opacity-0'
           }`}
         >
+          {/* Invisible spacer to reserve layout before image loads */}
+          <img
+            src={`${UPLOAD_URL}/${image.watermarkPath}`}
+            alt=""
+            width={image.width}
+            height={image.height}
+            className="h-full w-full object-contain invisible"
+            aria-hidden="true"
+          />
           <Image
             src={`${UPLOAD_URL}/${image.watermarkPath}`}
             alt={image.title}
             width={image.width}
             height={image.height}
-            className="h-full w-full object-contain"
+            className="absolute inset-0 h-full w-full object-contain"
             priority
             placeholder={blurDataURL ? 'blur' : 'empty'}
             blurDataURL={blurDataURL}

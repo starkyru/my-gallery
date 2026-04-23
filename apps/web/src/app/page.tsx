@@ -47,6 +47,10 @@ export default function HomePage() {
     return tagsParam ? tagsParam.split(',').filter(Boolean) : undefined;
   }, [searchParams]);
 
+  const initialCategory = searchParams.get('category') ?? undefined;
+  const initialMediaType = searchParams.get('media') ?? undefined;
+  const initialPaintType = searchParams.get('paint') ?? undefined;
+
   const shuffled = useMemo(() => shuffleArray(images), [images]);
 
   if (loading) {
@@ -57,7 +61,13 @@ export default function HomePage() {
     <>
       <CategoryBoxes images={images} categories={categories} artists={artists} />
       <HomeAbout />
-      <GalleryGrid images={shuffled} initialTags={initialTags} />
+      <GalleryGrid
+        images={shuffled}
+        initialCategory={initialCategory}
+        initialTags={initialTags}
+        initialMediaType={initialMediaType}
+        initialPaintType={initialPaintType}
+      />
     </>
   );
 }
