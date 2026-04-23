@@ -26,8 +26,8 @@ export function ArtistDetail({ artist, images }: ArtistDetailProps) {
   const [filter, setFilter] = useState(() => searchParams.get('category') ?? '');
   const [projectFilter, setProjectFilter] = useState('');
   const [tagFilter, setTagFilter] = useState<string[]>([]);
-  const [mediaTypeFilter, setMediaTypeFilter] = useState('');
-  const [paintTypeFilter, setPaintTypeFilter] = useState('');
+  const [mediaTypeFilter, setMediaTypeFilter] = useState<string[]>([]);
+  const [paintTypeFilter, setPaintTypeFilter] = useState<string[]>([]);
   const [visible, setVisible] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const portraitRef = useRef<HTMLDivElement>(null);
@@ -43,13 +43,13 @@ export function ArtistDetail({ artist, images }: ArtistDetailProps) {
       const imgSlugs = (img.tags ?? []).map((t) => t.slug);
       if (!tagFilter.some((slug) => imgSlugs.includes(slug))) return false;
     }
-    if (mediaTypeFilter) {
+    if (mediaTypeFilter.length > 0) {
       const slugs = (img.mediaTypes ?? []).map((m) => m.slug);
-      if (!slugs.includes(mediaTypeFilter)) return false;
+      if (!mediaTypeFilter.some((slug) => slugs.includes(slug))) return false;
     }
-    if (paintTypeFilter) {
+    if (paintTypeFilter.length > 0) {
       const slugs = (img.paintTypes ?? []).map((p) => p.slug);
-      if (!slugs.includes(paintTypeFilter)) return false;
+      if (!paintTypeFilter.some((slug) => slugs.includes(slug))) return false;
     }
     return true;
   });
@@ -199,9 +199,9 @@ export function ArtistDetail({ artist, images }: ArtistDetailProps) {
             artistId={artist.id}
             tagValues={tagFilter}
             onTagChange={handleTagFilter}
-            mediaTypeValue={mediaTypeFilter}
+            mediaTypeValues={mediaTypeFilter}
             onMediaTypeChange={setMediaTypeFilter}
-            paintTypeValue={paintTypeFilter}
+            paintTypeValues={paintTypeFilter}
             onPaintTypeChange={setPaintTypeFilter}
             className="mb-8"
           />

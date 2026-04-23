@@ -23,8 +23,8 @@ export function GalleryGrid({
   const [artistFilter, setArtistFilter] = useState('');
   const [projectFilter, setProjectFilter] = useState('');
   const [tagFilter, setTagFilter] = useState<string[]>(initialTags ?? []);
-  const [mediaTypeFilter, setMediaTypeFilter] = useState('');
-  const [paintTypeFilter, setPaintTypeFilter] = useState('');
+  const [mediaTypeFilter, setMediaTypeFilter] = useState<string[]>([]);
+  const [paintTypeFilter, setPaintTypeFilter] = useState<string[]>([]);
   const [visible, setVisible] = useState(true);
   const gridRef = useRef<HTMLDivElement>(null);
   const prevFilter = useRef('');
@@ -39,13 +39,13 @@ export function GalleryGrid({
           const imgSlugs = (img.tags ?? []).map((t) => t.slug);
           if (!tagFilter.some((slug) => imgSlugs.includes(slug))) return false;
         }
-        if (mediaTypeFilter) {
+        if (mediaTypeFilter.length > 0) {
           const slugs = (img.mediaTypes ?? []).map((m) => m.slug);
-          if (!slugs.includes(mediaTypeFilter)) return false;
+          if (!mediaTypeFilter.some((slug) => slugs.includes(slug))) return false;
         }
-        if (paintTypeFilter) {
+        if (paintTypeFilter.length > 0) {
           const slugs = (img.paintTypes ?? []).map((p) => p.slug);
-          if (!slugs.includes(paintTypeFilter)) return false;
+          if (!paintTypeFilter.some((slug) => slugs.includes(slug))) return false;
         }
         return true;
       }),
@@ -151,9 +151,9 @@ export function GalleryGrid({
         onProjectChange={setProjectFilter}
         tagValues={tagFilter}
         onTagChange={handleTagFilter}
-        mediaTypeValue={mediaTypeFilter}
+        mediaTypeValues={mediaTypeFilter}
         onMediaTypeChange={setMediaTypeFilter}
-        paintTypeValue={paintTypeFilter}
+        paintTypeValues={paintTypeFilter}
         onPaintTypeChange={setPaintTypeFilter}
       />
 
@@ -164,16 +164,16 @@ export function GalleryGrid({
           artistFilter ||
           projectFilter ||
           tagFilter.length > 0 ||
-          mediaTypeFilter ||
-          paintTypeFilter) && (
+          mediaTypeFilter.length > 0 ||
+          paintTypeFilter.length > 0) && (
           <button
             onClick={() => {
               setFilter('');
               setArtistFilter('');
               setProjectFilter('');
               handleTagFilter([]);
-              setMediaTypeFilter('');
-              setPaintTypeFilter('');
+              setMediaTypeFilter([]);
+              setPaintTypeFilter([]);
             }}
             className="ml-3 text-gallery-accent hover:text-gallery-accent-light transition-colors"
           >

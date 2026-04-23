@@ -17,10 +17,10 @@ interface FilterToolbarProps {
   artistId?: number;
   tagValues?: string[];
   onTagChange?: (values: string[]) => void;
-  mediaTypeValue?: string;
-  onMediaTypeChange?: (value: string) => void;
-  paintTypeValue?: string;
-  onPaintTypeChange?: (value: string) => void;
+  mediaTypeValues?: string[];
+  onMediaTypeChange?: (values: string[]) => void;
+  paintTypeValues?: string[];
+  onPaintTypeChange?: (values: string[]) => void;
 }
 
 export function FilterToolbar({
@@ -34,9 +34,9 @@ export function FilterToolbar({
   artistId,
   tagValues,
   onTagChange,
-  mediaTypeValue,
+  mediaTypeValues,
   onMediaTypeChange,
-  paintTypeValue,
+  paintTypeValues,
   onPaintTypeChange,
 }: FilterToolbarProps) {
   const [categories, setCategories] = useState<{ label: string; value: string }[]>([
@@ -114,12 +114,11 @@ export function FilterToolbar({
     api.mediaTypes
       .list()
       .then((items) => {
-        const opts = items
-          .filter((m) => (m.imageCount ?? 0) > 0)
-          .map((m) => ({ label: m.name, value: m.slug }));
-        if (opts.length > 0) {
-          setMediaTypeOptions([{ label: 'All Media', value: '' }, ...opts]);
-        }
+        setMediaTypeOptions(
+          items
+            .filter((m) => (m.imageCount ?? 0) > 0)
+            .map((m) => ({ label: m.name, value: m.slug })),
+        );
       })
       .catch(() => {});
   }, [onMediaTypeChange]);
@@ -129,15 +128,25 @@ export function FilterToolbar({
     api.paintTypes
       .list()
       .then((items) => {
-        const opts = items
-          .filter((p) => (p.imageCount ?? 0) > 0)
-          .map((p) => ({ label: p.name, value: p.slug }));
-        if (opts.length > 0) {
-          setPaintTypeOptions([{ label: 'All Paints', value: '' }, ...opts]);
-        }
+        setPaintTypeOptions(
+          items
+            .filter((p) => (p.imageCount ?? 0) > 0)
+            .map((p) => ({ label: p.name, value: p.slug })),
+        );
       })
       .catch(() => {});
   }, [onPaintTypeChange]);
+
+  const toggleMulti = (current: string[], slug: string, cb: (v: string[]) => void) => {
+    cb(current.includes(slug) ? current.filter((s) => s !== slug) : [...current, slug]);
+  };
+
+  const pillClass = (active: boolean) =>
+    `px-4 py-2 text-sm rounded-full border transition-all duration-300 ${
+      active
+        ? 'border-gallery-accent text-gallery-accent bg-gallery-accent/10'
+        : 'border-white/10 text-gallery-gray hover:border-white/30 hover:text-white'
+    }`;
 
   return (
     <div className={`${className} flex flex-wrap items-center gap-3`}>
@@ -166,50 +175,39 @@ export function FilterToolbar({
           />
         </div>
       )}
-      {onTagChange && tagOptions.length > 0 && (
-        <div className="w-56">
-          <Select
-            isMulti
-            options={tagOptions}
-            value={tagOptions.filter((o) => tagValues?.includes(o.value))}
-            onChange={(opts) => onTagChange(opts.map((o) => o.value))}
-            placeholder="Tags..."
-            styles={darkSelectStyles()}
-          />
-        </div>
-      )}
-      {(onMediaTypeChange && mediaTypeOptions.length > 1) ||
-      (onPaintTypeChange && paintTypeOptions.length > 1) ? (
-        <div className="w-full" />
-      ) : null}
-      {onMediaTypeChange && mediaTypeOptions.length > 1 && (
-        <div className="w-44">
-          <Select
-            options={mediaTypeOptions}
-            value={
-              mediaTypeOptions.find((o) => o.value === (mediaTypeValue ?? '')) ??
-              mediaTypeOptions[0]
-            }
-            onChange={(opt) => onMediaTypeChange((opt as { value: string } | null)?.value ?? '')}
-            placeholder="All Media"
-            styles={darkSelectStyles<{ label: string; value: string }, false>()}
-          />
-        </div>
-      )}
-      {onPaintTypeChange && paintTypeOptions.length > 1 && (
-        <div className="w-44">
-          <Select
-            options={paintTypeOptions}
-            value={
-              paintTypeOptions.find((o) => o.value === (paintTypeValue ?? '')) ??
-              paintTypeOptions[0]
-            }
-            onChange={(opt) => onPaintTypeChange((opt as { value: string } | null)?.value ?? '')}
-            placeholder="All Paints"
-            styles={darkSelectStyles<{ label: string; value: string }, false>()}
-          />
-        </div>
-      )}
+      {onTagChange &&
+        tagOptions.length > 0 &&
+        tagOptions.map((opt) => (
+          <button
+            key={`tag-${opt.value}`}
+            onClick={() => toggleMulti(tagValues ?? [], opt.value, onTagChange)}
+            className={pillClass(tagValues?.includes(opt.value) ?? false)}
+          >
+            {opt.label}
+          </button>
+        ))}
+      {onMediaTypeChange &&
+        mediaTypeOptions.length > 0 &&
+        mediaTypeOptions.map((opt) => (
+          <button
+            key={`media-${opt.value}`}
+            onClick={() => toggleMulti(mediaTypeValues ?? [], opt.value, onMediaTypeChange)}
+            className={pillClass(mediaTypeValues?.includes(opt.value) ?? false)}
+          >
+            {opt.label}
+          </button>
+        ))}
+      {onPaintTypeChange &&
+        paintTypeOptions.length > 0 &&
+        paintTypeOptions.map((opt) => (
+          <button
+            key={`paint-${opt.value}`}
+            onClick={() => toggleMulti(paintTypeValues ?? [], opt.value, onPaintTypeChange)}
+            className={pillClass(paintTypeValues?.includes(opt.value) ?? false)}
+          >
+            {opt.label}
+          </button>
+        ))}
     </div>
   );
 }
