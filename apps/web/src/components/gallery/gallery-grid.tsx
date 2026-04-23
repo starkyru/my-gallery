@@ -28,7 +28,7 @@ export function GalleryGrid({
   initialProject?: string;
 }) {
   const [filter, setFilter] = useState(initialCategory ?? '');
-  const [artistFilter, setArtistFilter] = useState<string[]>([]);
+  const [typeFilter, setTypeFilter] = useState<string[]>([]);
   const [projectFilter, setProjectFilter] = useState(initialProject ?? '');
   const [tagFilter, setTagFilter] = useState<string[]>(initialTags ?? []);
   const [mediaTypeFilter, setMediaTypeFilter] = useState(initialMediaType ?? '');
@@ -40,7 +40,7 @@ export function GalleryGrid({
   const matchesFilters = useCallback(
     (img: GalleryImage, skip?: 'category' | 'tag' | 'media' | 'paint') => {
       if (skip !== 'category' && filter && img.category !== filter) return false;
-      if (artistFilter.length > 0 && !artistFilter.includes(String(img.artist.id))) return false;
+      if (typeFilter.length > 0 && !typeFilter.includes(img.type)) return false;
       if (projectFilter && img.projectId !== Number(projectFilter)) return false;
       if (skip !== 'tag' && tagFilter.length > 0) {
         const imgSlugs = (img.tags ?? []).map((t) => t.slug);
@@ -56,7 +56,7 @@ export function GalleryGrid({
       }
       return true;
     },
-    [filter, artistFilter, projectFilter, tagFilter, mediaTypeFilter, paintTypeFilter],
+    [filter, typeFilter, projectFilter, tagFilter, mediaTypeFilter, paintTypeFilter],
   );
 
   const filtered = useMemo(
@@ -214,10 +214,9 @@ export function GalleryGrid({
         value={filter}
         onChange={handleFilter}
         className="mt-8 mb-12 justify-center"
-        artistValues={artistFilter}
-        onArtistChange={(v) => {
-          setArtistFilter(v);
-          setProjectFilter('');
+        typeValues={typeFilter}
+        onTypeChange={(v) => {
+          setTypeFilter(v);
         }}
         projectValue={projectFilter}
         onProjectChange={(v) => {
@@ -252,7 +251,7 @@ export function GalleryGrid({
       <div className="text-center text-gallery-gray text-sm mb-8 transition-opacity duration-300">
         {filtered.length} {filtered.length === 1 ? 'work' : 'works'}
         {(filter ||
-          artistFilter.length > 0 ||
+          typeFilter.length > 0 ||
           projectFilter ||
           tagFilter.length > 0 ||
           mediaTypeFilter ||
@@ -261,7 +260,7 @@ export function GalleryGrid({
             onClick={() => {
               setFilter('');
               updateUrl('category', '');
-              setArtistFilter([]);
+              setTypeFilter([]);
               setProjectFilter('');
               updateUrl('project', '');
               handleTagFilter([]);

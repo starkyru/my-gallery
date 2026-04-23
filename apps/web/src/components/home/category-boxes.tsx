@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import type { GalleryImage } from '@/components/gallery';
-import type { Artist, Category } from '@gallery/shared';
+import type { Category } from '@gallery/shared';
 import { CategoryCard } from './category-card';
 
 interface CategoryWithImage {
@@ -15,7 +15,12 @@ interface CategoryWithImage {
 // At smaller breakpoints (2 or 3 cols), the extra tall items just
 // create additional rows which auto-rows-fr distributes evenly.
 const MAX_COLS = 4;
-const ART_BY = ['Photography by ', 'Artwork by '];
+
+const TYPE_SIDES: { type: 'photo' | 'painting'; label: string; route: string }[] = [
+  { type: 'photo', label: 'Photographs', route: '/photographs' },
+  { type: 'painting', label: 'Paintings', route: '/paintings' },
+];
+
 function assignTallItems(items: Omit<CategoryWithImage, 'tall'>[]): CategoryWithImage[] {
   const n = items.length;
   if (n === 0) return [];
@@ -54,35 +59,35 @@ function collectCategories(
 export function CategoryBoxes({
   images,
   categories,
-  artists,
 }: {
   images: GalleryImage[];
   categories: Category[];
-  artists: Artist[];
 }) {
   const sides = useMemo(() => {
-    return artists.slice(0, 2).map((artist) => {
-      const artistImages = images.filter((img) => img.artist.id === artist.id);
+    return TYPE_SIDES.map(({ type, label, route }) => {
+      const typeImages = images.filter((img) => img.type === type);
       return {
-        artist,
-        categories: assignTallItems(collectCategories(artistImages, categories)),
+        type,
+        label,
+        route,
+        categories: assignTallItems(collectCategories(typeImages, categories)),
       };
-    });
-  }, [images, categories, artists]);
+    }).filter((s) => s.categories.length > 0);
+  }, [images, categories]);
 
-  if (sides.every((s) => s.categories.length === 0)) {
+  if (sides.length === 0) {
     return null;
   }
 
   return (
     <section>
       <div className="flex md:flex-row md:h-screen">
-        {sides.map(({ artist, categories: cats }, sideIndex) => (
-          <div key={artist.id} className="relative flex-1 md:h-full group/side">
+        {sides.map(({ type, label, route, categories: cats }) => (
+          <div key={type} className="relative flex-1 md:h-full group/side">
             <span
               className={`absolute top-20 md:top-24 left-1/2 -translate-x-1/2 z-20 px-30 py-2 font-serif italic text-2xl md:text-4xl lg:text-5xl whitespace-nowrap pointer-events-none backdrop-blur-sm text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]`}
             >
-              {`${ART_BY[sideIndex % ART_BY.length]}${artist.name}`}
+              {label}
             </span>
             <div
               className="relative z-0 grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 h-full"
@@ -93,7 +98,7 @@ export function CategoryBoxes({
                   key={category.id}
                   category={category}
                   image={image}
-                  href={`/artists/${artist.slug}?category=${category.slug}`}
+                  href={`${route}?category=${category.slug}`}
                   tall={tall}
                 />
               ))}

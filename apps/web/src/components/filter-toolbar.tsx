@@ -3,13 +3,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '@/lib/api';
 import { PillGroup } from './pill-group';
+import { PILL_STYLES, pillClass } from './pill-styles';
 
 interface FilterToolbarProps {
   value: string;
   onChange: (value: string) => void;
   className?: string;
-  artistValues?: string[];
-  onArtistChange?: (values: string[]) => void;
+  typeValues?: string[];
+  onTypeChange?: (values: string[]) => void;
   projectValue?: string;
   onProjectChange?: (value: string) => void;
   artistId?: number;
@@ -31,8 +32,8 @@ export function FilterToolbar({
   value,
   onChange,
   className,
-  artistValues,
-  onArtistChange,
+  typeValues,
+  onTypeChange,
   projectValue,
   onProjectChange,
   artistId,
@@ -47,7 +48,16 @@ export function FilterToolbar({
   const [categories, setCategories] = useState<{ label: string; value: string }[]>([
     { label: 'All', value: '' },
   ]);
-  const [artistOptions, setArtistOptions] = useState<{ label: string; value: string }[]>([]);
+  const typeOptions = useMemo(
+    () =>
+      onTypeChange
+        ? [
+            { label: 'Photographs', value: 'photo' },
+            { label: 'Paintings', value: 'painting' },
+          ]
+        : [],
+    [onTypeChange],
+  );
   const [projectOptions, setProjectOptions] = useState<{ label: string; value: string }[]>([]);
   const [tagOptions, setTagOptions] = useState<{ label: string; value: string }[]>([]);
   const [mediaTypeOptions, setMediaTypeOptions] = useState<{ label: string; value: string }[]>([]);
@@ -68,25 +78,8 @@ export function FilterToolbar({
   }, []);
 
   useEffect(() => {
-    if (!onArtistChange) return;
-    api.artists
-      .list()
-      .then((artists) => {
-        if (artists.length > 1) {
-          setArtistOptions(artists.map((a) => ({ label: a.name, value: String(a.id) })));
-        }
-      })
-      .catch(() => {});
-  }, [onArtistChange]);
-
-  useEffect(() => {
     if (!onProjectChange) return;
-    const id =
-      artistId !== undefined
-        ? artistId
-        : artistValues && artistValues.length === 1
-          ? Number(artistValues[0])
-          : undefined;
+    const id = artistId;
     api.projects
       .list(id)
       .then((projs) => {
@@ -97,7 +90,7 @@ export function FilterToolbar({
         }
       })
       .catch(() => {});
-  }, [artistId, artistValues, onProjectChange]);
+  }, [artistId, onProjectChange]);
 
   useEffect(() => {
     if (!onTagChange) return;
@@ -149,19 +142,16 @@ export function FilterToolbar({
     cb(current.includes(slug) ? [] : [slug]);
   };
 
-  const allArtistsSelected = !artistValues || artistValues.length === 0;
+  const allTypesSelected = !typeValues || typeValues.length === 0;
 
-  const toggleArtist = (id: string) => {
-    if (!onArtistChange) return;
-    if (allArtistsSelected) {
-      // All selected → select only this one
-      onArtistChange([id]);
-    } else if (artistValues!.length === 1 && artistValues![0] === id) {
-      // Only this one selected, clicking it again → select all
-      onArtistChange([]);
+  const toggleType = (value: string) => {
+    if (!onTypeChange) return;
+    if (allTypesSelected) {
+      onTypeChange([value]);
+    } else if (typeValues!.length === 1 && typeValues![0] === value) {
+      onTypeChange([]);
     } else {
-      // Multiple (but not all) selected → select only this one
-      onArtistChange([id]);
+      onTypeChange([value]);
     }
   };
 
@@ -175,51 +165,18 @@ export function FilterToolbar({
     return disabled;
   }, [availableFilters, categories]);
 
-  const pillClass = (active: boolean, disabled?: boolean) =>
-    `px-4 py-2 text-sm rounded-full border transition-all duration-300 ${
-      active
-        ? 'border-gallery-accent text-gallery-accent bg-gallery-accent/10'
-        : disabled
-          ? 'border-white/5 text-white/20 cursor-not-allowed'
-          : 'border-white/10 text-gallery-gray hover:border-white/30 hover:text-white'
-    }`;
-
-  const artistPillClass = (active: boolean) =>
-    `px-5 py-2 text-base rounded-full border transition-all duration-300 ${
-      active
-        ? 'border-white/60 text-white bg-white/10'
-        : 'border-white/10 text-gallery-gray hover:border-white/30 hover:text-white'
-    }`;
-
-  const mediaPillClass = (active: boolean, disabled?: boolean) =>
-    `px-4 py-2 text-sm rounded-full border transition-all duration-300 ${
-      active
-        ? 'border-blue-400/50 text-blue-300 bg-blue-500/15'
-        : disabled
-          ? 'border-white/5 text-white/20 cursor-not-allowed'
-          : 'border-white/10 text-gallery-gray hover:border-white/30 hover:text-white'
-    }`;
-
-  const paintPillClass = (active: boolean, disabled?: boolean) =>
-    `px-4 py-2 text-sm rounded-full border transition-all duration-300 ${
-      active
-        ? 'border-yellow-500/40 text-yellow-300 bg-yellow-500/15'
-        : disabled
-          ? 'border-white/5 text-white/20 cursor-not-allowed'
-          : 'border-white/10 text-gallery-gray hover:border-white/30 hover:text-white'
-    }`;
-
   return (
     <div className={className}>
-      {/* Artist pills — separate top row */}
-      {onArtistChange && artistOptions.length > 1 && (
+      {/* Type pills — separate top row */}
+      {onTypeChange && typeOptions.length > 1 && (
         <div className="flex flex-wrap justify-center gap-3 mb-4">
-          {artistOptions.map((opt) => (
+          {typeOptions.map((opt) => (
             <button
-              key={`artist-${opt.value}`}
-              onClick={() => toggleArtist(opt.value)}
-              className={artistPillClass(
-                allArtistsSelected || (artistValues?.includes(opt.value) ?? false),
+              key={`type-${opt.value}`}
+              onClick={() => toggleType(opt.value)}
+              className={pillClass(
+                PILL_STYLES.type,
+                allTypesSelected || (typeValues?.includes(opt.value) ?? false),
               )}
             >
               {opt.label}
@@ -233,7 +190,14 @@ export function FilterToolbar({
         <PillGroup
           options={categories}
           value={value}
-          onChange={onChange}
+          onChange={(v) => {
+            onChange(v);
+            if (v === '') {
+              onTagChange?.([]);
+              onMediaTypeChange?.('');
+              onPaintTypeChange?.('');
+            }
+          }}
           disabledValues={disabledCategories}
         />
       </div>
@@ -253,7 +217,7 @@ export function FilterToolbar({
                   key={`media-${opt.value}`}
                   onClick={() => toggleSingle(mediaTypeValue ?? '', opt.value, onMediaTypeChange)}
                   disabled={disabled}
-                  className={mediaPillClass(active, disabled)}
+                  className={pillClass(PILL_STYLES.mediaType, active, disabled)}
                 >
                   {opt.label}
                 </button>
@@ -269,7 +233,7 @@ export function FilterToolbar({
                   key={`paint-${opt.value}`}
                   onClick={() => toggleSingle(paintTypeValue ?? '', opt.value, onPaintTypeChange)}
                   disabled={disabled}
-                  className={paintPillClass(active, disabled)}
+                  className={pillClass(PILL_STYLES.paintType, active, disabled)}
                 >
                   {opt.label}
                 </button>
@@ -285,7 +249,7 @@ export function FilterToolbar({
                   key={`tag-${opt.value}`}
                   onClick={() => toggleTag(tagValues ?? [], opt.value, onTagChange)}
                   disabled={disabled}
-                  className={pillClass(active, disabled)}
+                  className={pillClass(PILL_STYLES.tag, active, disabled)}
                 >
                   {opt.label}
                 </button>

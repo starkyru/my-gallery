@@ -8,17 +8,9 @@ import { useAuthStore } from '@/store/auth';
 import { useNotification } from '@/hooks/useNotification';
 import type { Category, Project, GalleryImage, Artist } from '@gallery/shared';
 import { UPLOAD_URL } from '@/config';
-import heic2any from 'heic2any';
-
-interface DroppedFile {
-  id: string;
-  file: File;
-  title: string;
-  price: string;
-  category: string;
-  previewUrl: string;
-  previewLoading: boolean;
-}
+import { BulkActionBar } from './bulk-action-bar';
+import { FilterSortBar } from './filter-sort-bar';
+import { UploadForm } from './upload-form';
 
 export default function AdminImagesPage() {
   const { token } = useAuthStore();
@@ -27,19 +19,6 @@ export default function AdminImagesPage() {
   const [artists, setArtists] = useState<Artist[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
-
-  // Drop zone state
-  const [isDragging, setIsDragging] = useState(false);
-  const [droppedFiles, setDroppedFiles] = useState<DroppedFile[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(
-    null,
-  );
-
-  // Shared upload controls
-  const [sharedArtistId, setSharedArtistId] = useState('');
-  const sharedCategory = 'other';
-  const [autoDescribe, setAutoDescribe] = useState(false);
 
   // Filters & sorting
   const [filterArtist, setFilterArtist] = useState('');
@@ -57,10 +36,6 @@ export default function AdminImagesPage() {
 
   // Bulk selection
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
-  const [bulkCategory, setBulkCategory] = useState('');
-  const [bulkProject, setBulkProject] = useState('');
-  const [bulkArtist, setBulkArtist] = useState('');
-  const [aiApplyTitleDesc, setAiApplyTitleDesc] = useState(false);
   const [aiProgress, setAiProgress] = useState<{ done: number; total: number } | null>(null);
 
   const selectedArtistId = useMemo(() => {
@@ -94,12 +69,6 @@ export default function AdminImagesPage() {
   useEffect(() => {
     loadData();
   }, [loadData]);
-
-  useEffect(() => {
-    if (artists.length > 0 && !sharedArtistId) {
-      setSharedArtistId(String(artists[0].id));
-    }
-  }, [artists, sharedArtistId]);
 
   const filteredImages = useMemo(() => {
     let result = [...images];
@@ -188,126 +157,6 @@ export default function AdminImagesPage() {
     card?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }, [focusedIndex]);
 
-  // Drop zone handlers
-  function handleDragOver(e: React.DragEvent) {
-    e.preventDefault();
-    setIsDragging(true);
-  }
-
-  function handleDragLeave(e: React.DragEvent) {
-    e.preventDefault();
-    setIsDragging(false);
-  }
-
-  function handleDrop(e: React.DragEvent) {
-    e.preventDefault();
-    setIsDragging(false);
-    const files = Array.from(e.dataTransfer.files).filter(
-      (f) => f.type.startsWith('image/') || /\.hei[cf]$/i.test(f.name),
-    );
-    addFiles(files);
-  }
-
-  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files || []);
-    addFiles(files);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  }
-
-  function isHeicFile(file: File) {
-    return (
-      /\.hei[cf]$/i.test(file.name) || file.type === 'image/heic' || file.type === 'image/heif'
-    );
-  }
-
-  function addFiles(files: File[]) {
-    let fileIdCounter = Date.now();
-    const newFiles: DroppedFile[] = files.map((file) => ({
-      id: String(fileIdCounter++),
-      file,
-      title: file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' '),
-      price: '',
-      category: sharedCategory,
-      previewUrl: isHeicFile(file) ? '' : URL.createObjectURL(file),
-      previewLoading: isHeicFile(file),
-    }));
-    setDroppedFiles((prev) => [...prev, ...newFiles]);
-
-    // Generate HEIC previews in background — sequential to avoid WASM contention
-    const heicFiles = newFiles.filter((df) => df.previewLoading);
-    (async () => {
-      for (const df of heicFiles) {
-        try {
-          const result = await heic2any({ blob: df.file, toType: 'image/jpeg', quality: 0.5 });
-          const blob = Array.isArray(result) ? result[0] : result;
-          const previewUrl = URL.createObjectURL(blob);
-          setDroppedFiles((prev) =>
-            prev.map((f) => (f.id === df.id ? { ...f, previewUrl, previewLoading: false } : f)),
-          );
-        } catch {
-          setDroppedFiles((prev) =>
-            prev.map((f) => (f.id === df.id ? { ...f, previewLoading: false } : f)),
-          );
-        }
-      }
-    })();
-  }
-
-  function updateDroppedFile(index: number, field: keyof DroppedFile, value: string | File) {
-    setDroppedFiles((prev) => prev.map((f, i) => (i === index ? { ...f, [field]: value } : f)));
-  }
-
-  function removeDroppedFile(index: number) {
-    setDroppedFiles((prev) => {
-      if (prev[index]?.previewUrl) URL.revokeObjectURL(prev[index].previewUrl);
-      return prev.filter((_, i) => i !== index);
-    });
-  }
-
-  async function handleUploadAll() {
-    if (!token || droppedFiles.length === 0 || !sharedArtistId) return;
-
-    const uploadedIds: number[] = [];
-    setUploadProgress({ done: 0, total: droppedFiles.length });
-    for (let i = 0; i < droppedFiles.length; i++) {
-      const df = droppedFiles[i];
-      const formData = new FormData();
-      formData.append('file', df.file);
-      formData.append('title', df.title);
-      formData.append('price', df.price || '0');
-      formData.append('artistId', sharedArtistId);
-      formData.append('category', df.category);
-      try {
-        const result = (await api.images.upload(formData, token)) as { id: number };
-        uploadedIds.push(result.id);
-      } catch {
-        // continue with remaining files
-      }
-      setUploadProgress({ done: i + 1, total: droppedFiles.length });
-    }
-    setUploadProgress(null);
-    droppedFiles.forEach((df) => {
-      if (df.previewUrl) URL.revokeObjectURL(df.previewUrl);
-    });
-    setDroppedFiles([]);
-
-    if (autoDescribe && uploadedIds.length > 0) {
-      setAiProgress({ done: 0, total: uploadedIds.length });
-      for (let i = 0; i < uploadedIds.length; i++) {
-        try {
-          await api.ai.describe(uploadedIds[i], token, true);
-        } catch {
-          // continue with remaining
-        }
-        setAiProgress({ done: i + 1, total: uploadedIds.length });
-      }
-      setAiProgress(null);
-    }
-
-    notify.success('Upload complete');
-    loadData();
-  }
-
   async function handleToggleArchive(image: GalleryImage) {
     if (!token) return;
     try {
@@ -361,14 +210,14 @@ export default function AdminImagesPage() {
     }
   }
 
-  async function handleBulkAiDescribe() {
+  async function handleBulkAiDescribe(applyTitleDesc: boolean) {
     if (!token || selectedIds.size === 0) return;
     const ids = Array.from(selectedIds);
     setAiProgress({ done: 0, total: ids.length });
     let failed = 0;
     for (let i = 0; i < ids.length; i++) {
       try {
-        await api.ai.describe(ids[i], token, aiApplyTitleDesc);
+        await api.ai.describe(ids[i], token, applyTitleDesc);
       } catch {
         failed++;
       }
@@ -380,7 +229,7 @@ export default function AdminImagesPage() {
     } else {
       notify.success('AI descriptions generated');
     }
-    if (aiApplyTitleDesc) loadData();
+    if (applyTitleDesc) loadData();
   }
 
   async function handleBulkDelete() {
@@ -405,222 +254,46 @@ export default function AdminImagesPage() {
   }
 
   const gridOptions = [
-    { cols: 1, label: '1 per row', className: 'grid-cols-1' },
-    { cols: 3, label: '3 per row', className: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' },
-    { cols: 5, label: '5 per row', className: 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5' },
-    { cols: 10, label: '10 per row', className: 'grid-cols-3 sm:grid-cols-5 lg:grid-cols-10' },
+    { cols: 1, className: 'grid-cols-1' },
+    { cols: 3, className: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' },
+    { cols: 5, className: 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5' },
+    { cols: 10, className: 'grid-cols-3 sm:grid-cols-5 lg:grid-cols-10' },
   ];
-
-  const selectClass =
-    'px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-gallery-accent';
 
   return (
     <div className="pb-20">
       <h1 className="font-serif text-3xl mb-8">Images</h1>
 
-      {/* Drop Zone */}
-      <div
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        onClick={() => fileInputRef.current?.click()}
-        className={`mb-6 p-8 border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors ${
-          isDragging
-            ? 'border-gallery-accent bg-gallery-accent/10'
-            : 'border-white/20 hover:border-white/40'
-        }`}
-      >
-        <p className="text-gallery-gray">
-          Drop images here or click to browse (JPEG, PNG, WebP, TIFF, HEIC)
-        </p>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*,.heic,.heif"
-          multiple
-          onChange={handleFileSelect}
-          className="hidden"
-        />
-      </div>
+      <UploadForm
+        token={token}
+        artists={artists}
+        categories={categories}
+        onUploadComplete={loadData}
+      />
 
-      {/* Metadata form */}
-      {droppedFiles.length > 0 && (
-        <div className="mb-8 p-4 sm:p-6 border border-white/10 rounded-lg space-y-4">
-          <div className="flex flex-wrap gap-4 items-end">
-            <div className="flex-1 min-w-[200px]">
-              <label className="block text-xs text-gallery-gray mb-1">Artist (all images)</label>
-              <select
-                value={sharedArtistId}
-                onChange={(e) => setSharedArtistId(e.target.value)}
-                className={`${selectClass} w-full`}
-              >
-                {artists.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <label className="flex items-center gap-1.5 text-sm text-gallery-gray cursor-pointer pb-1">
-              <input
-                type="checkbox"
-                checked={autoDescribe}
-                onChange={(e) => setAutoDescribe(e.target.checked)}
-                className="accent-gallery-accent"
-              />
-              Auto-generate descriptions
-            </label>
-          </div>
-
-          <div className="space-y-3">
-            {droppedFiles.map((df, idx) => (
-              <div key={df.id} className="flex flex-wrap sm:flex-nowrap gap-3 items-center">
-                <div className="w-12 h-12 shrink-0 rounded overflow-hidden bg-white/5">
-                  {df.previewLoading ? (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <div className="w-5 h-5 border-2 border-white/20 border-t-gallery-accent rounded-full animate-spin" />
-                    </div>
-                  ) : df.previewUrl ? (
-                    <Image
-                      src={df.previewUrl}
-                      alt={df.title}
-                      width={48}
-                      height={48}
-                      className="w-full h-full object-cover"
-                      unoptimized
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-xs text-gallery-gray">
-                      HEIC
-                    </div>
-                  )}
-                </div>
-                <input
-                  value={df.title}
-                  onChange={(e) => updateDroppedFile(idx, 'title', e.target.value)}
-                  disabled={autoDescribe}
-                  placeholder={autoDescribe ? 'AI will generate' : 'Title'}
-                  className={`flex-1 min-w-0 px-3 py-1.5 bg-white/5 border border-white/10 rounded text-sm text-white ${autoDescribe ? 'opacity-40' : ''}`}
-                />
-                <input
-                  value={df.price}
-                  onChange={(e) => updateDroppedFile(idx, 'price', e.target.value)}
-                  placeholder="Price"
-                  type="number"
-                  step="0.01"
-                  className="w-20 sm:w-24 shrink-0 px-3 py-1.5 bg-white/5 border border-white/10 rounded text-sm text-white"
-                />
-                <select
-                  value={df.category}
-                  onChange={(e) => updateDroppedFile(idx, 'category', e.target.value)}
-                  className={`${selectClass} shrink-0`}
-                >
-                  {categories.map((c) => (
-                    <option key={c.slug} value={c.slug}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  onClick={() => removeDroppedFile(idx)}
-                  className="text-red-400 hover:text-red-300 text-lg px-1"
-                >
-                  &times;
-                </button>
-              </div>
-            ))}
-          </div>
-
-          <button
-            onClick={handleUploadAll}
-            disabled={uploadProgress !== null || aiProgress !== null || !sharedArtistId}
-            className="px-6 py-2 bg-gallery-accent text-gallery-black rounded-lg text-sm font-medium hover:bg-gallery-accent-light transition-colors disabled:opacity-50"
-          >
-            {uploadProgress
-              ? `Uploading ${uploadProgress.done}/${uploadProgress.total}...`
-              : aiProgress
-                ? `AI Describing ${aiProgress.done}/${aiProgress.total}...`
-                : `Upload ${droppedFiles.length} Image${droppedFiles.length !== 1 ? 's' : ''}`}
-          </button>
-        </div>
-      )}
-
-      {/* Filter / Sort bar */}
-      <div className="flex flex-wrap gap-3 mb-6 items-center">
-        <select
-          value={filterArtist}
-          onChange={(e) => setFilterArtist(e.target.value)}
-          className={selectClass}
-        >
-          <option value="">All Artists</option>
-          {artists.map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.name}
-            </option>
-          ))}
-        </select>
-        <select
-          value={filterCategory}
-          onChange={(e) => setFilterCategory(e.target.value)}
-          className={selectClass}
-        >
-          <option value="">All Categories</option>
-          {categories.map((c) => (
-            <option key={c.slug} value={c.slug}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-        <select
-          value={filterArchive}
-          onChange={(e) => setFilterArchive(e.target.value as typeof filterArchive)}
-          className={selectClass}
-        >
-          <option value="all">All Status</option>
-          <option value="active">Active</option>
-          <option value="archived">Archived</option>
-        </select>
-        <select
-          value={`${sortBy}:${sortDir}`}
-          onChange={(e) => handleSortChange(e.target.value)}
-          className={selectClass}
-        >
-          <option value="createdAt:desc">Date (newest)</option>
-          <option value="createdAt:asc">Date (oldest)</option>
-          <option value="price:desc">Price (high-low)</option>
-          <option value="price:asc">Price (low-high)</option>
-          <option value="artistName:asc">Artist (A-Z)</option>
-          <option value="artistName:desc">Artist (Z-A)</option>
-          <option value="printsSold:desc">Sales (most)</option>
-          <option value="printsSold:asc">Sales (least)</option>
-        </select>
-        <label className="flex items-center gap-1.5 ml-auto cursor-pointer text-xs text-gallery-gray">
-          <input
-            type="checkbox"
-            checked={filteredImages.length > 0 && selectedIds.size === filteredImages.length}
-            onChange={() => {
-              if (selectedIds.size === filteredImages.length) {
-                deselectAll();
-              } else {
-                selectAll();
-              }
-            }}
-            className="accent-gallery-accent"
-          />
-          {filteredImages.length} image{filteredImages.length !== 1 ? 's' : ''}
-        </label>
-        <select
-          value={colsPerRow}
-          onChange={(e) => setColsPerRow(Number(e.target.value))}
-          className={selectClass}
-        >
-          {gridOptions.map((opt) => (
-            <option key={opt.cols} value={opt.cols}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-      </div>
+      <FilterSortBar
+        filterArtist={filterArtist}
+        onFilterArtistChange={setFilterArtist}
+        filterCategory={filterCategory}
+        onFilterCategoryChange={setFilterCategory}
+        filterArchive={filterArchive}
+        onFilterArchiveChange={setFilterArchive}
+        sortValue={`${sortBy}:${sortDir}`}
+        onSortChange={handleSortChange}
+        colsPerRow={colsPerRow}
+        onColsPerRowChange={setColsPerRow}
+        imageCount={filteredImages.length}
+        selectedCount={selectedIds.size}
+        onToggleSelectAll={() => {
+          if (selectedIds.size === filteredImages.length) {
+            deselectAll();
+          } else {
+            selectAll();
+          }
+        }}
+        artists={artists}
+        categories={categories}
+      />
 
       {/* Image grid */}
       <div
@@ -794,141 +467,21 @@ export default function AdminImagesPage() {
         </p>
       )}
 
-      {/* Bulk action bar */}
       {selectedIds.size > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-gallery-black/95 backdrop-blur-md border-t border-white/10 px-4 sm:px-6 py-3 z-50">
-          <div className="mx-auto max-w-7xl flex items-center gap-3 sm:gap-4 flex-wrap">
-            <span className="text-sm font-medium">{selectedIds.size} selected</span>
-            <button onClick={selectAll} className="text-xs text-gallery-accent hover:underline">
-              Select All
-            </button>
-            <button onClick={deselectAll} className="text-xs text-gallery-gray hover:text-white">
-              Deselect All
-            </button>
-            <div className="border-l border-white/10 h-6" />
-            <button
-              onClick={() => handleBulkAction('archive')}
-              className="px-3 py-1.5 border border-white/10 rounded text-xs hover:border-white/30"
-            >
-              Archive
-            </button>
-            <button
-              onClick={() => handleBulkAction('unarchive')}
-              className="px-3 py-1.5 border border-white/10 rounded text-xs hover:border-white/30"
-            >
-              Unarchive
-            </button>
-            <div className="border-l border-white/10 h-6" />
-            <select
-              value={bulkCategory}
-              onChange={(e) => setBulkCategory(e.target.value)}
-              className={`${selectClass} text-xs`}
-            >
-              <option value="">Set category...</option>
-              {categories.map((c) => (
-                <option key={c.slug} value={c.slug}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-            {bulkCategory && (
-              <button
-                onClick={() => {
-                  handleBulkAction('setCategory', bulkCategory);
-                  setBulkCategory('');
-                }}
-                className="px-3 py-1.5 bg-gallery-accent text-gallery-black rounded text-xs font-medium"
-              >
-                Apply
-              </button>
-            )}
-            <div className="border-l border-white/10 h-6" />
-            <select
-              value={bulkProject}
-              onChange={(e) => setBulkProject(e.target.value)}
-              disabled={selectedArtistId === null}
-              className={`${selectClass} text-xs`}
-            >
-              <option value="">
-                {selectedArtistId === null ? 'Set project (same artist only)' : 'Set project...'}
-              </option>
-              {projects
-                .filter((p) => p.artistId === selectedArtistId)
-                .map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-            </select>
-            {bulkProject && (
-              <button
-                onClick={() => {
-                  handleBulkAction('setProject', bulkProject);
-                  setBulkProject('');
-                }}
-                className="px-3 py-1.5 bg-gallery-accent text-gallery-black rounded text-xs font-medium"
-              >
-                Apply
-              </button>
-            )}
-            <div className="border-l border-white/10 h-6" />
-            <select
-              value={bulkArtist}
-              onChange={(e) => setBulkArtist(e.target.value)}
-              className={`${selectClass} text-xs`}
-            >
-              <option value="">Set artist...</option>
-              {artists.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.name}
-                </option>
-              ))}
-            </select>
-            {bulkArtist && (
-              <button
-                onClick={() => {
-                  const selectedImages = images.filter((img) => selectedIds.has(img.id));
-                  const withProject = selectedImages.filter((img) => img.projectId);
-                  const message =
-                    withProject.length > 0
-                      ? `Are you sure? ${withProject.length} image(s) have a project assigned — it will be removed.`
-                      : 'Are you sure you want to change the artist?';
-                  if (window.confirm(message)) {
-                    handleBulkAction('setArtist', bulkArtist);
-                    setBulkArtist('');
-                  }
-                }}
-                className="px-3 py-1.5 bg-gallery-accent text-gallery-black rounded text-xs font-medium"
-              >
-                Apply
-              </button>
-            )}
-            <div className="border-l border-white/10 h-6" />
-            <button
-              onClick={handleBulkAiDescribe}
-              disabled={aiProgress !== null}
-              className="px-3 py-1.5 border border-white/10 rounded text-xs hover:border-white/30 disabled:opacity-50"
-            >
-              {aiProgress ? `AI ${aiProgress.done}/${aiProgress.total}...` : 'AI Describe'}
-            </button>
-            <label className="flex items-center gap-1.5 text-xs text-gallery-gray cursor-pointer">
-              <input
-                type="checkbox"
-                checked={aiApplyTitleDesc}
-                onChange={(e) => setAiApplyTitleDesc(e.target.checked)}
-                className="accent-gallery-accent"
-              />
-              Update title &amp; description
-            </label>
-            <div className="border-l border-white/10 h-6" />
-            <button
-              onClick={handleBulkDelete}
-              className="px-3 py-1.5 border border-red-500/30 text-red-400 rounded text-xs hover:bg-red-500/10"
-            >
-              Delete
-            </button>
-          </div>
-        </div>
+        <BulkActionBar
+          selectedIds={selectedIds}
+          images={images}
+          categories={categories}
+          projects={projects}
+          artists={artists}
+          selectedArtistId={selectedArtistId}
+          aiProgress={aiProgress}
+          onSelectAll={selectAll}
+          onDeselectAll={deselectAll}
+          onBulkAction={handleBulkAction}
+          onBulkAiDescribe={handleBulkAiDescribe}
+          onBulkDelete={handleBulkDelete}
+        />
       )}
     </div>
   );

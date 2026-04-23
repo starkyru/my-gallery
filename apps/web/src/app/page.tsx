@@ -9,22 +9,20 @@ import { CategoryBoxes } from '@/components/home/category-boxes';
 import { HomeAbout } from '@/components/home/home-about';
 import { api } from '@/lib/api';
 import { shuffleArray } from '@gallery/shared';
-import type { Artist, Category } from '@gallery/shared';
+import type { Category } from '@gallery/shared';
 
 export default function HomePage() {
   const { images, loading: imagesLoading } = useImages();
   const imageCache = useImageCache();
   const searchParams = useSearchParams();
   const [categories, setCategories] = useState<Category[]>([]);
-  const [artists, setArtists] = useState<Artist[]>([]);
   const [sideDataLoading, setSideDataLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([api.categories.list(), api.artists.list()]).then(([cats, arts]) => {
+    api.categories.list().then((cats) => {
       if (!cancelled) {
         setCategories(cats);
-        setArtists(arts.filter((a) => a.isActive));
         setSideDataLoading(false);
       }
     });
@@ -60,7 +58,7 @@ export default function HomePage() {
 
   return (
     <>
-      <CategoryBoxes images={images} categories={categories} artists={artists} />
+      <CategoryBoxes images={images} categories={categories} />
       <HomeAbout />
       <GalleryGrid
         images={shuffled}
