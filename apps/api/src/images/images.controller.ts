@@ -233,7 +233,7 @@ class BulkActionDto {
   @IsArray()
   ids!: number[];
 
-  @IsIn(['archive', 'unarchive', 'setCategory', 'setProject', 'setArtist'])
+  @IsIn(['archive', 'unarchive', 'setCategory', 'setProject', 'setArtist', 'setType'])
   action!: string;
 
   @IsOptional()
