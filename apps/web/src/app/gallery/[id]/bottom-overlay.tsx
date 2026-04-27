@@ -31,7 +31,7 @@ export const BottomOverlay = forwardRef<HTMLDivElement, BottomOverlayProps>(func
   return (
     <div
       ref={ref}
-      className="absolute bottom-0 left-0 right-0 z-10 bg-linear-to-t from-black/80 via-black/50 to-transparent"
+      className="absolute bottom-0 left-0 right-0 z-10"
       style={{ textShadow: '0 1px 4px rgba(0,0,0,0.6)' }}
     >
       <div className="px-4 pb-6 pt-16 sm:px-6">
