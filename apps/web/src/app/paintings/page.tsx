@@ -33,6 +33,7 @@ export default function PaintingsPage() {
         initialMediaType={initialMediaType}
         initialPaintType={initialPaintType}
         initialProject={initialProject}
+        typeLinks={{ photo: '/photographs', painting: '/paintings' }}
       />
     </div>
   );

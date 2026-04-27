@@ -18,6 +18,7 @@ export function GalleryGrid({
   initialMediaType,
   initialPaintType,
   initialProject,
+  typeLinks,
 }: {
   images: GalleryImage[];
   loading?: boolean;
@@ -26,6 +27,7 @@ export function GalleryGrid({
   initialMediaType?: string;
   initialPaintType?: string;
   initialProject?: string;
+  typeLinks?: Record<string, string>;
 }) {
   const [filter, setFilter] = useState(initialCategory ?? '');
   const [typeFilter, setTypeFilter] = useState<string[]>([]);
@@ -163,6 +165,25 @@ export function GalleryGrid({
     [handleSingleFilter],
   );
 
+  const handleProjectChange = useCallback((v: string) => {
+    setProjectFilter(v);
+    setFilter('');
+    setTagFilter([]);
+    setMediaTypeFilter('');
+    setPaintTypeFilter('');
+    const url = new URL(window.location.href);
+    if (v) {
+      url.searchParams.set('project', v);
+    } else {
+      url.searchParams.delete('project');
+    }
+    url.searchParams.delete('category');
+    url.searchParams.delete('tags');
+    url.searchParams.delete('media');
+    url.searchParams.delete('paint');
+    window.history.replaceState({}, '', url.toString());
+  }, []);
+
   // GSAP scroll-triggered entrance
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -201,43 +222,29 @@ export function GalleryGrid({
 
   if (loading) {
     return (
-      <section id="works" className="mx-auto max-w-7xl px-6 py-24">
+      <section id="works" className="mx-auto max-w-7xl px-6 py-8">
         <SkeletonGrid />
       </section>
     );
   }
 
   return (
-    <section id="works" className="mx-auto max-w-7xl px-6 py-24">
+    <section id="works" className="mx-auto max-w-7xl px-6 py-8">
       {/* Category + tag filters */}
       <FilterToolbar
         value={filter}
         onChange={handleFilter}
-        className="mt-8 mb-12 justify-center"
+        className="mt-4 mb-12 justify-center"
         typeValues={typeFilter}
-        onTypeChange={(v) => {
-          setTypeFilter(v);
-        }}
+        onTypeChange={
+          typeLinks
+            ? undefined
+            : (v) => {
+                setTypeFilter(v);
+              }
+        }
         projectValue={projectFilter}
-        onProjectChange={(v) => {
-          setProjectFilter(v);
-          setFilter('');
-          setTagFilter([]);
-          setMediaTypeFilter('');
-          setPaintTypeFilter('');
-          // Update URL: set project, clear other filters
-          const url = new URL(window.location.href);
-          if (v) {
-            url.searchParams.set('project', v);
-          } else {
-            url.searchParams.delete('project');
-          }
-          url.searchParams.delete('category');
-          url.searchParams.delete('tags');
-          url.searchParams.delete('media');
-          url.searchParams.delete('paint');
-          window.history.replaceState({}, '', url.toString());
-        }}
+        onProjectChange={handleProjectChange}
         tagValues={tagFilter}
         onTagChange={handleTagFilter}
         mediaTypeValue={mediaTypeFilter}

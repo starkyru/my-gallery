@@ -26,14 +26,17 @@ export function Header() {
         </Link>
         {!isAdmin && (
           <div className="flex items-center gap-6 text-sm">
-            <Link href="/#works" className="hover:text-gallery-accent transition-colors">
-              Works
-            </Link>
             <Link href="/about" className="hover:text-gallery-accent transition-colors">
               About
             </Link>
+            <Link href="/photographs" className="hover:text-gallery-accent transition-colors">
+              Photographs
+            </Link>
+            <Link href="/paintings" className="hover:text-gallery-accent transition-colors">
+              Paintings
+            </Link>
             <Link href="/contact" className="hover:text-gallery-accent transition-colors">
-              Contact
+              Contact Us
             </Link>
             <Link href="/cart" className="relative hover:text-gallery-accent transition-colors">
               Cart
