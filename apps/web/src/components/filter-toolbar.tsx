@@ -62,77 +62,85 @@ export function FilterToolbar({
   const [tagOptions, setTagOptions] = useState<{ label: string; value: string }[]>([]);
   const [mediaTypeOptions, setMediaTypeOptions] = useState<{ label: string; value: string }[]>([]);
   const [paintTypeOptions, setPaintTypeOptions] = useState<{ label: string; value: string }[]>([]);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    api.categories
-      .list()
-      .then((cats) => {
-        setCategories([
-          { label: 'All', value: '' },
-          ...cats
-            .filter((c) => (c.imageCount ?? 0) > 0)
-            .map((c) => ({ label: c.name, value: c.slug })),
-        ]);
-      })
-      .catch(() => {});
-  }, []);
+    const promises: Promise<void>[] = [];
 
-  useEffect(() => {
-    if (!onProjectChange) return;
-    const id = artistId;
-    api.projects
-      .list(id)
-      .then((projs) => {
-        if (projs.length > 0) {
-          setProjectOptions(projs.map((p) => ({ label: p.name, value: String(p.id) })));
-        } else {
-          setProjectOptions([]);
-        }
-      })
-      .catch(() => {});
-  }, [artistId, onProjectChange]);
+    promises.push(
+      api.categories
+        .list()
+        .then((cats) => {
+          setCategories([
+            { label: 'All', value: '' },
+            ...cats
+              .filter((c) => (c.imageCount ?? 0) > 0)
+              .map((c) => ({ label: c.name, value: c.slug })),
+          ]);
+        })
+        .catch(() => {}),
+    );
 
-  useEffect(() => {
-    if (!onTagChange) return;
-    api.tags
-      .list()
-      .then((tags) => {
-        setTagOptions(
-          tags
-            .filter((t) => (t.imageCount ?? 0) > 0)
-            .map((t) => ({ label: t.name, value: t.slug })),
-        );
-      })
-      .catch(() => {});
-  }, [onTagChange]);
+    if (onProjectChange) {
+      promises.push(
+        api.projects
+          .list(artistId)
+          .then((projs) => {
+            setProjectOptions(
+              projs.length > 0 ? projs.map((p) => ({ label: p.name, value: String(p.id) })) : [],
+            );
+          })
+          .catch(() => {}),
+      );
+    }
 
-  useEffect(() => {
-    if (!onMediaTypeChange) return;
-    api.mediaTypes
-      .list()
-      .then((items) => {
-        setMediaTypeOptions(
-          items
-            .filter((m) => (m.imageCount ?? 0) > 0)
-            .map((m) => ({ label: m.name, value: m.slug })),
-        );
-      })
-      .catch(() => {});
-  }, [onMediaTypeChange]);
+    if (onTagChange) {
+      promises.push(
+        api.tags
+          .list()
+          .then((tags) => {
+            setTagOptions(
+              tags
+                .filter((t) => (t.imageCount ?? 0) > 0)
+                .map((t) => ({ label: t.name, value: t.slug })),
+            );
+          })
+          .catch(() => {}),
+      );
+    }
 
-  useEffect(() => {
-    if (!onPaintTypeChange) return;
-    api.paintTypes
-      .list()
-      .then((items) => {
-        setPaintTypeOptions(
-          items
-            .filter((p) => (p.imageCount ?? 0) > 0)
-            .map((p) => ({ label: p.name, value: p.slug })),
-        );
-      })
-      .catch(() => {});
-  }, [onPaintTypeChange]);
+    if (onMediaTypeChange) {
+      promises.push(
+        api.mediaTypes
+          .list()
+          .then((items) => {
+            setMediaTypeOptions(
+              items
+                .filter((m) => (m.imageCount ?? 0) > 0)
+                .map((m) => ({ label: m.name, value: m.slug })),
+            );
+          })
+          .catch(() => {}),
+      );
+    }
+
+    if (onPaintTypeChange) {
+      promises.push(
+        api.paintTypes
+          .list()
+          .then((items) => {
+            setPaintTypeOptions(
+              items
+                .filter((p) => (p.imageCount ?? 0) > 0)
+                .map((p) => ({ label: p.name, value: p.slug })),
+            );
+          })
+          .catch(() => {}),
+      );
+    }
+
+    Promise.all(promises).then(() => setReady(true));
+  }, [artistId, onProjectChange, onTagChange, onMediaTypeChange, onPaintTypeChange]);
 
   const toggleSingle = (current: string, slug: string, cb: (v: string) => void) => {
     cb(current === slug ? '' : slug);
@@ -166,7 +174,9 @@ export function FilterToolbar({
   }, [availableFilters, categories]);
 
   return (
-    <div className={className}>
+    <div
+      className={`${className ?? ''} transition-opacity duration-300 ${ready ? 'opacity-100' : 'opacity-0'}`}
+    >
       {/* Type pills — separate top row */}
       {onTypeChange && typeOptions.length > 1 && (
         <div className="flex flex-wrap justify-center gap-3 mb-4">
