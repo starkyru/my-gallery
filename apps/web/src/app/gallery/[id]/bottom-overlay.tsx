@@ -16,6 +16,11 @@ interface BottomOverlayImage {
   place?: string | null;
   sizeWidthCm?: number | null;
   sizeHeightCm?: number | null;
+  type?: string;
+  project?: { id: number; name: string; slug: string } | null;
+  allowDownloadOriginal: boolean;
+  printEnabled: boolean;
+  originalAvailable?: boolean;
 }
 
 interface BottomOverlayProps {
@@ -26,8 +31,15 @@ export const BottomOverlay = forwardRef<HTMLDivElement, BottomOverlayProps>(func
   { image },
   ref,
 ) {
-  const [infoOpen, setInfoOpen] = useState(true);
-
+  const [infoOpen, setInfoOpen] = useState(false);
+  const typeMemo = [
+    image.type === 'painting' && 'Painting',
+    image.type === 'photograph' && 'Photograph',
+    // (image.allowDownloadOriginal || image.originalAvailable) && 'Original',
+    // image.printEnabled && 'Print',
+  ]
+    .filter(Boolean)
+    .join(', ');
   return (
     <div
       ref={ref}
@@ -45,15 +57,6 @@ export const BottomOverlay = forwardRef<HTMLDivElement, BottomOverlayProps>(func
             {infoOpen ? (
               <div>
                 <span className="block text-lg font-semibold text-white">{image.title}</span>
-                {((image.mediaTypes && image.mediaTypes.length > 0) ||
-                  (image.paintTypes && image.paintTypes.length > 0)) && (
-                  <span className="block text-sm text-white/60">
-                    {[
-                      ...(image.mediaTypes ?? []).map((m) => m.name),
-                      ...(image.paintTypes ?? []).map((p) => p.name),
-                    ].join(', ')}
-                  </span>
-                )}
                 <span className="block text-sm text-white/70">
                   by{' '}
                   <Link
@@ -86,21 +89,57 @@ export const BottomOverlay = forwardRef<HTMLDivElement, BottomOverlayProps>(func
           }`}
         >
           {image.description && (
-            <p className="text-white/80 text-sm leading-relaxed mb-2">{image.description}</p>
+            <p className="text-white/80 text-sm leading-relaxed mb-3">{image.description}</p>
           )}
 
-          <p className="text-gallery-gray text-xs mb-2">
-            Category: {image.category.replace(/_/g, ' ')}
-            {image.shotDate && <> &middot; {image.shotDate}</>}
-            {image.place && <> &middot; {image.place}</>}
-            {image.sizeWidthCm && image.sizeHeightCm && (
-              <>
-                {' '}
-                &middot; {+(Number(image.sizeWidthCm) / 2.54).toFixed(1)}&times;
-                {+(Number(image.sizeHeightCm) / 2.54).toFixed(1)}&Prime;
-              </>
+          <div className="text-sm text-white/70 space-y-1 mb-3">
+            {image.place && (
+              <p>
+                <span className="text-gallery-gray">Place:</span> {image.place}
+              </p>
             )}
-          </p>
+            {image.shotDate && (
+              <p>
+                <span className="text-gallery-gray">Date:</span> {image.shotDate}
+              </p>
+            )}
+            {image.sizeWidthCm && image.sizeHeightCm && (
+              <p>
+                <span className="text-gallery-gray">Physical Size:</span>{' '}
+                {+(Number(image.sizeWidthCm) / 2.54).toFixed(1)}&Prime;&times;
+                {+(Number(image.sizeHeightCm) / 2.54).toFixed(1)}&Prime;
+              </p>
+            )}
+            {image.mediaTypes && image.mediaTypes.length > 0 && (
+              <p>
+                <span className="text-gallery-gray">Media:</span>{' '}
+                {image.mediaTypes.map((m) => m.name).join(', ')}
+              </p>
+            )}
+            {image.paintTypes && image.paintTypes.length > 0 && (
+              <p>
+                <span className="text-gallery-gray">Paint:</span>{' '}
+                {image.paintTypes.map((p) => p.name).join(', ')}
+              </p>
+            )}
+            {image.project && (
+              <p>
+                <span className="text-gallery-gray">Project:</span>{' '}
+                <Link
+                  href={`/artists/${image.artist.slug}?project=${image.project.id}`}
+                  className="hover:text-gallery-accent transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {image.project.name}
+                </Link>
+              </p>
+            )}
+            {typeMemo && (
+              <p>
+                <span className="text-gallery-gray">Type:</span> {typeMemo}
+              </p>
+            )}
+          </div>
 
           {image.tags && image.tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5">

@@ -117,21 +117,39 @@ export class ImagesService {
       name: ipt.paintType.name,
       slug: ipt.paintType.slug,
     }));
-    const { imageTags, imageMediaTypes, imagePaintTypes, adminNote, originalFileName, ...rest } =
-      image as ImageEntity & {
-        imageTags?: unknown;
-        imageMediaTypes?: unknown;
-        imagePaintTypes?: unknown;
-      };
+    const {
+      imageTags,
+      imageMediaTypes,
+      imagePaintTypes,
+      adminNote,
+      originalFileName,
+      project,
+      ...rest
+    } = image as ImageEntity & {
+      imageTags?: unknown;
+      imageMediaTypes?: unknown;
+      imagePaintTypes?: unknown;
+    };
     void imageTags;
     void imageMediaTypes;
     void imagePaintTypes;
+    const mappedProject = project
+      ? { id: project.id, name: project.name, slug: project.slug }
+      : null;
     if (stripAdmin) {
       void adminNote;
       void originalFileName;
-      return { ...rest, tags, mediaTypes, paintTypes };
+      return { ...rest, project: mappedProject, tags, mediaTypes, paintTypes };
     }
-    return { ...rest, adminNote, originalFileName, tags, mediaTypes, paintTypes };
+    return {
+      ...rest,
+      adminNote,
+      originalFileName,
+      project: mappedProject,
+      tags,
+      mediaTypes,
+      paintTypes,
+    };
   }
 
   private getSigningKey(): string {
@@ -360,6 +378,7 @@ export class ImagesService {
         'image.printLimit',
         'image.printsSold',
         'image.perOptionLimits',
+        'image.type',
         'image.projectId',
         'image.shotDate',
         'image.place',
@@ -373,6 +392,7 @@ export class ImagesService {
         'image.updatedAt',
       ])
       .leftJoinAndSelect('image.artist', 'artist')
+      .leftJoinAndSelect('image.project', 'project')
       .leftJoinAndSelect('image.printOptions', 'printOptions')
       .leftJoinAndSelect('image.imageTags', 'imageTags')
       .leftJoinAndSelect('imageTags.tag', 'tag')

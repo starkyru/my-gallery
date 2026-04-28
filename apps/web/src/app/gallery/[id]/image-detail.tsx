@@ -49,6 +49,8 @@ interface ImageDetailProps {
     sizeHeightCm?: number | null;
     originalAvailable?: boolean;
     blurHash?: string | null;
+    type?: string;
+    project?: { id: number; name: string; slug: string } | null;
   };
 }
 
