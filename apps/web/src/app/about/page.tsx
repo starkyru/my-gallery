@@ -42,11 +42,15 @@ export default async function AboutPage() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {artists.map((artist) => (
-              <Link
+              <div
                 key={artist.id}
-                href={`/artists/${artist.slug}`}
-                className="group flex gap-6 p-4 rounded-lg border border-white/5 hover:border-white/15 transition-colors"
+                className="group relative flex gap-6 p-4 rounded-lg border border-white/5 hover:border-white/15 transition-colors"
               >
+                <Link
+                  href={`/artists/${artist.slug}`}
+                  className="absolute inset-0 z-0"
+                  aria-label={artist.name}
+                />
                 <div className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden">
                   <Avatar name={artist.name} portraitPath={artist.portraitPath} />
                 </div>
@@ -58,12 +62,12 @@ export default async function AboutPage() {
                     <p className="text-gallery-gray text-sm mt-1 line-clamp-3">{artist.bio}</p>
                   )}
                   {artist.instagramUrl && (
-                    <div className="mt-2">
+                    <div className="relative z-10 mt-2">
                       <InstagramLink url={artist.instagramUrl} name={artist.name} />
                     </div>
                   )}
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         </section>
