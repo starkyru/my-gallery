@@ -23,15 +23,12 @@ const TYPE_SIDES: { type: 'photo' | 'painting'; label: string; route: string }[]
 ];
 
 /**
- * Assign rowSpan values so both sides have equal height with fully filled rows.
- *
- * Mobile (<768px, effectiveCols=1):
- *   Bigger side → all rowSpan=1.
- *   Smaller side → extra spans distributed so total rows match.
+ * Mobile (<768px, 1 column per side):
+ *   Balance heights — bigger side all rowSpan=1, smaller side gets extra spans.
  *
  * Multi-column (768px+):
- *   Target rows = max(ceil(n/cols)) across sides.
- *   Each side fills targetRows×cols cells by distributing extra row spans.
+ *   Each side independently fills its own grid (rowSpan 1 or 2 only).
+ *   Height equalization comes from CSS (h-screen + minmax rows).
  */
 function assignRowSpans(
   sidesItems: Omit<CategoryWithImage, 'rowSpan'>[][],
@@ -40,30 +37,51 @@ function assignRowSpans(
 ): CategoryWithImage[][] {
   if (sidesItems.length === 0) return [];
 
-  const effectiveCols = isMobile ? 1 : cols;
-  const counts = sidesItems.map((items) => items.length);
-  const targetRows = Math.max(...counts.map((n) => Math.ceil(n / effectiveCols)));
-  const totalCells = targetRows * effectiveCols;
+  if (isMobile) {
+    // 1 column per side — balance total rows between sides
+    const counts = sidesItems.map((items) => items.length);
+    const targetRows = Math.max(...counts);
 
+    return sidesItems.map((items) => {
+      const n = items.length;
+      if (n === 0) return [];
+
+      const extra = targetRows - n;
+      const baseExtra = Math.floor(extra / n);
+      const remainder = extra % n;
+
+      const indexed = items.map((item, i) => ({ i, seed: item.category.id * 7 + i }));
+      indexed.sort((a, b) => a.seed - b.seed);
+      const bonusIndices = new Set(indexed.slice(0, remainder).map((e) => e.i));
+
+      const result = items.map((item, i) => ({
+        ...item,
+        rowSpan: 1 + baseExtra + (bonusIndices.has(i) ? 1 : 0),
+      }));
+
+      result.sort((a, b) => b.rowSpan - a.rowSpan);
+      return result;
+    });
+  }
+
+  // Multi-column: each side independently fills its grid (rowSpan 1 or 2)
   return sidesItems.map((items) => {
     const n = items.length;
     if (n === 0) return [];
 
-    const extra = totalCells - n;
-    const baseExtra = Math.floor(extra / n);
-    const remainder = extra % n;
+    const rows = Math.ceil(n / cols);
+    const totalCells = rows * cols;
+    const tallCount = Math.max(0, Math.min(totalCells - n, n));
 
-    // Randomly pick which items get the bonus +1 span, using category id for stability
     const indexed = items.map((item, i) => ({ i, seed: item.category.id * 7 + i }));
     indexed.sort((a, b) => a.seed - b.seed);
-    const bonusIndices = new Set(indexed.slice(0, remainder).map((e) => e.i));
+    const tallIndices = new Set(indexed.slice(0, tallCount).map((e) => e.i));
 
     const result = items.map((item, i) => ({
       ...item,
-      rowSpan: 1 + baseExtra + (bonusIndices.has(i) ? 1 : 0),
+      rowSpan: tallIndices.has(i) ? 2 : 1,
     }));
 
-    // Sort by rowSpan descending for dense grid packing
     result.sort((a, b) => b.rowSpan - a.rowSpan);
     return result;
   });
