@@ -9,30 +9,27 @@ export function CategoryCard({
   category,
   image,
   href,
-  tall,
+  rowSpan,
 }: {
   category: Category;
   image: GalleryImage;
   href: string;
-  tall: boolean;
+  rowSpan: number;
 }) {
   const blurDataURL = image.blurHash ? blurhashToDataURL(image.blurHash) : undefined;
 
   return (
     <Link
       href={href}
-      className={`relative z-0 block overflow-hidden group ${tall ? 'row-span-2' : ''}`}
+      className="relative z-0 block overflow-hidden group"
+      style={rowSpan > 1 ? { gridRow: `span ${rowSpan}` } : undefined}
     >
       <Image
-        src={`${UPLOAD_URL}/${tall ? image.watermarkPath : image.thumbnailPath}`}
+        src={`${UPLOAD_URL}/${rowSpan > 1 ? image.watermarkPath : image.thumbnailPath}`}
         alt={category.name}
         fill
         className="object-cover object-top grayscale group-hover/side:grayscale-0 group-active/side:grayscale-0 transition-all duration-500 ease-out group-hover:scale-105 origin-top"
-        sizes={
-          tall
-            ? '(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw'
-            : '(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw'
-        }
+        sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
         placeholder={blurDataURL ? 'blur' : 'empty'}
         blurDataURL={blurDataURL}
       />

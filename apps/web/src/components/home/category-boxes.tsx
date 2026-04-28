@@ -8,7 +8,7 @@ import { CategoryCard } from './category-card';
 interface CategoryWithImage {
   category: Category;
   image: GalleryImage;
-  tall: boolean;
+  rowSpan: number;
 }
 
 function getMaxCols(width: number): number {
@@ -22,61 +22,58 @@ const TYPE_SIDES: { type: 'photo' | 'painting'; label: string; route: string }[]
   { type: 'painting', label: 'Paintings', route: '/paintings' },
 ];
 
-function assignTallItems(
-  items: Omit<CategoryWithImage, 'tall'>[],
+/**
+ * Assign rowSpan values so both sides have equal height with fully filled rows.
+ *
+ * Mobile (<768px, effectiveCols=1):
+ *   Bigger side → all rowSpan=1.
+ *   Smaller side → extra spans distributed so total rows match.
+ *
+ * Multi-column (768px+):
+ *   Target rows = max(ceil(n/cols)) across sides.
+ *   Each side fills targetRows×cols cells by distributing extra row spans.
+ */
+function assignRowSpans(
+  sidesItems: Omit<CategoryWithImage, 'rowSpan'>[][],
   cols: number,
-): CategoryWithImage[] {
-  const n = items.length;
-  if (n === 0) return [];
+  isMobile: boolean,
+): CategoryWithImage[][] {
+  if (sidesItems.length === 0) return [];
 
-  const rows = Math.ceil(n / cols);
-  const totalCells = rows * cols;
-  const tallCount = Math.max(0, Math.min(totalCells - n, n));
+  const effectiveCols = isMobile ? 1 : cols;
+  const counts = sidesItems.map((items) => items.length);
+  const targetRows = Math.max(...counts.map((n) => Math.ceil(n / effectiveCols)));
+  const totalCells = targetRows * effectiveCols;
 
-  // Pick which items become tall, using category id for stable selection
-  const indexed = items.map((item, i) => ({ item, i, seed: item.category.id * 7 + i }));
-  indexed.sort((a, b) => a.seed - b.seed);
-  const tallIndices = new Set(indexed.slice(0, tallCount).map((e) => e.i));
+  return sidesItems.map((items) => {
+    const n = items.length;
+    if (n === 0) return [];
 
-  const result = items.map((item, i) => ({ ...item, tall: tallIndices.has(i) }));
-  // Tall items first so CSS grid dense packing places them before
-  // single-row items fill rows and block 2-row spans
-  result.sort((a, b) => (a.tall === b.tall ? 0 : a.tall ? -1 : 1));
-  return result;
-}
+    const extra = totalCells - n;
+    const baseExtra = Math.floor(extra / n);
+    const remainder = extra % n;
 
-/** Make both sides occupy the same number of rows in a 1-column layout
- *  by promoting non-tall items to tall on the shorter side. */
-function balanceSides(sides: { categories: CategoryWithImage[] }[]): void {
-  if (sides.length < 2) return;
+    // Randomly pick which items get the bonus +1 span, using category id for stability
+    const indexed = items.map((item, i) => ({ i, seed: item.category.id * 7 + i }));
+    indexed.sort((a, b) => a.seed - b.seed);
+    const bonusIndices = new Set(indexed.slice(0, remainder).map((e) => e.i));
 
-  const totalRows = (cats: CategoryWithImage[]) =>
-    cats.reduce((sum, c) => sum + (c.tall ? 2 : 1), 0);
+    const result = items.map((item, i) => ({
+      ...item,
+      rowSpan: 1 + baseExtra + (bonusIndices.has(i) ? 1 : 0),
+    }));
 
-  const rowCounts = sides.map((s) => totalRows(s.categories));
-  const maxRows = Math.max(...rowCounts);
-
-  for (let i = 0; i < sides.length; i++) {
-    let deficit = maxRows - rowCounts[i];
-    for (const cat of sides[i].categories) {
-      if (deficit <= 0) break;
-      if (!cat.tall) {
-        cat.tall = true;
-        deficit--;
-      }
-    }
-    if (deficit !== maxRows - rowCounts[i]) {
-      // Re-sort after modifying tall flags
-      sides[i].categories.sort((a, b) => (a.tall === b.tall ? 0 : a.tall ? -1 : 1));
-    }
-  }
+    // Sort by rowSpan descending for dense grid packing
+    result.sort((a, b) => b.rowSpan - a.rowSpan);
+    return result;
+  });
 }
 
 function collectCategories(
   filteredImages: GalleryImage[],
   categories: Category[],
-): Omit<CategoryWithImage, 'tall'>[] {
-  const items: Omit<CategoryWithImage, 'tall'>[] = [];
+): Omit<CategoryWithImage, 'rowSpan'>[] {
+  const items: Omit<CategoryWithImage, 'rowSpan'>[] = [];
   for (const cat of categories) {
     const matches = filteredImages.filter((img) => img.category === cat.slug);
     if (matches.length > 0) {
@@ -121,16 +118,20 @@ export function CategoryBoxes({
     }).filter((s) => s.items.length > 0);
   }, [images, categories]);
 
-  // Tall assignment — re-runs when maxCols changes across breakpoints
+  // Row span assignment — re-runs when maxCols changes across breakpoints
   const sides = useMemo(() => {
-    const result = rawSides.map(({ type, label, route, items }) => ({
+    const isMobile = maxCols === getMaxCols(0); // mobile when cols matches <768 value
+    const spanResults = assignRowSpans(
+      rawSides.map((s) => s.items),
+      maxCols,
+      isMobile,
+    );
+    return rawSides.map(({ type, label, route }, i) => ({
       type,
       label,
       route,
-      categories: assignTallItems(items, maxCols),
+      categories: spanResults[i],
     }));
-    balanceSides(result);
-    return result;
   }, [rawSides, maxCols]);
 
   if (sides.length === 0) {
@@ -159,13 +160,13 @@ export function CategoryBoxes({
               className="relative z-0 grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 md:h-full category-side-grid"
               style={{ gridAutoFlow: 'dense' }}
             >
-              {cats.map(({ category, image, tall }) => (
+              {cats.map(({ category, image, rowSpan }) => (
                 <CategoryCard
                   key={category.id}
                   category={category}
                   image={image}
                   href={`${route}?category=${category.slug}`}
-                  tall={tall}
+                  rowSpan={rowSpan}
                 />
               ))}
             </div>
