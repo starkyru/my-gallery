@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { GalleryImage } from '@/components/gallery';
 import type { Category } from '@gallery/shared';
 import { CategoryCard } from './category-card';
@@ -11,22 +11,26 @@ interface CategoryWithImage {
   tall: boolean;
 }
 
-// Max columns at largest breakpoint — used for tall item calculation.
-// At smaller breakpoints (2 or 3 cols), the extra tall items just
-// create additional rows which auto-rows-fr distributes evenly.
-const MAX_COLS = 4;
+function getMaxCols(width: number): number {
+  if (width < 768) return 2;
+  if (width <= 1200) return 3;
+  return 4;
+}
 
 const TYPE_SIDES: { type: 'photo' | 'painting'; label: string; route: string }[] = [
   { type: 'photo', label: 'Photographs', route: '/photographs' },
   { type: 'painting', label: 'Paintings', route: '/paintings' },
 ];
 
-function assignTallItems(items: Omit<CategoryWithImage, 'tall'>[]): CategoryWithImage[] {
+function assignTallItems(
+  items: Omit<CategoryWithImage, 'tall'>[],
+  cols: number,
+): CategoryWithImage[] {
   const n = items.length;
   if (n === 0) return [];
 
-  const rows = Math.ceil(n / MAX_COLS);
-  const totalCells = rows * MAX_COLS;
+  const rows = Math.ceil(n / cols);
+  const totalCells = rows * cols;
   const tallCount = Math.max(0, Math.min(totalCells - n, n));
 
   // Pick which items become tall, using category id for stable selection
@@ -39,6 +43,33 @@ function assignTallItems(items: Omit<CategoryWithImage, 'tall'>[]): CategoryWith
   // single-row items fill rows and block 2-row spans
   result.sort((a, b) => (a.tall === b.tall ? 0 : a.tall ? -1 : 1));
   return result;
+}
+
+/** Make both sides occupy the same number of rows in a 1-column layout
+ *  by promoting non-tall items to tall on the shorter side. */
+function balanceSides(sides: { categories: CategoryWithImage[] }[]): void {
+  if (sides.length < 2) return;
+
+  const totalRows = (cats: CategoryWithImage[]) =>
+    cats.reduce((sum, c) => sum + (c.tall ? 2 : 1), 0);
+
+  const rowCounts = sides.map((s) => totalRows(s.categories));
+  const maxRows = Math.max(...rowCounts);
+
+  for (let i = 0; i < sides.length; i++) {
+    let deficit = maxRows - rowCounts[i];
+    for (const cat of sides[i].categories) {
+      if (deficit <= 0) break;
+      if (!cat.tall) {
+        cat.tall = true;
+        deficit--;
+      }
+    }
+    if (deficit !== maxRows - rowCounts[i]) {
+      // Re-sort after modifying tall flags
+      sides[i].categories.sort((a, b) => (a.tall === b.tall ? 0 : a.tall ? -1 : 1));
+    }
+  }
 }
 
 function collectCategories(
@@ -63,24 +94,59 @@ export function CategoryBoxes({
   images: GalleryImage[];
   categories: Category[];
 }) {
-  const sides = useMemo(() => {
+  const [maxCols, setMaxCols] = useState(4);
+
+  useEffect(() => {
+    function update() {
+      setMaxCols((prev) => {
+        const next = getMaxCols(window.innerWidth);
+        return prev === next ? prev : next;
+      });
+    }
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+
+  // Stable image selection — only re-runs when data changes, not on resize
+  const rawSides = useMemo(() => {
     return TYPE_SIDES.map(({ type, label, route }) => {
       const typeImages = images.filter((img) => img.type === type);
       return {
         type,
         label,
         route,
-        categories: assignTallItems(collectCategories(typeImages, categories)),
+        items: collectCategories(typeImages, categories),
       };
-    }).filter((s) => s.categories.length > 0);
+    }).filter((s) => s.items.length > 0);
   }, [images, categories]);
+
+  // Tall assignment — re-runs when maxCols changes across breakpoints
+  const sides = useMemo(() => {
+    const result = rawSides.map(({ type, label, route, items }) => ({
+      type,
+      label,
+      route,
+      categories: assignTallItems(items, maxCols),
+    }));
+    balanceSides(result);
+    return result;
+  }, [rawSides, maxCols]);
 
   if (sides.length === 0) {
     return null;
   }
 
+  const mobileRowHeight = `${0.5}vw`;
+
   return (
     <section>
+      <style>{`
+        .category-side-grid { grid-auto-rows: ${mobileRowHeight}; }
+        @media (min-width: 768px) {
+          .category-side-grid { grid-auto-rows: minmax(200px, 1fr); }
+        }
+      `}</style>
       <div className="flex md:flex-row md:h-screen">
         {sides.map(({ type, label, route, categories: cats }) => (
           <div key={type} className="relative flex-1 md:h-full group/side">
@@ -90,8 +156,8 @@ export function CategoryBoxes({
               {label}
             </span>
             <div
-              className="relative z-0 grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 h-full"
-              style={{ gridAutoFlow: 'dense', gridAutoRows: 'minmax(100px, 1fr)' }}
+              className="relative z-0 grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 md:h-full category-side-grid"
+              style={{ gridAutoFlow: 'dense' }}
             >
               {cats.map(({ category, image, tall }) => (
                 <CategoryCard
