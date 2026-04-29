@@ -11,6 +11,36 @@ import { CatalogueBrowser } from '@/components/catalogue-browser';
 import { FULFILLMENT_COUNTRY, FULFILLMENT_CURRENCY } from '@/config';
 import type { ServiceConfig } from '@gallery/shared';
 
+const cmToInch = (cm: number) => (cm ? +(cm / 2.54).toFixed(2) : 0);
+const inchToCm = (inch: number) => (inch ? +(inch * 2.54).toFixed(1) : 0);
+
+const PRESET_SIZES: { label: string; widthCm: number; heightCm: number }[] = [
+  { label: '5×7"', widthCm: 12.7, heightCm: 17.8 },
+  { label: 'A5', widthCm: 14.8, heightCm: 21.0 },
+  { label: '8×10"', widthCm: 20.3, heightCm: 25.4 },
+  { label: 'Letter', widthCm: 21.6, heightCm: 27.9 },
+  { label: 'A4', widthCm: 21.0, heightCm: 29.7 },
+  { label: '11×14"', widthCm: 27.9, heightCm: 35.6 },
+  { label: 'A3', widthCm: 29.7, heightCm: 42.0 },
+  { label: '12×16"', widthCm: 30.5, heightCm: 40.6 },
+  { label: '13×19"', widthCm: 33.0, heightCm: 48.3 },
+  { label: 'A3+', widthCm: 32.9, heightCm: 48.3 },
+  { label: '16×20"', widthCm: 40.6, heightCm: 50.8 },
+];
+
+const MEDIA_TYPE_SUGGESTIONS = [
+  'Glossy Photo Paper',
+  'Matte Photo Paper',
+  'Semi-Gloss Photo Paper',
+  'Canvas',
+  'Watercolor Paper',
+  'Fine Art Rag',
+  'Baryta Paper',
+  'Metallic Paper',
+  'Cotton Rag',
+  'Bamboo Paper',
+];
+
 export default function ProviderSettingsPage() {
   const { provider } = useParams<{ provider: string }>();
   const router = useRouter();
@@ -33,6 +63,8 @@ export default function ProviderSettingsPage() {
     description: '',
     widthCm: '',
     heightCm: '',
+    widthIn: '',
+    heightIn: '',
     mediaType: '',
   });
   const [sandbox, setSandbox] = useState(true);
@@ -86,7 +118,15 @@ export default function ProviderSettingsPage() {
         ...(newSku.mediaType ? { mediaType: newSku.mediaType } : {}),
       },
     ]);
-    setNewSku({ sku: '', description: '', widthCm: '', heightCm: '', mediaType: '' });
+    setNewSku({
+      sku: '',
+      description: '',
+      widthCm: '',
+      heightCm: '',
+      widthIn: '',
+      heightIn: '',
+      mediaType: '',
+    });
   }
 
   function removeSku(index: number) {
@@ -240,6 +280,41 @@ export default function ProviderSettingsPage() {
                 className={`${inputClass} w-16`}
               />
               <input
+                value={s.widthCm ? cmToInch(s.widthCm) : ''}
+                onChange={(e) =>
+                  setSkus((prev) =>
+                    prev.map((sk, i) =>
+                      i === idx
+                        ? { ...sk, widthCm: e.target.value ? inchToCm(+e.target.value) : undefined }
+                        : sk,
+                    ),
+                  )
+                }
+                type="number"
+                step="0.01"
+                placeholder="W in"
+                className={`${inputClass} w-16`}
+              />
+              <input
+                value={s.heightCm ? cmToInch(s.heightCm) : ''}
+                onChange={(e) =>
+                  setSkus((prev) =>
+                    prev.map((sk, i) =>
+                      i === idx
+                        ? {
+                            ...sk,
+                            heightCm: e.target.value ? inchToCm(+e.target.value) : undefined,
+                          }
+                        : sk,
+                    ),
+                  )
+                }
+                type="number"
+                step="0.01"
+                placeholder="H in"
+                className={`${inputClass} w-16`}
+              />
+              <input
                 value={s.mediaType ?? ''}
                 onChange={(e) =>
                   setSkus((prev) =>
@@ -248,6 +323,7 @@ export default function ProviderSettingsPage() {
                     ),
                   )
                 }
+                list="media-type-suggestions"
                 placeholder="Media type"
                 className={`${inputClass} w-32`}
               />
@@ -275,7 +351,14 @@ export default function ProviderSettingsPage() {
           />
           <input
             value={newSku.widthCm}
-            onChange={(e) => setNewSku((prev) => ({ ...prev, widthCm: e.target.value }))}
+            onChange={(e) => {
+              const cm = e.target.value;
+              setNewSku((prev) => ({
+                ...prev,
+                widthCm: cm,
+                widthIn: cm ? String(cmToInch(+cm)) : '',
+              }));
+            }}
             type="number"
             step="0.1"
             placeholder="W cm"
@@ -283,15 +366,53 @@ export default function ProviderSettingsPage() {
           />
           <input
             value={newSku.heightCm}
-            onChange={(e) => setNewSku((prev) => ({ ...prev, heightCm: e.target.value }))}
+            onChange={(e) => {
+              const cm = e.target.value;
+              setNewSku((prev) => ({
+                ...prev,
+                heightCm: cm,
+                heightIn: cm ? String(cmToInch(+cm)) : '',
+              }));
+            }}
             type="number"
             step="0.1"
             placeholder="H cm"
             className={`${inputClass} w-16`}
           />
           <input
+            value={newSku.widthIn}
+            onChange={(e) => {
+              const inch = e.target.value;
+              setNewSku((prev) => ({
+                ...prev,
+                widthIn: inch,
+                widthCm: inch ? String(inchToCm(+inch)) : '',
+              }));
+            }}
+            type="number"
+            step="0.01"
+            placeholder="W in"
+            className={`${inputClass} w-16`}
+          />
+          <input
+            value={newSku.heightIn}
+            onChange={(e) => {
+              const inch = e.target.value;
+              setNewSku((prev) => ({
+                ...prev,
+                heightIn: inch,
+                heightCm: inch ? String(inchToCm(+inch)) : '',
+              }));
+            }}
+            type="number"
+            step="0.01"
+            placeholder="H in"
+            className={`${inputClass} w-16`}
+          />
+          <input
             value={newSku.mediaType}
             onChange={(e) => setNewSku((prev) => ({ ...prev, mediaType: e.target.value }))}
+            list="media-type-suggestions"
             placeholder="Media type"
             className={`${inputClass} w-32`}
           />
@@ -310,6 +431,35 @@ export default function ProviderSettingsPage() {
             </button>
           )}
         </div>
+        <div className="mt-2">
+          <span className="text-xs text-gallery-gray mr-2">Size presets:</span>
+          <div className="inline-flex flex-wrap gap-1">
+            {PRESET_SIZES.map((p) => (
+              <button
+                key={p.label}
+                type="button"
+                onClick={() =>
+                  setNewSku((prev) => ({
+                    ...prev,
+                    widthCm: String(p.widthCm),
+                    heightCm: String(p.heightCm),
+                    widthIn: String(cmToInch(p.widthCm)),
+                    heightIn: String(cmToInch(p.heightCm)),
+                    description: prev.description || p.label,
+                  }))
+                }
+                className="px-2 py-0.5 border border-white/10 rounded text-xs text-gallery-gray hover:text-white hover:bg-white/5 transition-colors"
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <datalist id="media-type-suggestions">
+          {MEDIA_TYPE_SUGGESTIONS.map((m) => (
+            <option key={m} value={m} />
+          ))}
+        </datalist>
         <div className="flex gap-2 mt-3">
           <button
             onClick={handleSaveSkus}
