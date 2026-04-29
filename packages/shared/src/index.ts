@@ -44,6 +44,7 @@ export interface ImagePrintOption {
   price: number;
   widthCm: number;
   heightCm: number;
+  mediaType: string | null;
   fulfillmentProvider: string | null;
   printLimit: number | null;
   soldCount: number;
@@ -107,6 +108,7 @@ export interface FulfillmentSku {
   price?: string;
   widthCm?: number;
   heightCm?: number;
+  mediaType?: string;
 }
 
 export type UserRole = 'admin' | 'artist';

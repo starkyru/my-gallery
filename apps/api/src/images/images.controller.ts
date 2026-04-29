@@ -98,6 +98,10 @@ class PrintOptionDto {
   heightCm?: number;
 
   @IsOptional()
+  @IsString()
+  mediaType?: string;
+
+  @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(0)

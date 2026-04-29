@@ -91,6 +91,7 @@ export class ServicesController {
       description: string;
       widthCm?: number;
       heightCm?: number;
+      mediaType?: string;
     }[] = [];
     for (const config of configs) {
       for (const s of config.skus || []) {
@@ -100,6 +101,7 @@ export class ServicesController {
           description: s.description,
           ...(s.widthCm != null && { widthCm: s.widthCm }),
           ...(s.heightCm != null && { heightCm: s.heightCm }),
+          ...(s.mediaType && { mediaType: s.mediaType }),
         });
       }
     }

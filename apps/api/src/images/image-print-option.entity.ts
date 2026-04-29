@@ -28,6 +28,9 @@ export class ImagePrintOptionEntity {
   @Column({ name: 'height_cm', type: 'decimal', precision: 6, scale: 1, default: 0 })
   heightCm!: number;
 
+  @Column({ name: 'media_type', type: 'varchar', nullable: true })
+  mediaType!: string | null;
+
   @Column({ name: 'fulfillment_provider', type: 'varchar', nullable: true })
   fulfillmentProvider!: string | null;
 

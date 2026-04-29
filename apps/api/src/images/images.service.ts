@@ -45,6 +45,7 @@ interface UpdateImageData {
     price: number;
     widthCm?: number;
     heightCm?: number;
+    mediaType?: string;
     printLimit?: number | null;
   }[];
   tagIds?: number[];

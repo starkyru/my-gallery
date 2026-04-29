@@ -19,9 +19,22 @@ export default function ProviderSettingsPage() {
 
   const [config, setConfig] = useState<ServiceConfig | null>(null);
   const [skus, setSkus] = useState<
-    { sku: string; description: string; price?: string; widthCm?: number; heightCm?: number }[]
+    {
+      sku: string;
+      description: string;
+      price?: string;
+      widthCm?: number;
+      heightCm?: number;
+      mediaType?: string;
+    }[]
   >([]);
-  const [newSku, setNewSku] = useState({ sku: '', description: '', widthCm: '', heightCm: '' });
+  const [newSku, setNewSku] = useState({
+    sku: '',
+    description: '',
+    widthCm: '',
+    heightCm: '',
+    mediaType: '',
+  });
   const [sandbox, setSandbox] = useState(true);
   const [saving, setSaving] = useState(false);
   const [catalogueOpen, setCatalogueOpen] = useState(false);
@@ -70,9 +83,10 @@ export default function ProviderSettingsPage() {
         description: newSku.description,
         ...(newSku.widthCm ? { widthCm: +newSku.widthCm } : {}),
         ...(newSku.heightCm ? { heightCm: +newSku.heightCm } : {}),
+        ...(newSku.mediaType ? { mediaType: newSku.mediaType } : {}),
       },
     ]);
-    setNewSku({ sku: '', description: '', widthCm: '', heightCm: '' });
+    setNewSku({ sku: '', description: '', widthCm: '', heightCm: '', mediaType: '' });
   }
 
   function removeSku(index: number) {
@@ -225,6 +239,18 @@ export default function ProviderSettingsPage() {
                 placeholder="H cm"
                 className={`${inputClass} w-16`}
               />
+              <input
+                value={s.mediaType ?? ''}
+                onChange={(e) =>
+                  setSkus((prev) =>
+                    prev.map((sk, i) =>
+                      i === idx ? { ...sk, mediaType: e.target.value || undefined } : sk,
+                    ),
+                  )
+                }
+                placeholder="Media type"
+                className={`${inputClass} w-32`}
+              />
               <button
                 onClick={() => removeSku(idx)}
                 className="text-red-400 hover:text-red-300 text-xs px-1"
@@ -262,6 +288,12 @@ export default function ProviderSettingsPage() {
             step="0.1"
             placeholder="H cm"
             className={`${inputClass} w-16`}
+          />
+          <input
+            value={newSku.mediaType}
+            onChange={(e) => setNewSku((prev) => ({ ...prev, mediaType: e.target.value }))}
+            placeholder="Media type"
+            className={`${inputClass} w-32`}
           />
           <button
             onClick={addSku}

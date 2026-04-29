@@ -30,6 +30,7 @@ export class ServiceConfigEntity {
     price?: string;
     widthCm?: number;
     heightCm?: number;
+    mediaType?: string;
   }[];
 
   @Column({ type: 'boolean', default: true })

@@ -10,6 +10,7 @@ import { BtcPayProvider } from './providers/btcpay/btcpay.provider';
 import { PayPalProvider } from './providers/paypal/paypal.provider';
 import { ProdigiProvider } from './providers/prodigi/prodigi.provider';
 import { StripeProvider } from './providers/stripe/stripe.provider';
+import { InhouseProvider } from './providers/inhouse/inhouse.provider';
 
 @Module({
   imports: [TypeOrmModule.forFeature([ServiceConfigEntity])],
@@ -22,6 +23,7 @@ import { StripeProvider } from './providers/stripe/stripe.provider';
     PayPalProvider,
     StripeProvider,
     ProdigiProvider,
+    InhouseProvider,
   ],
   exports: [ServicesService, PaymentRegistryService, FulfillmentRegistryService],
 })
@@ -33,6 +35,7 @@ export class ServicesModule implements OnModuleInit {
     private readonly payPalProvider: PayPalProvider,
     private readonly stripeProvider: StripeProvider,
     private readonly prodigiProvider: ProdigiProvider,
+    private readonly inhouseProvider: InhouseProvider,
   ) {}
 
   onModuleInit() {
@@ -40,5 +43,6 @@ export class ServicesModule implements OnModuleInit {
     this.paymentRegistry.register(this.payPalProvider);
     this.paymentRegistry.register(this.stripeProvider);
     this.fulfillmentRegistry.register(this.prodigiProvider);
+    this.fulfillmentRegistry.register(this.inhouseProvider);
   }
 }

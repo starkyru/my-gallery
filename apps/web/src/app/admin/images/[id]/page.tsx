@@ -19,6 +19,7 @@ interface PrintOptionRow {
   price: number;
   widthCm: number;
   heightCm: number;
+  mediaType: string;
   printLimit: number | null;
   soldCount: number;
 }
@@ -114,7 +115,14 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
   const [categories, setCategories] = useState<Category[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [availableSkus, setAvailableSkus] = useState<
-    { provider: string; sku: string; description: string; widthCm?: number; heightCm?: number }[]
+    {
+      provider: string;
+      sku: string;
+      description: string;
+      widthCm?: number;
+      heightCm?: number;
+      mediaType?: string;
+    }[]
   >([]);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [allTags, setAllTags] = useState<Tag[]>([]);
@@ -175,6 +183,7 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
           price: Number(o.price),
           widthCm: Number(o.widthCm) || 0,
           heightCm: Number(o.heightCm) || 0,
+          mediaType: o.mediaType ?? '',
           printLimit: o.printLimit ?? null,
           soldCount: o.soldCount ?? 0,
         })),
@@ -385,6 +394,7 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
         price: 0,
         widthCm: 0,
         heightCm: 0,
+        mediaType: '',
         printLimit: null,
         soldCount: 0,
       },
@@ -403,6 +413,7 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
             description: catalog?.description || o.description,
             ...(catalog?.widthCm != null ? { widthCm: catalog.widthCm } : {}),
             ...(catalog?.heightCm != null ? { heightCm: catalog.heightCm } : {}),
+            ...(catalog?.mediaType ? { mediaType: catalog.mediaType } : {}),
           };
         }
         return { ...o, [field]: value };
@@ -688,40 +699,44 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
               />
             </div>
 
-            {/* Physical Size (inches input, stored as cm) */}
-            <div>
-              <label className="block text-xs text-gallery-gray mb-1">Physical Size (inches)</label>
-              <div className="grid grid-cols-2 gap-1.5">
-                <input
-                  defaultValue={editData.sizeWidthCm ? cmToInch(editData.sizeWidthCm) : ''}
-                  key={`w-${image.id}`}
-                  onBlur={(e) =>
-                    setEditData({
-                      ...editData,
-                      sizeWidthCm: e.target.value ? inchToCm(+e.target.value) : null,
-                    })
-                  }
-                  type="number"
-                  step="0.01"
-                  placeholder="Width"
-                  className={inputClass}
-                />
-                <input
-                  defaultValue={editData.sizeHeightCm ? cmToInch(editData.sizeHeightCm) : ''}
-                  key={`h-${image.id}`}
-                  onBlur={(e) =>
-                    setEditData({
-                      ...editData,
-                      sizeHeightCm: e.target.value ? inchToCm(+e.target.value) : null,
-                    })
-                  }
-                  type="number"
-                  step="0.01"
-                  placeholder="Height"
-                  className={inputClass}
-                />
+            {/* Physical Size — hidden when any print option has dimensions */}
+            {!printOptions.some((o) => o.widthCm || o.heightCm) && (
+              <div>
+                <label className="block text-xs text-gallery-gray mb-1">
+                  Physical Size (inches)
+                </label>
+                <div className="grid grid-cols-2 gap-1.5">
+                  <input
+                    defaultValue={editData.sizeWidthCm ? cmToInch(editData.sizeWidthCm) : ''}
+                    key={`w-${image.id}`}
+                    onBlur={(e) =>
+                      setEditData({
+                        ...editData,
+                        sizeWidthCm: e.target.value ? inchToCm(+e.target.value) : null,
+                      })
+                    }
+                    type="number"
+                    step="0.01"
+                    placeholder="Width"
+                    className={inputClass}
+                  />
+                  <input
+                    defaultValue={editData.sizeHeightCm ? cmToInch(editData.sizeHeightCm) : ''}
+                    key={`h-${image.id}`}
+                    onBlur={(e) =>
+                      setEditData({
+                        ...editData,
+                        sizeHeightCm: e.target.value ? inchToCm(+e.target.value) : null,
+                      })
+                    }
+                    type="number"
+                    step="0.01"
+                    placeholder="Height"
+                    className={inputClass}
+                  />
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Tags */}
@@ -996,6 +1011,10 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
                           className={`${inputClass} ${dimsLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
                         />
                       </div>
+                      {/* Media type (from catalog) */}
+                      {opt.mediaType && (
+                        <div className="text-xs text-gallery-gray">Media: {opt.mediaType}</div>
+                      )}
                       {/* Per-option limit */}
                       {editData.perOptionLimits && (
                         <div className="flex gap-1.5 items-center">

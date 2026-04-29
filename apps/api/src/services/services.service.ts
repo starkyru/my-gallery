@@ -59,11 +59,21 @@ export class ServicesService implements OnModuleInit {
           sandbox: true,
           sortOrder: 0,
         }),
+        this.repo.create({
+          type: 'fulfillment',
+          provider: 'inhouse',
+          displayName: 'Inhouse Print',
+          enabled: false,
+          skus: [],
+          sandbox: false,
+          sortOrder: 1,
+        }),
       ]);
       this.logger.log('Default service configs seeded');
     } else {
       // Ensure newer providers exist in existing DBs
       await this.ensureProvider('payment', 'stripe', 'Stripe', 2);
+      await this.ensureProvider('fulfillment', 'inhouse', 'Inhouse Print', 1);
     }
   }
 
@@ -109,7 +119,14 @@ export class ServicesService implements OnModuleInit {
     provider: string,
     data: {
       enabled?: boolean;
-      skus?: { sku: string; description: string; price?: string }[];
+      skus?: {
+        sku: string;
+        description: string;
+        price?: string;
+        widthCm?: number;
+        heightCm?: number;
+        mediaType?: string;
+      }[];
       sandbox?: boolean;
     },
   ): Promise<ServiceConfigEntity> {

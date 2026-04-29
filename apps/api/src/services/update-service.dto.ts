@@ -26,6 +26,10 @@ class SkuDto {
   @IsOptional()
   @IsNumber()
   heightCm?: number;
+
+  @IsOptional()
+  @IsString()
+  mediaType?: string;
 }
 
 export class UpdateServiceDto {
