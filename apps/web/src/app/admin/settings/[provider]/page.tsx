@@ -280,8 +280,9 @@ export default function ProviderSettingsPage() {
                 className={`${inputClass} w-16`}
               />
               <input
-                value={s.widthCm ? cmToInch(s.widthCm) : ''}
-                onChange={(e) =>
+                key={`w-in-${idx}-${s.widthCm}`}
+                defaultValue={s.widthCm ? cmToInch(s.widthCm) : ''}
+                onBlur={(e) =>
                   setSkus((prev) =>
                     prev.map((sk, i) =>
                       i === idx
@@ -296,8 +297,9 @@ export default function ProviderSettingsPage() {
                 className={`${inputClass} w-16`}
               />
               <input
-                value={s.heightCm ? cmToInch(s.heightCm) : ''}
-                onChange={(e) =>
+                key={`h-in-${idx}-${s.heightCm}`}
+                defaultValue={s.heightCm ? cmToInch(s.heightCm) : ''}
+                onBlur={(e) =>
                   setSkus((prev) =>
                     prev.map((sk, i) =>
                       i === idx
