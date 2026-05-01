@@ -361,7 +361,7 @@ export default function AdminImagesPage() {
                 <div className="flex gap-1 mt-3">
                   <Link
                     href={`/admin/images/${image.id}`}
-                    title="Edit"
+                    aria-label="Edit"
                     className="p-1.5 rounded hover:bg-white/10 transition-colors"
                   >
                     <svg
@@ -380,7 +380,7 @@ export default function AdminImagesPage() {
                   </Link>
                   <button
                     onClick={() => handleToggleArchive(image)}
-                    title={image.isArchived ? 'Unarchive' : 'Archive'}
+                    aria-label={image.isArchived ? 'Unarchive' : 'Archive'}
                     className="p-1.5 rounded hover:bg-white/10 transition-colors"
                   >
                     {image.isArchived ? (
@@ -415,7 +415,7 @@ export default function AdminImagesPage() {
                   </button>
                   <button
                     onClick={() => handleDelete(image.id)}
-                    title="Delete"
+                    aria-label="Delete"
                     className="p-1.5 rounded hover:bg-white/10 text-red-400 transition-colors"
                   >
                     <svg

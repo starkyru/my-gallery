@@ -15,6 +15,7 @@ import { memoryStorage } from 'multer';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AdminGuard } from '../auth/admin.guard';
 import { WallsService } from './walls.service';
+import { CreateWallDto, UpdateWallDto, UpdateFrameDto } from './walls.dto';
 
 @Controller('walls')
 export class WallsController {
@@ -27,18 +28,10 @@ export class WallsController {
 
   @Post()
   @UseGuards(JwtAuthGuard, AdminGuard)
-  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))
-  create(
-    @UploadedFile() file: Express.Multer.File,
-    @Body()
-    body: {
-      name: string;
-      wallWidthCm?: string;
-      wallHeightCm?: string;
-      anchorX?: string;
-      anchorY?: string;
-    },
-  ) {
+  @UseInterceptors(
+    FileInterceptor('file', { storage: memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } }),
+  )
+  create(@UploadedFile() file: Express.Multer.File, @Body() body: CreateWallDto) {
     return this.service.createWall(file, {
       name: body.name,
       wallWidthCm: body.wallWidthCm ? parseFloat(body.wallWidthCm) : undefined,
@@ -50,19 +43,7 @@ export class WallsController {
 
   @Put(':id')
   @UseGuards(JwtAuthGuard, AdminGuard)
-  update(
-    @Param('id') id: string,
-    @Body()
-    body: {
-      name?: string;
-      wallWidthCm?: number | null;
-      wallHeightCm?: number | null;
-      anchorX?: number;
-      anchorY?: number;
-      isDefault?: boolean;
-      sortOrder?: number;
-    },
-  ) {
+  update(@Param('id') id: string, @Body() body: UpdateWallDto) {
     return this.service.updateWall(+id, body);
   }
 
@@ -85,20 +66,7 @@ export class WallsController {
 
   @Put('frames/:id')
   @UseGuards(JwtAuthGuard, AdminGuard)
-  updateFrame(
-    @Param('id') id: string,
-    @Body()
-    body: {
-      name?: string;
-      borderColor?: string;
-      borderWidthMm?: number;
-      matColor?: string;
-      matWidthMm?: number;
-      shadowEnabled?: boolean;
-      enabled?: boolean;
-      sortOrder?: number;
-    },
-  ) {
+  updateFrame(@Param('id') id: string, @Body() body: UpdateFrameDto) {
     return this.service.updateFrame(+id, body);
   }
 }

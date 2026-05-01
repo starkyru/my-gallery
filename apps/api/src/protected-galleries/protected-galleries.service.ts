@@ -32,11 +32,11 @@ export class ProtectedGalleriesService {
   }
 
   private getSigningKey(): string {
-    return (
+    const key =
       this.configService.get<string>('DOWNLOAD_SIGNING_KEY') ||
-      this.configService.get<string>('JWT_SECRET') ||
-      'dev-secret-change-me'
-    );
+      this.configService.get<string>('JWT_SECRET');
+    if (!key) throw new Error('DOWNLOAD_SIGNING_KEY or JWT_SECRET must be set');
+    return key;
   }
 
   private stripHash(gallery: ProtectedGalleryEntity) {
@@ -284,9 +284,11 @@ export class ProtectedGalleriesService {
 
     const images = await this.getGalleryImages(gallery.id);
 
-    return images.map((img) => ({
-      name: `${img.title || img.id}${path.extname(img.filePath)}`,
-      filePath: path.join(this.uploadDir, img.filePath),
-    }));
+    return images
+      .filter((img) => img.allowDownloadOriginal)
+      .map((img) => ({
+        name: `${img.title || img.id}${path.extname(img.filePath)}`,
+        filePath: path.join(this.uploadDir, img.filePath),
+      }));
   }
 }

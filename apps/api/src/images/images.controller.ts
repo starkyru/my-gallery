@@ -306,7 +306,9 @@ export class ImagesController {
 
   @Post()
   @UseGuards(JwtAuthGuard, AdminGuard)
-  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))
+  @UseInterceptors(
+    FileInterceptor('file', { storage: memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } }),
+  )
   upload(@UploadedFile() file: Express.Multer.File, @Body() dto: CreateImageDto) {
     return this.service.upload(file, dto);
   }
@@ -348,9 +350,10 @@ export class ImagesController {
     if (!this.service.verifyDownloadSignature(+id, expires, sig)) {
       throw new ForbiddenException('Invalid or expired download link');
     }
-    const image = await this.service.findOne(+id);
+    const image = await this.service.findOneEntity(+id);
     const uploadDir = this.configService.get('UPLOAD_DIR', './uploads');
     const filePath = path.join(uploadDir, image.filePath);
-    res.download(filePath, `${image.title}${path.extname(image.filePath)}`);
+    const safeName = (image.title || 'image').replace(/[^a-zA-Z0-9._\s-]/g, '_');
+    res.download(filePath, `${safeName}${path.extname(image.filePath)}`);
   }
 }

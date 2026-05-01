@@ -70,14 +70,21 @@ export default function AdminLoginPage() {
             </p>
           ) : (
             <form onSubmit={handleForgot} className="space-y-4">
-              <input
-                type="email"
-                value={forgotEmail}
-                onChange={(e) => setForgotEmail(e.target.value)}
-                placeholder="Your email address"
-                required
-                className={inputClass}
-              />
+              <div>
+                <label htmlFor="forgot-email" className="sr-only">
+                  Email address
+                </label>
+                <input
+                  id="forgot-email"
+                  type="email"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  placeholder="Your email address"
+                  required
+                  autoComplete="email"
+                  className={inputClass}
+                />
+              </div>
               <button
                 type="submit"
                 disabled={loading}
@@ -102,20 +109,34 @@ export default function AdminLoginPage() {
         <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
           <h1 className="font-serif text-3xl text-center mb-8">Login</h1>
           {error && <p className="text-red-400 text-sm text-center">{error}</p>}
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="Username"
-            className={inputClass}
-          />
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
-            className={inputClass}
-          />
+          <div>
+            <label htmlFor="login-username" className="sr-only">
+              Username
+            </label>
+            <input
+              id="login-username"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Username"
+              autoComplete="username"
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label htmlFor="login-password" className="sr-only">
+              Password
+            </label>
+            <input
+              id="login-password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+              autoComplete="current-password"
+              className={inputClass}
+            />
+          </div>
           <button
             type="submit"
             disabled={loading}

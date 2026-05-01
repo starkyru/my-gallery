@@ -228,51 +228,100 @@ export default function CheckoutPage() {
       {needsShipping && (
         <div className="mb-6 space-y-4">
           <h2 className="font-serif text-xl">Shipping Address</h2>
-          <input
-            value={shipping.name}
-            onChange={(e) => setShipping((s) => ({ ...s, name: e.target.value }))}
-            placeholder="Full name"
-            className={inputClass}
-          />
-          <input
-            value={shipping.address1}
-            onChange={(e) => setShipping((s) => ({ ...s, address1: e.target.value }))}
-            placeholder="Address line 1"
-            className={inputClass}
-          />
-          <input
-            value={shipping.address2}
-            onChange={(e) => setShipping((s) => ({ ...s, address2: e.target.value }))}
-            placeholder="Address line 2 (optional)"
-            className={inputClass}
-          />
-          <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="ship-name" className="sr-only">
+              Full name
+            </label>
             <input
-              value={shipping.city}
-              onChange={(e) => setShipping((s) => ({ ...s, city: e.target.value }))}
-              placeholder="City"
+              id="ship-name"
+              value={shipping.name}
+              onChange={(e) => setShipping((s) => ({ ...s, name: e.target.value }))}
+              placeholder="Full name"
+              autoComplete="name"
               className={inputClass}
             />
+          </div>
+          <div>
+            <label htmlFor="ship-address1" className="sr-only">
+              Address line 1
+            </label>
             <input
-              value={shipping.state}
-              onChange={(e) => setShipping((s) => ({ ...s, state: e.target.value }))}
-              placeholder="State / Province"
+              id="ship-address1"
+              value={shipping.address1}
+              onChange={(e) => setShipping((s) => ({ ...s, address1: e.target.value }))}
+              placeholder="Address line 1"
+              autoComplete="address-line1"
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label htmlFor="ship-address2" className="sr-only">
+              Address line 2
+            </label>
+            <input
+              id="ship-address2"
+              value={shipping.address2}
+              onChange={(e) => setShipping((s) => ({ ...s, address2: e.target.value }))}
+              placeholder="Address line 2 (optional)"
+              autoComplete="address-line2"
               className={inputClass}
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <input
-              value={shipping.postalCode}
-              onChange={(e) => setShipping((s) => ({ ...s, postalCode: e.target.value }))}
-              placeholder="Postal code"
-              className={inputClass}
-            />
-            <input
-              value={shipping.country}
-              onChange={(e) => setShipping((s) => ({ ...s, country: e.target.value }))}
-              placeholder="Country code (e.g. US)"
-              className={inputClass}
-            />
+            <div>
+              <label htmlFor="ship-city" className="sr-only">
+                City
+              </label>
+              <input
+                id="ship-city"
+                value={shipping.city}
+                onChange={(e) => setShipping((s) => ({ ...s, city: e.target.value }))}
+                placeholder="City"
+                autoComplete="address-level2"
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label htmlFor="ship-state" className="sr-only">
+                State / Province
+              </label>
+              <input
+                id="ship-state"
+                value={shipping.state}
+                onChange={(e) => setShipping((s) => ({ ...s, state: e.target.value }))}
+                placeholder="State / Province"
+                autoComplete="address-level1"
+                className={inputClass}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="ship-postal" className="sr-only">
+                Postal code
+              </label>
+              <input
+                id="ship-postal"
+                value={shipping.postalCode}
+                onChange={(e) => setShipping((s) => ({ ...s, postalCode: e.target.value }))}
+                placeholder="Postal code"
+                autoComplete="postal-code"
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label htmlFor="ship-country" className="sr-only">
+                Country
+              </label>
+              <input
+                id="ship-country"
+                value={shipping.country}
+                onChange={(e) => setShipping((s) => ({ ...s, country: e.target.value }))}
+                placeholder="Country code (e.g. US)"
+                autoComplete="country"
+                className={inputClass}
+              />
+            </div>
           </div>
         </div>
       )}

@@ -124,6 +124,8 @@ export class ImagesService {
       imagePaintTypes,
       adminNote,
       originalFileName,
+      filePath,
+      aiDescription,
       project,
       ...rest
     } = image as ImageEntity & {
@@ -138,14 +140,14 @@ export class ImagesService {
       ? { id: project.id, name: project.name, slug: project.slug }
       : null;
     if (stripAdmin) {
-      void adminNote;
-      void originalFileName;
       return { ...rest, project: mappedProject, tags, mediaTypes, paintTypes };
     }
     return {
       ...rest,
       adminNote,
       originalFileName,
+      filePath,
+      aiDescription,
       project: mappedProject,
       tags,
       mediaTypes,
@@ -154,11 +156,11 @@ export class ImagesService {
   }
 
   private getSigningKey(): string {
-    return (
+    const key =
       this.configService.get<string>('DOWNLOAD_SIGNING_KEY') ||
-      this.configService.get<string>('JWT_SECRET') ||
-      'dev-secret-change-me'
-    );
+      this.configService.get<string>('JWT_SECRET');
+    if (!key) throw new Error('DOWNLOAD_SIGNING_KEY or JWT_SECRET must be set');
+    return key;
   }
 
   async findAll(query?: {
@@ -340,7 +342,7 @@ export class ImagesService {
     }
   }
 
-  async findOne(id: number) {
+  async findOneEntity(id: number): Promise<ImageEntity> {
     const image = await this.repo.findOne({
       where: { id },
       relations: [
@@ -355,6 +357,11 @@ export class ImagesService {
       ],
     });
     if (!image) throw new NotFoundException('Image not found');
+    return image;
+  }
+
+  async findOne(id: number) {
+    const image = await this.findOneEntity(id);
     return this.mapRelations(image, false);
   }
 
@@ -541,7 +548,7 @@ export class ImagesService {
   }
 
   async reupload(id: number, file: Express.Multer.File) {
-    const existing = await this.findOne(id);
+    const existing = await this.findOneEntity(id);
     this.logger.log(`Reupload started for image ${id}: ${file?.originalname}, size=${file?.size}`);
 
     const { processBuffer, metadata } = await this.validateAndProcessFile(file);
@@ -671,7 +678,7 @@ export class ImagesService {
   }
 
   async remove(id: number) {
-    const image = await this.findOne(id);
+    const image = await this.findOneEntity(id);
     const mediumPath = image.watermarkPath.replace('watermarked/', 'medium/');
     const paths = [image.filePath, image.thumbnailPath, image.watermarkPath, mediumPath].map((p) =>
       this.safePath(p),

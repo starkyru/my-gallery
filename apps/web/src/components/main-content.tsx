@@ -7,6 +7,8 @@ export function MainContent({ children }: { children: React.ReactNode }) {
   const isImageDetail = pathname.startsWith('/gallery/');
 
   return (
-    <main className={isImageDetail ? 'h-[calc(100dvh-61px)]' : 'min-h-screen'}>{children}</main>
+    <main id="main-content" className={isImageDetail ? 'h-[calc(100dvh-61px)]' : 'min-h-screen'}>
+      {children}
+    </main>
   );
 }
