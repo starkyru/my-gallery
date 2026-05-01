@@ -12,17 +12,8 @@ import CreatableSelect from 'react-select/creatable';
 import { darkSelectStyles } from '@/lib/select-styles';
 import { CalendarIcon } from '@/components/icons/calendar-icon';
 import { ChevronRightIcon } from '@/components/icons/chevron-right-icon';
-
-interface PrintOptionRow {
-  sku: string;
-  description: string;
-  price: number;
-  widthCm: number;
-  heightCm: number;
-  mediaType: string;
-  printLimit: number | null;
-  soldCount: number;
-}
+import { PrintOptionsEditor } from './print-options-editor';
+import type { PrintOptionRow } from './print-options-editor';
 
 const cmToInch = (cm: number) => (cm ? +(cm / 2.54).toFixed(2) : 0);
 const inchToCm = (inch: number) => (inch ? +(inch * 2.54).toFixed(1) : 0);
@@ -383,46 +374,6 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
       setReuploading(false);
       if (reuploadInputRef.current) reuploadInputRef.current.value = '';
     }
-  }
-
-  function addPrintOption() {
-    setPrintOptions((opts) => [
-      ...opts,
-      {
-        sku: '',
-        description: '',
-        price: 0,
-        widthCm: 0,
-        heightCm: 0,
-        mediaType: '',
-        printLimit: null,
-        soldCount: 0,
-      },
-    ]);
-  }
-
-  function updatePrintOption(index: number, field: string, value: string | number | null) {
-    setPrintOptions((opts) =>
-      opts.map((o, i) => {
-        if (i !== index) return o;
-        if (field === 'sku') {
-          const catalog = availableSkus.find((s) => s.sku === value);
-          return {
-            ...o,
-            sku: String(value),
-            description: catalog?.description || o.description,
-            ...(catalog?.widthCm != null ? { widthCm: catalog.widthCm } : {}),
-            ...(catalog?.heightCm != null ? { heightCm: catalog.heightCm } : {}),
-            ...(catalog?.mediaType ? { mediaType: catalog.mediaType } : {}),
-          };
-        }
-        return { ...o, [field]: value };
-      }),
-    );
-  }
-
-  function removePrintOption(index: number) {
-    setPrintOptions((opts) => opts.filter((_, i) => i !== index));
   }
 
   if (!image) {
@@ -893,162 +844,18 @@ export default function AdminImageEditPage({ params }: { params: Promise<{ id: s
 
           {/* Print settings */}
           {editData.printEnabled && (
-            <div className="border border-white/10 rounded-lg p-4 space-y-3">
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={editData.perOptionLimits}
-                  onChange={(e) => setEditData({ ...editData, perOptionLimits: e.target.checked })}
-                  className="accent-gallery-accent"
-                />
-                Track limits per print option
-              </label>
-
-              {!editData.perOptionLimits && (
-                <>
-                  <div className="flex items-center gap-2">
-                    <label className="text-xs text-gallery-gray whitespace-nowrap">
-                      Print Limit
-                    </label>
-                    <input
-                      value={editData.printLimit ?? ''}
-                      onChange={(e) =>
-                        setEditData({
-                          ...editData,
-                          printLimit: e.target.value ? +e.target.value : null,
-                        })
-                      }
-                      type="number"
-                      placeholder="Unlimited"
-                      className={`${inputClass} flex-1`}
-                    />
-                  </div>
-                  {editData.printLimit !== null && (
-                    <p className="text-xs text-gallery-gray">
-                      Prints sold: {image.printsSold} / {editData.printLimit}
-                    </p>
-                  )}
-                </>
-              )}
-
-              <div className="space-y-2">
-                <label className="text-xs text-gallery-gray">Print Options</label>
-                {printOptions.map((opt, idx) => {
-                  const catalogSku = availableSkus.find((s) => s.sku === opt.sku);
-                  const dimsLocked = catalogSku?.widthCm != null && catalogSku?.heightCm != null;
-                  return (
-                    <div key={idx} className="border border-white/5 rounded p-2 space-y-1.5">
-                      {/* Row 1: SKU dropdown (2/3), price (1/3), remove */}
-                      <div className="flex gap-1.5 items-center">
-                        <select
-                          value={opt.sku}
-                          onChange={(e) => updatePrintOption(idx, 'sku', e.target.value)}
-                          required
-                          className={`${inputClass} flex-[2] ${showErrors && !opt.sku ? '!border-red-500' : ''}`}
-                        >
-                          <option value="">Select SKU *</option>
-                          {availableSkus.map((s) => (
-                            <option key={`${s.provider}-${s.sku}`} value={s.sku}>
-                              {s.description} ({s.sku})
-                            </option>
-                          ))}
-                        </select>
-                        <input
-                          value={opt.price || ''}
-                          onChange={(e) => updatePrintOption(idx, 'price', +e.target.value)}
-                          type="number"
-                          step="0.01"
-                          placeholder="Price"
-                          className={`${inputClass} flex-1`}
-                        />
-                        <button
-                          onClick={() => removePrintOption(idx)}
-                          className="text-red-400 text-xs hover:text-red-300 px-1"
-                        >
-                          &times;
-                        </button>
-                      </div>
-                      {/* Row 2: Dimensions cm + inches (2-column grid) */}
-                      <div className="grid grid-cols-2 gap-1.5">
-                        <input
-                          value={opt.widthCm || ''}
-                          onChange={(e) => updatePrintOption(idx, 'widthCm', +e.target.value)}
-                          type="number"
-                          step="0.1"
-                          placeholder="W cm"
-                          readOnly={dimsLocked}
-                          className={`${inputClass} ${dimsLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        />
-                        <input
-                          value={opt.heightCm || ''}
-                          onChange={(e) => updatePrintOption(idx, 'heightCm', +e.target.value)}
-                          type="number"
-                          step="0.1"
-                          placeholder="H cm"
-                          readOnly={dimsLocked}
-                          className={`${inputClass} ${dimsLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        />
-                        <input
-                          value={opt.widthCm ? cmToInch(opt.widthCm) : ''}
-                          onChange={(e) =>
-                            updatePrintOption(idx, 'widthCm', inchToCm(+e.target.value))
-                          }
-                          type="number"
-                          step="0.01"
-                          placeholder="W in"
-                          readOnly={dimsLocked}
-                          className={`${inputClass} ${dimsLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        />
-                        <input
-                          value={opt.heightCm ? cmToInch(opt.heightCm) : ''}
-                          onChange={(e) =>
-                            updatePrintOption(idx, 'heightCm', inchToCm(+e.target.value))
-                          }
-                          type="number"
-                          step="0.01"
-                          placeholder="H in"
-                          readOnly={dimsLocked}
-                          className={`${inputClass} ${dimsLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        />
-                      </div>
-                      {/* Media type (from catalog) */}
-                      {opt.mediaType && (
-                        <div className="text-xs text-gallery-gray">Media: {opt.mediaType}</div>
-                      )}
-                      {/* Per-option limit */}
-                      {editData.perOptionLimits && (
-                        <div className="flex gap-1.5 items-center">
-                          <input
-                            value={opt.printLimit ?? ''}
-                            onChange={(e) =>
-                              updatePrintOption(
-                                idx,
-                                'printLimit',
-                                e.target.value ? +e.target.value : null,
-                              )
-                            }
-                            type="number"
-                            placeholder="Limit"
-                            className={`${inputClass} w-20`}
-                          />
-                          {opt.printLimit !== null && (
-                            <span className="text-xs text-gallery-gray whitespace-nowrap">
-                              {opt.soldCount} sold
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-                <button
-                  onClick={addPrintOption}
-                  className="text-xs text-gallery-accent hover:underline"
-                >
-                  + Add print option
-                </button>
-              </div>
-            </div>
+            <PrintOptionsEditor
+              printOptions={printOptions}
+              setPrintOptions={setPrintOptions}
+              availableSkus={availableSkus}
+              perOptionLimits={editData.perOptionLimits}
+              setPerOptionLimits={(v) => setEditData({ ...editData, perOptionLimits: v })}
+              printLimit={editData.printLimit}
+              setPrintLimit={(v) => setEditData({ ...editData, printLimit: v })}
+              printsSold={image.printsSold}
+              showErrors={showErrors}
+              inputClass={inputClass}
+            />
           )}
 
           {/* Actions */}
