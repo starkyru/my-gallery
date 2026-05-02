@@ -10,6 +10,9 @@ function generateChallenge() {
   return { question: `${a} + ${b}`, answer: a + b };
 }
 
+const inputStyle =
+  'w-full border-0 border-b border-ot-line bg-transparent py-2 font-sans text-[15px] text-ot-ink outline-none focus:border-ot-ochre transition-colors resize-none';
+
 export default function ContactPage() {
   const notify = useNotification();
   const [form, setForm] = useState({ name: '', email: '', message: '' });
@@ -26,7 +29,7 @@ export default function ContactPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (honeypot) return; // bot trap
+    if (honeypot) return;
     if (!captchaValid) {
       notify.error('Incorrect answer, please try again');
       setChallenge(generateChallenge());
@@ -38,8 +41,8 @@ export default function ContactPage() {
       await api.contacts.create(form);
       setSent(true);
       notify.success('Message sent!');
-    } catch (e: unknown) {
-      notify.error(e instanceof Error ? e.message : 'Failed to send message');
+    } catch (err: unknown) {
+      notify.error(err instanceof Error ? err.message : 'Failed to send message');
       setChallenge(generateChallenge());
       setCaptchaInput('');
     } finally {
@@ -47,14 +50,11 @@ export default function ContactPage() {
     }
   }
 
-  const inputClass =
-    'w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-gallery-gray focus:outline-none focus:border-gallery-accent transition-colors';
-
   if (sent) {
     return (
-      <div className="mx-auto max-w-xl px-6 pt-28 pb-24 text-center">
-        <h1 className="font-serif text-4xl mb-4">Thank you!</h1>
-        <p className="text-gallery-gray">
+      <div className="max-w-xl mx-auto px-5 pt-20 md:pt-28 pb-24 text-center">
+        <h1 className="ot-display text-[48px] md:text-[80px] m-0 leading-[1.02]">Thank you!</h1>
+        <p className="text-ot-ink-soft mt-4">
           Your message has been sent. We&apos;ll get back to you soon.
         </p>
       </div>
@@ -62,77 +62,99 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="mx-auto max-w-xl px-6 pt-28 pb-24">
-      <h1 className="font-serif text-4xl mb-8">Contact</h1>
+    <main>
+      <section className="py-10 md:py-20 pb-20 md:pb-[120px]">
+        <div className="px-5 md:px-10 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-20 max-w-[1200px] mx-auto">
+          {/* Left: info */}
+          <div>
+            <div className="ot-eyebrow mb-[18px]">Get in touch</div>
+            <h1 className="ot-display text-[48px] md:text-[80px] m-0 leading-[1.02]">
+              Visit <br />
+              <span className="italic text-ot-ochre">by appointment.</span>
+            </h1>
+            <p className="text-[15px] text-ot-ink-soft leading-relaxed mt-6 max-w-[460px]">
+              The studio is open Friday&ndash;Sunday by appointment. Email a few times that work and
+              we&apos;ll send a confirmation.
+            </p>
+            <dl className="mt-8 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2.5">
+              <dt className="ot-meta">EMAIL</dt>
+              <dd className="m-0">hello@overtone.art</dd>
+              <dt className="ot-meta">STUDIO</dt>
+              <dd className="m-0">Charlotte, NC</dd>
+              <dt className="ot-meta">HOURS</dt>
+              <dd className="m-0">Fri&ndash;Sun &middot; By appointment</dd>
+            </dl>
+          </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div>
-          <label className="block text-sm text-gallery-gray mb-1">Name</label>
-          <input
-            type="text"
-            value={form.name}
-            onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-            required
-            maxLength={200}
-            className={inputClass}
-          />
-        </div>
-        <div>
-          <label className="block text-sm text-gallery-gray mb-1">Email</label>
-          <input
-            type="email"
-            value={form.email}
-            onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-            required
-            className={inputClass}
-          />
-        </div>
-        <div>
-          <label className="block text-sm text-gallery-gray mb-1">Message</label>
-          <textarea
-            value={form.message}
-            onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
-            required
-            rows={5}
-            maxLength={5000}
-            className={inputClass}
-          />
-        </div>
+          {/* Right: form */}
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            <label className="flex flex-col gap-2">
+              <span className="ot-eyebrow">Name</span>
+              <input
+                type="text"
+                value={form.name}
+                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                required
+                maxLength={200}
+                className={inputStyle}
+              />
+            </label>
+            <label className="flex flex-col gap-2">
+              <span className="ot-eyebrow">Email</span>
+              <input
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                required
+                className={inputStyle}
+              />
+            </label>
+            <label className="flex flex-col gap-2">
+              <span className="ot-eyebrow">What brings you here?</span>
+              <textarea
+                value={form.message}
+                onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
+                required
+                rows={5}
+                maxLength={5000}
+                className={inputStyle}
+              />
+            </label>
 
-        {/* Honeypot — hidden from real users */}
-        <div className="absolute -left-[9999px]" aria-hidden="true">
-          <input
-            type="text"
-            tabIndex={-1}
-            autoComplete="off"
-            value={honeypot}
-            onChange={(e) => setHoneypot(e.target.value)}
-          />
-        </div>
+            {/* Honeypot */}
+            <div className="absolute -left-[9999px]" aria-hidden="true">
+              <input
+                type="text"
+                tabIndex={-1}
+                autoComplete="off"
+                value={honeypot}
+                onChange={(e) => setHoneypot(e.target.value)}
+              />
+            </div>
 
-        {/* Math captcha */}
-        <div>
-          <label className="block text-sm text-gallery-gray mb-1">
-            What is {challenge.question}?
-          </label>
-          <input
-            type="text"
-            inputMode="numeric"
-            value={captchaInput}
-            onChange={(e) => setCaptchaInput(e.target.value)}
-            required
-            className={`${inputClass} max-w-[120px]`}
-          />
-        </div>
+            {/* Math captcha */}
+            <label className="flex flex-col gap-2">
+              <span className="ot-eyebrow">What is {challenge.question}?</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={captchaInput}
+                onChange={(e) => setCaptchaInput(e.target.value)}
+                required
+                className={`${inputStyle} max-w-[120px]`}
+              />
+            </label>
 
-        <button
-          type="submit"
-          disabled={sending || !captchaValid}
-          className="w-full py-3 bg-gallery-accent text-gallery-black rounded-lg font-medium hover:bg-gallery-accent-light transition-colors disabled:opacity-50"
-        >
-          {sending ? 'Sending...' : 'Send Message'}
-        </button>
-      </form>
-    </div>
+            <button
+              type="submit"
+              disabled={sending || !captchaValid}
+              className="ot-btn ot-btn--solid self-start"
+            >
+              {sending ? 'Sending...' : 'Send \u2192'}
+            </button>
+          </form>
+        </div>
+      </section>
+    </main>
   );
 }

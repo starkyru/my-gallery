@@ -8,7 +8,7 @@ export function NothingFound({
   image?: { src: string; alt?: string; width?: number; height?: number };
 }) {
   return (
-    <div className="text-center text-gallery-gray py-24">
+    <div className="text-center text-ot-mute py-24">
       {image && (
         <Image
           src={image.src}

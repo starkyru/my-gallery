@@ -255,7 +255,7 @@ export function GalleryGrid({
       />
 
       {/* Image count + reset */}
-      <div className="text-center text-gallery-gray text-sm mb-8 transition-opacity duration-300">
+      <div className="text-center text-ot-mute text-sm mb-8 transition-opacity duration-300">
         {filtered.length} {filtered.length === 1 ? 'work' : 'works'}
         {(filter ||
           typeFilter.length > 0 ||
@@ -274,7 +274,7 @@ export function GalleryGrid({
               handleMediaTypeFilter('');
               handlePaintTypeFilter('');
             }}
-            className="ml-3 text-gallery-accent hover:text-gallery-accent-light transition-colors"
+            className="ml-3 text-ot-ochre hover:text-ot-ochre-deep transition-colors"
           >
             Reset filters
           </button>
@@ -293,9 +293,7 @@ export function GalleryGrid({
         ))}
       </div>
 
-      {filtered.length === 0 && (
-        <p className="text-center text-gallery-gray py-24">No images found.</p>
-      )}
+      {filtered.length === 0 && <p className="text-center text-ot-mute py-24">No images found.</p>}
     </section>
   );
 }

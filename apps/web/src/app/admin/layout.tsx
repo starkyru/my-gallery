@@ -88,7 +88,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const navItems = role === 'admin' ? ADMIN_NAV : ARTIST_NAV;
 
   return (
-    <div className="pt-20 min-h-screen">
+    <div className="pt-20 min-h-screen bg-gallery-black text-gallery-white">
       <nav className="border-b border-white/10 px-4 sm:px-6 py-3">
         <div className="mx-auto max-w-7xl flex items-center gap-6">
           {/* Desktop nav */}

@@ -10,7 +10,7 @@ export function InstagramLink({ url, name }: { url: string; name: string }) {
       href={ensureHttps(url)}
       target="_blank"
       rel="noopener noreferrer"
-      className="text-gallery-gray hover:text-gallery-accent transition-colors"
+      className="text-ot-mute hover:text-ot-ochre transition-colors"
       aria-label={`${name} on Instagram`}
     >
       <InstagramIcon />

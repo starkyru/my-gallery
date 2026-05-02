@@ -1,16 +1,10 @@
-import Link from 'next/link';
-import type { Artist, GalleryConfig } from '@gallery/shared';
-import { InstagramLink } from '@/components/instagram-link';
+import type { Artist } from '@gallery/shared';
 import { Avatar } from '@/components/avatar';
+import { Flourish } from '@/components/overtone/flourish';
 
 export const dynamic = 'force-dynamic';
 
 const API_URL = process.env.API_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || '';
-
-async function getConfig(): Promise<GalleryConfig> {
-  const res = await fetch(`${API_URL}/api/gallery-config`, { next: { revalidate: 300 } });
-  return res.json();
-}
 
 async function getArtists(): Promise<Artist[]> {
   const res = await fetch(`${API_URL}/api/artists?active=true`, { next: { revalidate: 300 } });
@@ -18,60 +12,62 @@ async function getArtists(): Promise<Artist[]> {
 }
 
 export async function generateMetadata() {
-  const config = await getConfig();
-  return { title: `About \u2014 ${config.galleryName}` };
+  return { title: 'About — Overtone.art' };
 }
 
 export default async function AboutPage() {
-  const [config, artists] = await Promise.all([getConfig(), getArtists()]);
+  const artists = await getArtists();
 
   return (
-    <div className="mx-auto max-w-5xl px-6 pt-28 pb-24">
-      <h1 className="font-serif text-4xl md:text-5xl mb-8">About</h1>
-
-      {config.aboutText && (
-        <div className="text-gallery-gray leading-relaxed text-lg mb-16 max-w-3xl whitespace-pre-line">
-          {config.aboutText}
+    <main>
+      {/* Hero */}
+      <section className="pt-10 md:pt-20 pb-8 md:pb-10">
+        <div className="px-5 md:px-10 max-w-[920px] text-center mx-auto">
+          <div className="ot-eyebrow mb-[18px]">About the studio</div>
+          <h1 className="ot-display text-[52px] md:text-[96px] m-0 leading-[1.02]">
+            We make <span className="italic text-ot-ochre">quiet</span> things
+            <br /> in a loud city.
+          </h1>
+          <Flourish width={120} className="mx-auto mt-6" />
+          <p className="text-base md:text-lg leading-relaxed text-ot-ink-soft mt-8 max-w-[640px] mx-auto">
+            Overtone is a two-person gallery in Charlotte, North Carolina. Ilia at one end with
+            cameras and a wet darkroom, Sveta at the other surrounded by stretched canvas and
+            palette knives. Visitors are welcome by appointment.
+          </p>
         </div>
-      )}
+      </section>
 
-      {artists.length > 0 && (
-        <section>
-          <h2 className="font-serif text-2xl mb-8">
-            {artists.length === 1 ? 'Artist' : 'Artists'}
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {artists.map((artist) => (
-              <div
-                key={artist.id}
-                className="group relative flex gap-6 p-4 rounded-lg border border-white/5 hover:border-white/15 transition-colors"
+      {/* Artist cards */}
+      <section className="pb-[60px] md:pb-[100px]">
+        <div className="px-5 md:px-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-6">
+            {artists.map((a) => (
+              <article
+                key={a.id}
+                className="bg-ot-paper-2 p-5 md:p-8 grid grid-cols-[100px_1fr] md:grid-cols-[140px_1fr] gap-4 md:gap-6 items-start"
               >
-                <Link
-                  href={`/artists/${artist.slug}`}
-                  className="absolute inset-0 z-0"
-                  aria-label={artist.name}
-                />
-                <div className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden">
-                  <Avatar name={artist.name} portraitPath={artist.portraitPath} />
+                <div className="w-[100px] md:w-[140px] aspect-square overflow-hidden">
+                  <Avatar name={a.name} portraitPath={a.portraitPath} />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-serif text-xl group-hover:text-gallery-accent transition-colors">
-                    {artist.name}
-                  </h3>
-                  {artist.bio && (
-                    <p className="text-gallery-gray text-sm mt-1 line-clamp-3">{artist.bio}</p>
+                <div>
+                  <div className="ot-eyebrow mb-1.5">
+                    {a.slug === 'ilia' ? 'Photographer' : 'Painter'}
+                  </div>
+                  <h3 className="ot-display text-[32px] md:text-[40px] m-0 italic">{a.name}</h3>
+                  {a.bio && (
+                    <p className="text-sm leading-relaxed text-ot-ink-soft mt-3.5">{a.bio}</p>
                   )}
-                  {artist.instagramUrl && (
-                    <div className="relative z-10 mt-2">
-                      <InstagramLink url={artist.instagramUrl} name={artist.name} />
-                    </div>
-                  )}
+                  <div className="flex gap-4 mt-[18px] font-mono text-[11px] tracking-[0.08em] text-ot-mute uppercase">
+                    <span>Charlotte, NC</span>
+                    <span>&middot;</span>
+                    <span>{a.slug === 'ilia' ? 'Photographer' : 'Painter'}</span>
+                  </div>
                 </div>
-              </div>
+              </article>
             ))}
           </div>
-        </section>
-      )}
-    </div>
+        </div>
+      </section>
+    </main>
   );
 }

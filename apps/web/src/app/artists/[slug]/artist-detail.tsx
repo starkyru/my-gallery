@@ -183,7 +183,7 @@ export function ArtistDetail({ artist, images }: ArtistDetailProps) {
             <h1 className="font-serif text-4xl md:text-5xl">{artist.name}</h1>
             {artist.instagramUrl && <InstagramLink url={artist.instagramUrl} name={artist.name} />}
           </div>
-          {artist.bio && <p className="text-gallery-gray leading-relaxed text-lg">{artist.bio}</p>}
+          {artist.bio && <p className="text-ot-mute leading-relaxed text-lg">{artist.bio}</p>}
         </div>
       </div>
 
@@ -206,7 +206,7 @@ export function ArtistDetail({ artist, images }: ArtistDetailProps) {
             className="mb-8"
           />
 
-          <p className="text-gallery-gray text-sm mb-8 transition-opacity duration-300">
+          <p className="text-ot-mute text-sm mb-8 transition-opacity duration-300">
             {filtered.length} {filtered.length === 1 ? 'work' : 'works'}
           </p>
 

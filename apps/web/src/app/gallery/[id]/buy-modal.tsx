@@ -62,13 +62,13 @@ export function BuyModal({ open, onClose, image }: BuyModalProps) {
       <div className="flex flex-col gap-4">
         {/* Digital Original */}
         {image.allowDownloadOriginal && (
-          <div className="p-4 border border-white/10 rounded-lg">
+          <div className="p-4 border border-ot-line-soft rounded-lg">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <p className="font-medium">Digital Original</p>
-                <p className="text-gallery-gray text-sm">Full resolution download</p>
+                <p className="font-medium text-ot-ink">Digital Original</p>
+                <p className="text-ot-mute text-sm">Full resolution download</p>
               </div>
-              <p className="text-2xl font-light">${image.price}</p>
+              <p className="text-2xl font-light font-serif">${image.price}</p>
             </div>
             <button
               onClick={() =>
@@ -83,7 +83,7 @@ export function BuyModal({ open, onClose, image }: BuyModalProps) {
                 })
               }
               disabled={originalInCart || Number(image.price) === 0}
-              className="w-full px-6 py-2.5 bg-gallery-accent text-gallery-black font-medium rounded-lg hover:bg-gallery-accent-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              className="ot-btn ot-btn--solid w-full justify-center"
             >
               {originalInCart ? 'In Cart' : 'Add to Cart'}
             </button>
@@ -92,11 +92,11 @@ export function BuyModal({ open, onClose, image }: BuyModalProps) {
 
         {/* Physical Original */}
         {image.originalAvailable && (
-          <div className="p-4 border border-white/10 rounded-lg">
+          <div className="p-4 border border-ot-line-soft rounded-lg">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <p className="font-medium">Physical Original</p>
-                <p className="text-gallery-gray text-sm">
+                <p className="font-medium text-ot-ink">Physical Original</p>
+                <p className="text-ot-mute text-sm">
                   Original artwork
                   {image.sizeWidthCm && image.sizeHeightCm && (
                     <>
@@ -106,9 +106,9 @@ export function BuyModal({ open, onClose, image }: BuyModalProps) {
                     </>
                   )}
                 </p>
-                <p className="text-gallery-accent text-xs mt-1">Shipping calculated at checkout</p>
+                <p className="text-ot-ochre text-xs mt-1">Shipping calculated at checkout</p>
               </div>
-              <p className="text-2xl font-light">${image.price}</p>
+              <p className="text-2xl font-light font-serif">${image.price}</p>
             </div>
             <button
               onClick={() =>
@@ -123,7 +123,7 @@ export function BuyModal({ open, onClose, image }: BuyModalProps) {
                 })
               }
               disabled={physicalOriginalInCart || Number(image.price) === 0}
-              className="w-full px-6 py-2.5 bg-gallery-accent text-gallery-black font-medium rounded-lg hover:bg-gallery-accent-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              className="ot-btn ot-btn--solid w-full justify-center"
             >
               {physicalOriginalInCart ? 'In Cart' : 'Add to Cart'}
             </button>
@@ -132,29 +132,29 @@ export function BuyModal({ open, onClose, image }: BuyModalProps) {
 
         {/* Print Options */}
         {image.printEnabled && image.printOptions?.length > 0 && (
-          <div className="p-4 border border-white/10 rounded-lg">
+          <div className="p-4 border border-ot-line-soft rounded-lg">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <p className="font-medium">Buy Print</p>
+                <p className="font-medium text-ot-ink">Buy Print</p>
                 {remaining !== null && !soldOut && (
-                  <p className="text-gallery-accent text-sm">
+                  <p className="text-ot-ochre text-sm">
                     Limited edition &mdash; {remaining} of {image.printLimit} remaining
                   </p>
                 )}
-                {soldOut && <p className="text-red-400 text-sm">Sold out</p>}
+                {soldOut && <p className="text-ot-terra text-sm">Sold out</p>}
                 {image.perOptionLimits &&
                   selectedOptionRemaining !== null &&
                   !selectedOptionSoldOut && (
-                    <p className="text-gallery-accent text-sm">
+                    <p className="text-ot-ochre text-sm">
                       Limited edition &mdash; {selectedOptionRemaining} remaining
                     </p>
                   )}
                 {image.perOptionLimits && selectedOptionSoldOut && (
-                  <p className="text-red-400 text-sm">This option is sold out</p>
+                  <p className="text-ot-terra text-sm">This option is sold out</p>
                 )}
               </div>
               {selectedPrintOption && (
-                <p className="text-2xl font-light">${selectedPrintOption.price}</p>
+                <p className="text-2xl font-light font-serif">${selectedPrintOption.price}</p>
               )}
             </div>
 
@@ -163,7 +163,7 @@ export function BuyModal({ open, onClose, image }: BuyModalProps) {
                 <select
                   value={selectedSku}
                   onChange={(e) => setSelectedSku(e.target.value)}
-                  className="w-full mb-3 px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-gallery-accent text-sm"
+                  className="w-full mb-3 px-4 py-2.5 bg-transparent border border-ot-line rounded-lg text-ot-ink focus:outline-none focus:border-ot-ochre text-sm"
                 >
                   <option value="">Select print size</option>
                   {image.printOptions.map((opt) => {
@@ -204,7 +204,7 @@ export function BuyModal({ open, onClose, image }: BuyModalProps) {
                     selectedOptionSoldOut ||
                     Number(selectedPrintOption?.price) === 0
                   }
-                  className="w-full px-6 py-2.5 bg-white/10 text-white font-medium rounded-lg hover:bg-white/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm border border-white/10"
+                  className="ot-btn ot-btn--ghost w-full justify-center"
                 >
                   {printInCart ? 'In Cart' : 'Add Print to Cart'}
                 </button>

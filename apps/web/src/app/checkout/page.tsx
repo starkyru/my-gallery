@@ -7,7 +7,7 @@ import { api } from '@/lib/api';
 import type { EnabledPayment, ShippingRate } from '@gallery/shared';
 
 const inputClass =
-  'w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-gallery-gray focus:outline-none focus:border-gallery-accent';
+  'w-full px-4 py-3 bg-transparent border border-ot-line rounded-lg text-ot-ink placeholder:text-ot-mute focus:outline-none focus:border-ot-ochre transition-colors';
 
 const PROVIDER_STYLES: Record<string, { bg: string; hover: string; label: string }> = {
   paypal: { bg: 'bg-[#0070ba]', hover: 'hover:bg-[#005ea6]', label: 'Pay with PayPal / Card' },
@@ -202,12 +202,12 @@ export default function CheckoutPage() {
     <div className="mx-auto max-w-lg px-6 pt-28 pb-24">
       <h1 className="font-serif text-4xl mb-8">Checkout</h1>
 
-      <div className="mb-8 p-4 border border-white/10 rounded-lg">
-        <p className="text-gallery-gray mb-1">{items.length} item(s)</p>
+      <div className="mb-8 p-4 border border-ot-line-soft rounded-lg bg-ot-paper-2">
+        <p className="text-ot-mute mb-1">{items.length} item(s)</p>
         <p className="text-2xl font-serif">
           ${displayTotal.toFixed(2)}
           {shippingCost > 0 && (
-            <span className="text-sm text-gallery-gray ml-2">
+            <span className="text-sm text-ot-mute ml-2">
               (incl. ${shippingCost.toFixed(2)} shipping)
             </span>
           )}
@@ -215,7 +215,7 @@ export default function CheckoutPage() {
       </div>
 
       <div className="mb-6">
-        <label className="block text-sm text-gallery-gray mb-2">Email for delivery</label>
+        <label className="block text-sm text-ot-mute mb-2">Email for delivery</label>
         <input
           type="email"
           value={email}
@@ -332,16 +332,13 @@ export default function CheckoutPage() {
           <h2 className="font-serif text-xl">Shipping Method</h2>
 
           {!ratesFetchedForRef.current && !ratesLoading && (
-            <button
-              onClick={fetchShippingRates}
-              className="w-full px-4 py-3 border border-gallery-accent text-gallery-accent rounded-lg hover:bg-gallery-accent hover:text-gallery-black transition-colors text-sm"
-            >
+            <button onClick={fetchShippingRates} className="ot-btn w-full justify-center">
               Calculate Shipping Rates
             </button>
           )}
 
           {ratesLoading && (
-            <p className="text-gallery-gray text-sm py-3">Calculating shipping rates...</p>
+            <p className="text-ot-mute text-sm py-3">Calculating shipping rates...</p>
           )}
 
           {ratesError && <p className="text-red-400 text-sm">{ratesError}</p>}
@@ -353,8 +350,8 @@ export default function CheckoutPage() {
                   key={rate.rateId}
                   className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
                     selectedRateId === rate.rateId
-                      ? 'border-gallery-accent bg-gallery-accent/10'
-                      : 'border-white/10 hover:border-white/30'
+                      ? 'border-ot-ochre bg-ot-ochre/10'
+                      : 'border-ot-line hover:border-ot-ochre'
                   }`}
                 >
                   <input
@@ -363,14 +360,14 @@ export default function CheckoutPage() {
                     value={rate.rateId}
                     checked={selectedRateId === rate.rateId}
                     onChange={() => setSelectedRateId(rate.rateId)}
-                    className="accent-gallery-accent"
+                    className="accent-ot-ochre"
                   />
                   <div className="flex-1">
                     <p className="text-sm font-medium">
                       {rate.carrier} {rate.service}
                     </p>
                     {rate.deliveryDays && (
-                      <p className="text-xs text-gallery-gray">
+                      <p className="text-xs text-ot-mute">
                         Est. {rate.deliveryDays} business day{rate.deliveryDays !== 1 ? 's' : ''}
                       </p>
                     )}
@@ -388,8 +385,8 @@ export default function CheckoutPage() {
       <div className="space-y-3">
         {enabledPayments.map((payment) => {
           const style = PROVIDER_STYLES[payment.provider] || {
-            bg: 'bg-white/10',
-            hover: 'hover:bg-white/20',
+            bg: 'bg-ot-ink',
+            hover: 'hover:bg-ot-ink-soft',
             label: `Pay with ${payment.displayName}`,
           };
           return (
@@ -404,7 +401,7 @@ export default function CheckoutPage() {
           );
         })}
         {enabledPayments.length === 0 && (
-          <p className="text-gallery-gray text-sm text-center py-4">
+          <p className="text-ot-mute text-sm text-center py-4">
             No payment methods are currently available.
           </p>
         )}

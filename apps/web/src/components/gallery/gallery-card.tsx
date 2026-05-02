@@ -41,7 +41,7 @@ export function GalleryCard({ image, index }: { image: GalleryImage; index: numb
 
   return (
     <Link href={`/gallery/${image.id}`} className="gallery-card block break-inside-avoid group">
-      <div ref={cardRef} className="relative overflow-hidden rounded-lg bg-white/5">
+      <div ref={cardRef} className="relative overflow-hidden rounded-lg bg-ot-paper-3">
         <div
           className={`transition-all duration-1000 ease-out ${
             loaded ? 'blur-0 scale-100' : 'blur-sm scale-[1.02]'
@@ -69,7 +69,7 @@ export function GalleryCard({ image, index }: { image: GalleryImage; index: numb
         {/* Hover info */}
         <div className="absolute bottom-0 left-0 right-0 p-5 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 ease-out">
           <h3 className="font-serif text-lg leading-tight">{image.title}</h3>
-          <p className="text-gallery-gray text-sm mt-1">
+          <p className="text-ot-paper/80 text-sm mt-1">
             <span
               role="link"
               tabIndex={0}
@@ -78,7 +78,7 @@ export function GalleryCard({ image, index }: { image: GalleryImage; index: numb
                 e.stopPropagation();
                 router.push(`/artists/${image.artist.slug}`);
               }}
-              className="hover:text-gallery-accent transition-colors cursor-pointer"
+              className="hover:text-ot-ochre transition-colors cursor-pointer"
             >
               {image.artist.name}
             </span>{' '}
@@ -87,7 +87,7 @@ export function GalleryCard({ image, index }: { image: GalleryImage; index: numb
         </div>
 
         {/* Hover border glow */}
-        <div className="absolute inset-0 rounded-lg ring-1 ring-white/0 group-hover:ring-gallery-accent/30 transition-all duration-500 pointer-events-none" />
+        <div className="absolute inset-0 rounded-lg ring-1 ring-transparent group-hover:ring-ot-ochre/30 transition-all duration-500 pointer-events-none" />
       </div>
     </Link>
   );

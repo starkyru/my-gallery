@@ -7,83 +7,83 @@ export function darkSelectStyles<
   return {
     control: (base, state) => ({
       ...base,
-      backgroundColor: 'rgba(255, 255, 255, 0.05)',
-      borderColor: state.isFocused ? 'var(--color-gallery-accent)' : 'rgba(255, 255, 255, 0.1)',
+      backgroundColor: 'transparent',
+      borderColor: state.isFocused ? 'var(--color-ot-ochre)' : 'var(--color-ot-line)',
       borderRadius: '0.375rem',
       minHeight: '2.25rem',
       boxShadow: 'none',
       '&:hover': {
-        borderColor: 'rgba(255, 255, 255, 0.2)',
+        borderColor: 'var(--color-ot-ochre)',
       },
     }),
     menu: (base) => ({
       ...base,
-      backgroundColor: '#1a1a1a',
-      border: '1px solid rgba(255, 255, 255, 0.1)',
+      backgroundColor: 'var(--color-ot-paper)',
+      border: '1px solid var(--color-ot-line)',
       borderRadius: '0.375rem',
       zIndex: 50,
     }),
     option: (base, state) => ({
       ...base,
-      backgroundColor: state.isFocused ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-      color: '#fff',
+      backgroundColor: state.isFocused ? 'var(--color-ot-paper-2)' : 'transparent',
+      color: 'var(--color-ot-ink)',
       cursor: 'pointer',
       fontSize: '0.875rem',
       '&:active': {
-        backgroundColor: 'rgba(255, 255, 255, 0.15)',
+        backgroundColor: 'var(--color-ot-paper-3)',
       },
     }),
     multiValue: (base) => ({
       ...base,
-      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+      backgroundColor: 'var(--color-ot-paper-2)',
       borderRadius: '0.25rem',
     }),
     multiValueLabel: (base) => ({
       ...base,
-      color: '#fff',
+      color: 'var(--color-ot-ink)',
       fontSize: '0.75rem',
     }),
     multiValueRemove: (base) => ({
       ...base,
-      color: 'rgba(255, 255, 255, 0.5)',
+      color: 'var(--color-ot-mute)',
       '&:hover': {
-        backgroundColor: 'rgba(255, 255, 255, 0.15)',
-        color: '#fff',
+        backgroundColor: 'var(--color-ot-paper-3)',
+        color: 'var(--color-ot-ink)',
       },
     }),
     input: (base) => ({
       ...base,
-      color: '#fff',
+      color: 'var(--color-ot-ink)',
       fontSize: '0.875rem',
     }),
     placeholder: (base) => ({
       ...base,
-      color: 'rgba(255, 255, 255, 0.4)',
+      color: 'var(--color-ot-mute)',
       fontSize: '0.875rem',
     }),
     singleValue: (base) => ({
       ...base,
-      color: '#fff',
+      color: 'var(--color-ot-ink)',
     }),
     noOptionsMessage: (base) => ({
       ...base,
-      color: 'rgba(255, 255, 255, 0.4)',
+      color: 'var(--color-ot-mute)',
     }),
     indicatorSeparator: () => ({
       display: 'none',
     }),
     dropdownIndicator: (base) => ({
       ...base,
-      color: 'rgba(255, 255, 255, 0.4)',
+      color: 'var(--color-ot-mute)',
       '&:hover': {
-        color: 'rgba(255, 255, 255, 0.6)',
+        color: 'var(--color-ot-ink-soft)',
       },
     }),
     clearIndicator: (base) => ({
       ...base,
-      color: 'rgba(255, 255, 255, 0.4)',
+      color: 'var(--color-ot-mute)',
       '&:hover': {
-        color: '#fff',
+        color: 'var(--color-ot-ink)',
       },
     }),
   };

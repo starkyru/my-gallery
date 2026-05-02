@@ -1,14 +1,33 @@
 @import 'tailwindcss';
 
 @theme {
+  /* Overtone palette */
+  --color-ot-paper: #f4f1ec;
+  --color-ot-paper-2: #ebe6dc;
+  --color-ot-paper-3: #ddd5c5;
+  --color-ot-ink: #1d2533;
+  --color-ot-ink-soft: #4a5260;
+  --color-ot-mute: #8a8478;
+  --color-ot-ochre: #c8893d;
+  --color-ot-ochre-deep: #a06a23;
+  --color-ot-terra: #b07a5c;
+  --color-ot-line: rgba(29, 37, 51, 0.18);
+  --color-ot-line-soft: rgba(29, 37, 51, 0.1);
+
+  /* Admin backward compat */
   --color-gallery-black: #0a0a0a;
   --color-gallery-white: #fafafa;
   --color-gallery-gray: #888;
   --color-gallery-accent: #c9a96e;
   --color-gallery-accent-light: #e0c99a;
-  --font-sans: 'Inter', system-ui, sans-serif;
-  --font-serif: 'Playfair Display', Georgia, serif;
+
+  /* Fonts */
+  --font-sans: 'Inter Tight', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-serif: 'Cormorant Garamond', 'EB Garamond', Georgia, serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 }
+
+/* ---- Base ---- */
 
 html.lenis,
 html.lenis body {
@@ -20,15 +39,263 @@ html.lenis body {
 }
 
 ::selection {
-  background-color: var(--color-gallery-accent);
-  color: var(--color-gallery-black);
+  background-color: var(--color-ot-ochre);
+  color: #fff;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .gallery-card {
-    will-change: transform;
-  }
+/* ---- Typography ---- */
+
+.ot-display {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  letter-spacing: -0.005em;
+  line-height: 1.02;
 }
+
+.ot-eyebrow {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-ot-ink-soft);
+}
+
+.ot-meta {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-ot-mute);
+}
+
+.ot-mono {
+  font-family: var(--font-mono);
+}
+
+/* ---- Buttons ---- */
+
+.ot-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 22px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  border: 1px solid var(--color-ot-ochre);
+  background: transparent;
+  color: var(--color-ot-ochre-deep);
+  cursor: pointer;
+  transition:
+    background 0.18s,
+    color 0.18s,
+    border-color 0.18s;
+  font-family: var(--font-sans);
+  white-space: nowrap;
+  text-decoration: none;
+}
+.ot-btn:hover {
+  background: var(--color-ot-ochre);
+  color: #fff;
+}
+.ot-btn--solid {
+  background: var(--color-ot-ochre);
+  color: #fff;
+}
+.ot-btn--solid:hover {
+  background: var(--color-ot-ochre-deep);
+  border-color: var(--color-ot-ochre-deep);
+}
+.ot-btn--ink {
+  border-color: var(--color-ot-ink);
+  color: var(--color-ot-ink);
+}
+.ot-btn--ink:hover {
+  background: var(--color-ot-ink);
+  color: var(--color-ot-paper);
+}
+.ot-btn--ghost {
+  border-color: var(--color-ot-line);
+  color: var(--color-ot-ink);
+}
+.ot-btn--ghost:hover {
+  background: transparent;
+  color: var(--color-ot-ochre-deep);
+  border-color: var(--color-ot-ochre);
+}
+.ot-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* ---- Chips ---- */
+
+.ot-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-family: var(--font-sans);
+  letter-spacing: 0.02em;
+  border: 1px solid var(--color-ot-line);
+  background: transparent;
+  color: var(--color-ot-ink);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.ot-chip:hover {
+  border-color: var(--color-ot-ochre);
+  color: var(--color-ot-ochre-deep);
+}
+.ot-chip.active {
+  background: var(--color-ot-ochre);
+  border-color: var(--color-ot-ochre);
+  color: #fff;
+}
+.ot-chip .count {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  opacity: 0.6;
+}
+
+/* ---- Tiles ---- */
+
+.ot-tile {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-ot-paper-3);
+  cursor: pointer;
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+.ot-tile-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.2, 0.6, 0.2, 1);
+}
+.ot-tile:hover .ot-tile-img {
+  transform: scale(1.04);
+}
+.ot-tile-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 50%, rgba(29, 37, 51, 0.78) 100%);
+  opacity: 0;
+  transition: opacity 0.25s;
+  display: flex;
+  align-items: flex-end;
+  padding: 16px;
+}
+.ot-tile:hover .ot-tile-overlay {
+  opacity: 1;
+}
+.ot-tile-title {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 18px;
+  line-height: 1.1;
+  color: var(--color-ot-paper);
+}
+.ot-tile-price {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.75;
+  margin-top: 4px;
+  color: var(--color-ot-paper);
+}
+
+/* ---- Nav links ---- */
+
+.ot-nav-link {
+  font-size: 14px;
+  letter-spacing: 0.01em;
+  color: var(--color-ot-ink);
+  text-decoration: none;
+  padding: 4px 0;
+  position: relative;
+  transition: color 0.15s;
+}
+.ot-nav-link::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 1px;
+  background: var(--color-ot-ochre);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 0.2s;
+}
+.ot-nav-link:hover {
+  color: var(--color-ot-ochre-deep);
+}
+.ot-nav-link.active {
+  color: var(--color-ot-ochre-deep);
+}
+.ot-nav-link.active::after {
+  transform: scaleX(1);
+}
+
+/* ---- Section tag ---- */
+
+.ot-section-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--color-ot-mute);
+}
+.ot-section-tag::before {
+  content: '';
+  width: 32px;
+  height: 1px;
+  background: var(--color-ot-ochre);
+}
+
+/* ---- Footer ---- */
+
+.ot-footer-quote {
+  text-align: center;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 22px;
+  color: var(--color-ot-ink);
+  max-width: 720px;
+  margin: 0 auto;
+  line-height: 1.4;
+}
+.ot-footer-quote .attr {
+  display: block;
+  font-style: normal;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--color-ot-mute);
+  margin-top: 14px;
+}
+
+/* ---- Admin shimmer (keep) ---- */
 
 @keyframes shimmer {
   0% {
@@ -41,4 +308,10 @@ html.lenis body {
 
 .animate-shimmer {
   animation: shimmer 1.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .gallery-card {
+    will-change: transform;
+  }
 }

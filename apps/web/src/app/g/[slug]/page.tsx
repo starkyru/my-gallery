@@ -85,7 +85,7 @@ export default function ProtectedGalleryPage({ params }: { params: Promise<{ slu
   if (checking) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gallery-gray text-sm">Loading...</div>
+        <div className="text-ot-mute text-sm">Loading...</div>
       </div>
     );
   }
@@ -97,12 +97,12 @@ export default function ProtectedGalleryPage({ params }: { params: Promise<{ slu
           <h1 className="font-serif text-3xl text-center mb-8">Private Gallery</h1>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm text-gallery-gray mb-1">Password</label>
+              <label className="block text-sm text-ot-mute mb-1">Password</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-gallery-accent"
+                className="w-full px-4 py-2.5 bg-transparent border border-ot-line rounded-lg text-ot-ink focus:outline-none focus:border-ot-ochre"
                 placeholder="Enter gallery password"
                 autoFocus
               />
@@ -111,7 +111,7 @@ export default function ProtectedGalleryPage({ params }: { params: Promise<{ slu
             <button
               type="submit"
               disabled={loading || !password}
-              className="w-full py-2.5 bg-gallery-accent text-gallery-black rounded-lg font-medium hover:bg-gallery-accent-light transition-colors disabled:opacity-50"
+              className="w-full py-2.5 bg-ot-ochre text-white rounded-lg font-medium hover:bg-ot-ochre-deep transition-colors disabled:opacity-50"
             >
               {loading ? 'Verifying...' : 'Enter Gallery'}
             </button>
@@ -130,13 +130,13 @@ export default function ProtectedGalleryPage({ params }: { params: Promise<{ slu
             href={api.protectedGalleries.downloadUrl(slug, accessToken)}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-4 py-2 bg-gallery-accent text-gallery-black rounded-lg text-sm font-medium hover:bg-gallery-accent-light transition-colors"
+            className="px-4 py-2 bg-ot-ochre text-white rounded-lg text-sm font-medium hover:bg-ot-ochre-deep transition-colors"
           >
             Download All
           </a>
         </div>
 
-        <p className="text-gallery-gray text-sm mb-8">
+        <p className="text-ot-mute text-sm mb-8">
           {images.length} {images.length === 1 ? 'photo' : 'photos'}
         </p>
 
@@ -144,7 +144,7 @@ export default function ProtectedGalleryPage({ params }: { params: Promise<{ slu
           {images.map((image) => (
             <div
               key={image.id}
-              className="break-inside-avoid rounded-lg overflow-hidden bg-white/5 relative group cursor-pointer"
+              className="break-inside-avoid rounded-lg overflow-hidden bg-ot-paper-3 relative group cursor-pointer"
               onClick={() => setSelectedImage(image)}
             >
               <Image
@@ -171,7 +171,7 @@ export default function ProtectedGalleryPage({ params }: { params: Promise<{ slu
         </div>
 
         {images.length === 0 && (
-          <p className="text-center text-gallery-gray py-24">No images in this gallery.</p>
+          <p className="text-center text-ot-mute py-24">No images in this gallery.</p>
         )}
       </div>
 

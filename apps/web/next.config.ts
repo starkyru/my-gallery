@@ -7,6 +7,10 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'gallery.ilia.to',
       },
+      {
+        protocol: 'https',
+        hostname: 'overtone.art',
+      },
     ],
   },
   async rewrites() {

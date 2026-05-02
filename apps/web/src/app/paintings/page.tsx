@@ -1,40 +1,12 @@
 'use client';
 
-import { useMemo } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { GalleryGrid } from '@/components/gallery';
 import { useImages } from '@/hooks/useImages';
-import { shuffleArray } from '@gallery/shared';
+import { GalleryPageContent } from '@/components/overtone/gallery-page';
 
 export default function PaintingsPage() {
-  const { images, loading } = useImages({ type: 'painting' });
-  const searchParams = useSearchParams();
+  const { images, loading } = useImages();
 
-  const initialTags = useMemo(() => {
-    const tagsParam = searchParams.get('tags');
-    return tagsParam ? tagsParam.split(',').filter(Boolean) : undefined;
-  }, [searchParams]);
+  if (loading) return null;
 
-  const initialCategory = searchParams.get('category') ?? undefined;
-  const initialMediaType = searchParams.get('media') ?? undefined;
-  const initialPaintType = searchParams.get('paint') ?? undefined;
-  const initialProject = searchParams.get('project') ?? undefined;
-
-  const shuffled = useMemo(() => shuffleArray(images), [images]);
-
-  return (
-    <div className="pt-20">
-      <h1 className="font-serif text-4xl md:text-5xl text-center mb-4">Paintings</h1>
-      <GalleryGrid
-        images={shuffled}
-        loading={loading}
-        initialCategory={initialCategory}
-        initialTags={initialTags}
-        initialMediaType={initialMediaType}
-        initialPaintType={initialPaintType}
-        initialProject={initialProject}
-        typeLinks={{ photo: '/photographs', painting: '/paintings' }}
-      />
-    </div>
-  );
+  return <GalleryPageContent images={images} medium="painting" />;
 }

@@ -27,8 +27,8 @@ function ResetPasswordForm() {
       await api.auth.resetPassword(token, newPassword);
       setSuccess(true);
       setTimeout(() => router.push('/admin/login'), 2000);
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Failed to reset password');
     } finally {
       setLoading(false);
     }
@@ -36,14 +36,14 @@ function ResetPasswordForm() {
 
   if (!token) {
     return (
-      <div className="flex items-center justify-center min-h-screen px-6">
+      <div className="flex items-center justify-center min-h-screen px-6 bg-gallery-black text-gallery-white">
         <p className="text-red-400">Invalid or missing reset token.</p>
       </div>
     );
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen px-6">
+    <div className="flex items-center justify-center min-h-screen px-6 bg-gallery-black text-gallery-white">
       <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
         <h1 className="font-serif text-3xl text-center mb-8">Reset Password</h1>
         {error && <p className="text-red-400 text-sm text-center">{error}</p>}

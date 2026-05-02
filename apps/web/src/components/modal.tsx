@@ -63,16 +63,16 @@ export function Modal({ open, onClose, title, children, maxWidth = 'max-w-md' }:
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className={`bg-gallery-black border border-white/10 rounded-lg w-full ${maxWidth} max-h-[80vh] flex flex-col mx-4 outline-none`}
+        className={`bg-ot-paper border border-ot-line rounded-lg w-full ${maxWidth} max-h-[80vh] flex flex-col mx-4 outline-none`}
       >
-        <div className="flex items-center justify-between p-4 border-b border-white/10">
+        <div className="flex items-center justify-between p-4 border-b border-ot-line-soft">
           <h2 id={titleId} className="font-serif text-lg">
             {title}
           </h2>
           <button
             onClick={onClose}
             aria-label="Close"
-            className="text-gallery-gray hover:text-white transition-colors text-lg leading-none"
+            className="text-ot-mute hover:text-ot-ink transition-colors text-lg leading-none"
           >
             &times;
           </button>

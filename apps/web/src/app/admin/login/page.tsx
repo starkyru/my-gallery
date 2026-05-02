@@ -59,7 +59,7 @@ export default function AdminLoginPage() {
     'w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-gallery-gray focus:outline-none focus:border-gallery-accent';
 
   return (
-    <div className="flex items-center justify-center min-h-screen px-6">
+    <div className="flex items-center justify-center min-h-screen px-6 bg-gallery-black text-gallery-white">
       {showForgot ? (
         <div className="w-full max-w-sm space-y-4">
           <h1 className="font-serif text-3xl text-center mb-8">Reset Password</h1>
