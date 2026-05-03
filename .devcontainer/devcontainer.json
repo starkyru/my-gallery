@@ -1,0 +1,14 @@
+{
+  "name": "Frontend Dev Container",
+  "image": "://microsoft.com",
+  "features": {
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": ["esbenp.prettier-vscode", "dbaeumer.vscode-eslint"]
+    }
+  },
+  "forwardPorts": [3000, 5173],
+  "remoteUser": "node"
+}
