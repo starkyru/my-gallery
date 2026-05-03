@@ -11,7 +11,13 @@ import { CatalogueBrowser } from '@/components/catalogue-browser';
 import { FULFILLMENT_COUNTRY, FULFILLMENT_CURRENCY } from '@/config';
 import type { ServiceConfig } from '@gallery/shared';
 
-const cmToInch = (cm: number) => (cm ? +(cm / 2.54).toFixed(2) : 0);
+const cmToInch = (cm: number) => {
+  if (!cm) return 0;
+  const raw = cm / 2.54;
+  const rounded = Math.round(raw);
+  // If within 0.05" of an integer, snap to it
+  return Math.abs(raw - rounded) < 0.05 ? rounded : +raw.toFixed(1);
+};
 const inchToCm = (inch: number) => (inch ? +(inch * 2.54).toFixed(1) : 0);
 
 const PRESET_SIZES: { label: string; widthCm: number; heightCm: number }[] = [
