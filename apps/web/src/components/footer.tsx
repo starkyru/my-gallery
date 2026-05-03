@@ -21,7 +21,7 @@ export function Footer() {
       </p>
 
       {/* Columns */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr] gap-10 pt-10 border-t border-ot-line-soft">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr] gap-10 pt-10 border-t border-ot-line-soft">
         {/* Brand */}
         <div>
           <Logo linked={false} />
@@ -79,25 +79,6 @@ export function Footer() {
               </Link>
             </li>
           </ul>
-        </div>
-
-        {/* Newsletter */}
-        <div>
-          <h4 className="font-sans text-[10px] font-semibold tracking-[0.28em] uppercase text-ot-mute mb-4">
-            Newsletter
-          </h4>
-          <p className="text-[13px] text-ot-ink-soft mb-3">
-            One email a month. New work, no noise.
-          </p>
-          <div className="flex border-b border-ot-ink pb-1.5">
-            <input
-              placeholder="you@studio.com"
-              className="flex-1 border-none bg-transparent outline-none font-sans text-[13px] text-ot-ink placeholder:text-ot-mute"
-            />
-            <button className="bg-transparent border-none cursor-pointer text-ot-ochre-deep font-sans text-[11px] font-medium tracking-[0.16em] uppercase">
-              Subscribe &rarr;
-            </button>
-          </div>
         </div>
       </div>
 

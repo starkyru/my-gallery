@@ -69,20 +69,17 @@ export default function ContactPage() {
           <div>
             <div className="ot-eyebrow mb-[18px]">Get in touch</div>
             <h1 className="ot-display text-[48px] md:text-[80px] m-0 leading-[1.02]">
-              Visit <br />
-              <span className="italic text-ot-ochre">by appointment.</span>
+              Let&apos;s <span className="italic text-ot-ochre">talk.</span>
             </h1>
             <p className="text-[15px] text-ot-ink-soft leading-relaxed mt-6 max-w-[460px]">
-              The studio is open Friday&ndash;Sunday by appointment. Email a few times that work and
-              we&apos;ll send a confirmation.
+              Have a question about a piece, want to discuss a commission, or just want to say
+              hello? Drop us a message and we&apos;ll get back to you soon.
             </p>
             <dl className="mt-8 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2.5">
               <dt className="ot-meta">EMAIL</dt>
               <dd className="m-0">hello@overtone.art</dd>
-              <dt className="ot-meta">STUDIO</dt>
+              <dt className="ot-meta">BASED IN</dt>
               <dd className="m-0">Charlotte, NC</dd>
-              <dt className="ot-meta">HOURS</dt>
-              <dd className="m-0">Fri&ndash;Sun &middot; By appointment</dd>
             </dl>
           </div>
 

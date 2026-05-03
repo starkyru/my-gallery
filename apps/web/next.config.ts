@@ -11,6 +11,10 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'overtone.art',
       },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+      },
     ],
   },
   async rewrites() {

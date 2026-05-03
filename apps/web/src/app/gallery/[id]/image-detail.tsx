@@ -110,9 +110,6 @@ export function ImageDetail({ image }: ImageDetailProps) {
           &larr; Back to gallery
         </Link>
         <div className="flex items-center gap-3">
-          <span className="ot-meta">
-            {image.type === 'photo' ? 'PH' : 'PT'}-{String(image.id).padStart(3, '0')}
-          </span>
           {isAdmin && (
             <a
               href={`/admin/images/${image.id}`}
