@@ -26,6 +26,7 @@ const PRESET_SIZES: { label: string; widthCm: number; heightCm: number }[] = [
   { label: '13×19"', widthCm: 33.0, heightCm: 48.3 },
   { label: 'A3+', widthCm: 32.9, heightCm: 48.3 },
   { label: '16×20"', widthCm: 40.6, heightCm: 50.8 },
+  { label: '17×22"', widthCm: 43.2, heightCm: 55.9 },
 ];
 
 const MEDIA_TYPE_SUGGESTIONS = [
@@ -248,38 +249,6 @@ export default function ProviderSettingsPage() {
               <span className="flex-1 min-w-0 truncate">{s.description}</span>
               {s.price && <span className="text-xs text-gallery-gray">${s.price}</span>}
               <input
-                value={s.widthCm ?? ''}
-                onChange={(e) =>
-                  setSkus((prev) =>
-                    prev.map((sk, i) =>
-                      i === idx
-                        ? { ...sk, widthCm: e.target.value ? +e.target.value : undefined }
-                        : sk,
-                    ),
-                  )
-                }
-                type="number"
-                step="0.1"
-                placeholder="W cm"
-                className={`${inputClass} w-16`}
-              />
-              <input
-                value={s.heightCm ?? ''}
-                onChange={(e) =>
-                  setSkus((prev) =>
-                    prev.map((sk, i) =>
-                      i === idx
-                        ? { ...sk, heightCm: e.target.value ? +e.target.value : undefined }
-                        : sk,
-                    ),
-                  )
-                }
-                type="number"
-                step="0.1"
-                placeholder="H cm"
-                className={`${inputClass} w-16`}
-              />
-              <input
                 key={`w-in-${idx}-${s.widthCm}`}
                 defaultValue={s.widthCm ? cmToInch(s.widthCm) : ''}
                 onBlur={(e) =>
@@ -293,7 +262,7 @@ export default function ProviderSettingsPage() {
                 }
                 type="number"
                 step="0.01"
-                placeholder="W in"
+                placeholder="W"
                 className={`${inputClass} w-16`}
               />
               <input
@@ -313,7 +282,7 @@ export default function ProviderSettingsPage() {
                 }
                 type="number"
                 step="0.01"
-                placeholder="H in"
+                placeholder="H"
                 className={`${inputClass} w-16`}
               />
               <input
@@ -352,36 +321,6 @@ export default function ProviderSettingsPage() {
             className={`${inputClass} flex-1 min-w-[100px]`}
           />
           <input
-            value={newSku.widthCm}
-            onChange={(e) => {
-              const cm = e.target.value;
-              setNewSku((prev) => ({
-                ...prev,
-                widthCm: cm,
-                widthIn: cm ? String(cmToInch(+cm)) : '',
-              }));
-            }}
-            type="number"
-            step="0.1"
-            placeholder="W cm"
-            className={`${inputClass} w-16`}
-          />
-          <input
-            value={newSku.heightCm}
-            onChange={(e) => {
-              const cm = e.target.value;
-              setNewSku((prev) => ({
-                ...prev,
-                heightCm: cm,
-                heightIn: cm ? String(cmToInch(+cm)) : '',
-              }));
-            }}
-            type="number"
-            step="0.1"
-            placeholder="H cm"
-            className={`${inputClass} w-16`}
-          />
-          <input
             value={newSku.widthIn}
             onChange={(e) => {
               const inch = e.target.value;
@@ -393,7 +332,7 @@ export default function ProviderSettingsPage() {
             }}
             type="number"
             step="0.01"
-            placeholder="W in"
+            placeholder="W"
             className={`${inputClass} w-16`}
           />
           <input
@@ -408,7 +347,7 @@ export default function ProviderSettingsPage() {
             }}
             type="number"
             step="0.01"
-            placeholder="H in"
+            placeholder="H"
             className={`${inputClass} w-16`}
           />
           <input

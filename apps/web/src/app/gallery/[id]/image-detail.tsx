@@ -190,10 +190,18 @@ export function ImageDetail({ image }: ImageDetailProps) {
                 <dd className="m-0">{year}</dd>
               </>
             )}
-            <dt className="ot-meta">MEDIUM</dt>
-            <dd className="m-0">
-              {image.type === 'photo' ? 'Archival pigment print' : 'Acrylic on canvas'}
-            </dd>
+            {image.mediaTypes && image.mediaTypes.length > 0 && (
+              <>
+                <dt className="ot-meta">MEDIA</dt>
+                <dd className="m-0">{image.mediaTypes.map((m) => m.name).join(', ')}</dd>
+              </>
+            )}
+            {image.paintTypes && image.paintTypes.length > 0 && (
+              <>
+                <dt className="ot-meta">TECHNIQUE</dt>
+                <dd className="m-0">{image.paintTypes.map((p) => p.name).join(', ')}</dd>
+              </>
+            )}
             {edition && (
               <>
                 <dt className="ot-meta">EDITION</dt>
