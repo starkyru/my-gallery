@@ -106,6 +106,12 @@ class PrintOptionDto {
   @IsNumber()
   @Min(0)
   printLimit?: number | null;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  soldCount?: number;
 }
 
 class UpdateImageDto {

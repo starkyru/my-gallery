@@ -374,7 +374,7 @@ export default function ProviderSettingsPage() {
           >
             Add
           </button>
-          {config.configured && (
+          {config.configured && provider !== 'inhouse' && (
             <button
               onClick={() => setCatalogueOpen(true)}
               className="px-3 py-1 border border-white/10 text-white rounded text-xs font-medium hover:bg-white/5 transition-colors"
@@ -420,7 +420,7 @@ export default function ProviderSettingsPage() {
           >
             {saving ? 'Saving...' : 'Save SKUs'}
           </button>
-          {config.configured && skus.length > 0 && (
+          {config.configured && skus.length > 0 && provider !== 'inhouse' && (
             <button
               onClick={handleUpdatePrices}
               disabled={fetchingPrices}
