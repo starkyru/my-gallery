@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useCartStore } from '@/store/cart';
 import type { ImagePrintOption, OrderItemType } from '@gallery/shared';
-import { Modal } from '@/components/modal';
+import { Modal } from '@/components/common/modal';
 
 interface BuyModalImage {
   id: number;

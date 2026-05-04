@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import type { GalleryImage } from '@/components/gallery/types';
 import { Tile } from './tile';
@@ -30,33 +30,47 @@ export function GalleryPageContent({ images, medium }: GalleryPageContentProps) 
     return Object.entries(c).sort((a, b) => b[1] - a[1]);
   }, [allOfMedium]);
 
+  const [category, setCategory] = useState('All');
+  const [activeTags, setActiveTags] = useState<string[]>([]);
+
+  const categoryFiltered = useMemo(
+    () => (category === 'All' ? allOfMedium : allOfMedium.filter((w) => w.category === category)),
+    [allOfMedium, category],
+  );
+
   const tags = useMemo(() => {
     const c: Record<string, number> = {};
-    allOfMedium.forEach((w) =>
+    categoryFiltered.forEach((w) =>
       w.tags?.forEach((t) => {
         c[t.name] = (c[t.name] || 0) + 1;
       }),
     );
     return Object.entries(c).sort((a, b) => b[1] - a[1]);
-  }, [allOfMedium]);
-
-  const [category, setCategory] = useState('All');
-  const [activeTags, setActiveTags] = useState<string[]>([]);
+  }, [categoryFiltered]);
   const [sort, setSort] = useState<SortMode>('recent');
 
+  // Reset active tag when it's no longer available in current category
+  useEffect(() => {
+    if (activeTags.length > 0) {
+      const tagNames = new Set(tags.map(([t]) => t));
+      if (!tagNames.has(activeTags[0])) {
+        setActiveTags([]);
+      }
+    }
+  }, [tags, activeTags]);
+
   const filtered = useMemo(() => {
-    let r = allOfMedium;
-    if (category !== 'All') r = r.filter((w) => w.category === category);
+    let r = categoryFiltered;
     if (activeTags.length)
       r = r.filter((w) => activeTags.every((t) => w.tags?.some((wt) => wt.name === t)));
     if (sort === 'price-asc') r = [...r].sort((a, b) => a.price - b.price);
     if (sort === 'price-desc') r = [...r].sort((a, b) => b.price - a.price);
     if (sort === 'recent') r = [...r].sort((a, b) => b.id - a.id);
     return r;
-  }, [allOfMedium, category, activeTags, sort]);
+  }, [categoryFiltered, activeTags, sort]);
 
   function toggleTag(t: string) {
-    setActiveTags((p) => (p.includes(t) ? p.filter((x) => x !== t) : [...p, t]));
+    setActiveTags((p) => (p.includes(t) ? [] : [t]));
   }
 
   return (

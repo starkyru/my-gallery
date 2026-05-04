@@ -14,10 +14,13 @@ import { useImages } from '@/hooks/useImages';
 import { blurhashToDataURL } from '@/lib/blurhash';
 import { Tile } from '@/components/overtone/tile';
 
-const WallPreview = dynamic(() => import('@/components/wall-preview').then((m) => m.WallPreview), {
-  ssr: false,
-});
-const ArViewer = dynamic(() => import('@/components/ar-viewer').then((m) => m.ArViewer), {
+const WallPreview = dynamic(
+  () => import('@/components/gallery/wall-preview').then((m) => m.WallPreview),
+  {
+    ssr: false,
+  },
+);
+const ArViewer = dynamic(() => import('@/components/common/ar-viewer').then((m) => m.ArViewer), {
   ssr: false,
 });
 

@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react';
 import Image from 'next/image';
 import type { Category, Project, GalleryImage, Artist } from '@gallery/shared';
 import { UPLOAD_URL } from '@/config';
-import { Modal } from '@/components/modal';
+import { Modal } from '@/components/common/modal';
 
 interface BulkActionBarProps {
   selectedIds: Set<number>;

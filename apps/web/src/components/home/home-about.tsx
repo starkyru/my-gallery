@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import type { Artist, GalleryConfig } from '@gallery/shared';
-import { InstagramLink } from '@/components/instagram-link';
-import { Avatar } from '@/components/avatar';
+import { InstagramLink } from '@/components/common/instagram-link';
+import { Avatar } from '@/components/common/avatar';
 import { api } from '@/lib/api';
 
 export function HomeAbout() {

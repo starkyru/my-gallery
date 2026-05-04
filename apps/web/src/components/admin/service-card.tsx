@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { ServiceConfig } from '@gallery/shared';
-import { ChevronDownIcon } from './icons/chevron-down-icon';
+import { ChevronDownIcon } from '../icons/chevron-down-icon';
 
 export const inputClass =
   'w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded text-sm text-white placeholder:text-gallery-gray focus:outline-none focus:border-gallery-accent';

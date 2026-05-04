@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
 import { Inter_Tight, Cormorant_Garamond, JetBrains_Mono } from 'next/font/google';
-import { Header } from '@/components/header';
-import { Footer } from '@/components/footer';
-import { MainContent } from '@/components/main-content';
-import { LenisProvider } from '@/components/lenis-provider';
-import { ConfigProvider } from '@/components/config-provider';
+import { Header } from '@/components/layout/header';
+import { Footer } from '@/components/layout/footer';
+import { MainContent } from '@/components/layout/main-content';
+import { LenisProvider } from '@/components/providers/lenis-provider';
+import { ConfigProvider } from '@/components/providers/config-provider';
 import { ChatWidget } from '@/components/chat/chat-widget';
 import { ImageCacheProvider } from '@/hooks/useImageCache';
 import './globals.css';

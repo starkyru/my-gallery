@@ -1,5 +1,5 @@
 import type { Artist } from '@gallery/shared';
-import { Avatar } from '@/components/avatar';
+import { Avatar } from '@/components/common/avatar';
 import { Flourish } from '@/components/overtone/flourish';
 
 export const dynamic = 'force-dynamic';

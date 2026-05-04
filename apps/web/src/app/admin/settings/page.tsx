@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { useNotification } from '@/hooks/useNotification';
-import { ServiceCard } from '@/components/service-card';
+import { ServiceCard } from '@/components/admin/service-card';
 import type { ServiceConfig, ShipFromAddress } from '@gallery/shared';
 
 export default function SettingsPage() {

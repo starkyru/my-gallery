@@ -11,7 +11,7 @@ import type { GalleryImage } from '@/components/gallery/types';
 import { Tile } from '@/components/overtone/tile';
 import { Mosaic } from '@/components/overtone/mosaic';
 import { Flourish } from '@/components/overtone/flourish';
-import { AboutStrip } from '@/components/about-strip';
+import { AboutStrip } from '@/components/about/about-strip';
 
 export default function HomePage() {
   const { images, loading: imagesLoading } = useImages();
@@ -36,7 +36,7 @@ export default function HomePage() {
 
   const shuffled = useMemo(() => shuffleArray(images), [images]);
   const heroSet = shuffled.slice(0, 6);
-  const mosaicSet = shuffled.slice(2, 14);
+  const mosaicSet = shuffled.slice(6, 14);
 
   if (imagesLoading) return null;
 
@@ -100,7 +100,7 @@ function HeroSection({ images }: { images: GalleryImage[] }) {
 
 function FilterStrip({ images }: { images: GalleryImage[] }) {
   const [tab, setTab] = useState<'All' | 'Photographs' | 'Paintings'>('All');
-  const [activeTags, setActiveTags] = useState<string[]>([]);
+  const [activeTag, setActiveTag] = useState<string | null>(null);
 
   const base = useMemo(() => {
     if (tab === 'All') return images;
@@ -122,13 +122,9 @@ function FilterStrip({ images }: { images: GalleryImage[] }) {
   }, [base]);
 
   const filtered = useMemo(() => {
-    if (activeTags.length === 0) return base;
-    return base.filter((w) => activeTags.every((t) => w.tags?.some((wt) => wt.name === t)));
-  }, [base, activeTags]);
-
-  function toggleTag(t: string) {
-    setActiveTags((p) => (p.includes(t) ? p.filter((x) => x !== t) : [...p, t]));
-  }
+    if (!activeTag) return base;
+    return base.filter((w) => w.tags?.some((wt) => wt.name === activeTag));
+  }, [base, activeTag]);
 
   return (
     <section className="py-[60px] md:py-20">
@@ -140,7 +136,7 @@ function FilterStrip({ images }: { images: GalleryImage[] }) {
               key={t}
               onClick={() => {
                 setTab(t);
-                setActiveTags([]);
+                setActiveTag(null);
               }}
               className="bg-transparent border-none cursor-pointer py-1.5 px-1 font-sans text-xs tracking-[0.22em] uppercase transition-colors"
               style={{
@@ -158,16 +154,16 @@ function FilterStrip({ images }: { images: GalleryImage[] }) {
         {/* Chips */}
         <div className="flex flex-wrap gap-2 justify-center max-w-[980px] mx-auto mb-9">
           <button
-            className={`ot-chip ${activeTags.length === 0 ? 'active' : ''}`}
-            onClick={() => setActiveTags([])}
+            className={`ot-chip ${!activeTag ? 'active' : ''}`}
+            onClick={() => setActiveTag(null)}
           >
             All
           </button>
           {tags.slice(0, 16).map((t) => (
             <button
               key={t}
-              className={`ot-chip ${activeTags.includes(t) ? 'active' : ''}`}
-              onClick={() => toggleTag(t)}
+              className={`ot-chip ${activeTag === t ? 'active' : ''}`}
+              onClick={() => setActiveTag((prev) => (prev === t ? null : t))}
             >
               {t}
             </button>

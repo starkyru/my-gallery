@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { Artist } from '@gallery/shared';
 import { Flourish } from '@/components/overtone/flourish';
-import { Avatar } from '@/components/avatar';
+import { Avatar } from '@/components/common/avatar';
 import { InstagramIcon } from '@/components/icons/instagram-icon';
 
 export function AboutStrip({ artists }: { artists: Artist[] }) {

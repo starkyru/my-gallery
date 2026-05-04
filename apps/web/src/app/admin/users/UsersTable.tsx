@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { useNotification } from '@/hooks/useNotification';
-import { Modal } from '@/components/modal';
+import { Modal } from '@/components/common/modal';
 import { AdminUser, inputClass, btnClass } from './styles';
 
 interface UsersTableProps {

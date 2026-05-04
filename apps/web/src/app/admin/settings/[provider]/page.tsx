@@ -5,9 +5,9 @@ import { useParams, useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { useNotification } from '@/hooks/useNotification';
-import { inputClass } from '@/components/service-card';
+import { inputClass } from '@/components/admin/service-card';
 import { ChevronLeftIcon } from '@/components/icons/chevron-left-icon';
-import { CatalogueBrowser } from '@/components/catalogue-browser';
+import { CatalogueBrowser } from '@/components/gallery/catalogue-browser';
 import { FULFILLMENT_COUNTRY, FULFILLMENT_CURRENCY } from '@/config';
 import type { ServiceConfig } from '@gallery/shared';
 

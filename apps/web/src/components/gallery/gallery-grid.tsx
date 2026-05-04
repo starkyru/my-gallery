@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { FilterToolbar } from '../filter-toolbar';
+import { FilterToolbar } from './filter-toolbar';
 import { GalleryCard } from './gallery-card';
 import { SkeletonGrid } from './skeleton-grid';
 import type { GalleryImage } from './types';

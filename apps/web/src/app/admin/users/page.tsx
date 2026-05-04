@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
-import { Modal } from '@/components/modal';
+import { Modal } from '@/components/common/modal';
 import { AdminUser } from './styles';
 import UsersTable from './UsersTable';
 import AddUserForm from './AddUserForm';

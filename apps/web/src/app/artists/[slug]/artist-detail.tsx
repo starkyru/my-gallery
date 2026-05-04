@@ -3,11 +3,11 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import gsap from 'gsap';
-import { FilterToolbar } from '@/components/filter-toolbar';
+import { FilterToolbar } from '@/components/gallery/filter-toolbar';
 import { GalleryCard } from '@/components/gallery';
-import { InstagramLink } from '@/components/instagram-link';
-import { Avatar } from '@/components/avatar';
-import { NothingFound } from '@/components/nothing-found';
+import { InstagramLink } from '@/components/common/instagram-link';
+import { Avatar } from '@/components/common/avatar';
+import { NothingFound } from '@/components/common/nothing-found';
 import type { GalleryImage } from '@/components/gallery';
 
 interface ArtistDetailProps {

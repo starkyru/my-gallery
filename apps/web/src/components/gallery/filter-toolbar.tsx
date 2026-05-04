@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '@/lib/api';
-import { PillGroup } from './pill-group';
-import { PILL_STYLES, pillClass } from './pill-styles';
+import { PillGroup } from '../common/pill/pill-group';
+import { PILL_STYLES, pillClass } from '../common/pill/pill-styles';
 
 interface FilterToolbarProps {
   value: string;
