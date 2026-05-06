@@ -50,7 +50,7 @@ export const useCartStore = create<CartState>()(
           items: state.items.filter((i) => i.imageId !== imageId),
         })),
       clear: () => set({ items: [] }),
-      total: () => get().items.reduce((sum, item) => sum + item.price, 0),
+      total: () => get().items.reduce((sum, item) => sum + Number(item.price), 0),
       hasPrintItems: () => get().items.some((i) => i.type === 'print'),
       hasShippableItems: () =>
         get().items.some((i) => i.type === 'print' || i.type === 'physical_original'),

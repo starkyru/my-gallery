@@ -42,8 +42,6 @@ export default function CheckoutPage() {
   const [ratesError, setRatesError] = useState('');
   const ratesFetchedForRef = useRef('');
 
-  const hasPhysicalOriginals = items.some((i) => i.type === 'physical_original');
-
   const selectedRate = shippingRates.find((r) => r.rateId === selectedRateId);
   const shippingCost = selectedRate?.rate ?? 0;
 
@@ -56,14 +54,18 @@ export default function CheckoutPage() {
     shipping.country;
 
   const fetchShippingRates = useCallback(async () => {
-    if (!hasPhysicalOriginals || !shippingAddressFilled) return;
+    if (!needsShipping || !shippingAddressFilled) return;
 
     const addressKey = JSON.stringify(shipping);
     if (ratesFetchedForRef.current === addressKey) return;
 
-    const physicalImageIds = items
-      .filter((i) => i.type === 'physical_original')
-      .map((i) => i.imageId);
+    const shippableImageIds = [
+      ...new Set(
+        items
+          .filter((i) => i.type === 'physical_original' || i.type === 'print')
+          .map((i) => i.imageId),
+      ),
+    ];
 
     setRatesLoading(true);
     setRatesError('');
@@ -72,7 +74,7 @@ export default function CheckoutPage() {
 
     try {
       const rates = await api.shipping.getRates({
-        imageIds: physicalImageIds,
+        imageIds: shippableImageIds,
         toAddress: {
           name: shipping.name,
           address1: shipping.address1,
@@ -93,7 +95,7 @@ export default function CheckoutPage() {
     } finally {
       setRatesLoading(false);
     }
-  }, [hasPhysicalOriginals, shippingAddressFilled, shipping, items]);
+  }, [needsShipping, shippingAddressFilled, shipping, items]);
 
   useEffect(() => {
     if (items.length === 0) router.push('/cart');
@@ -136,8 +138,7 @@ export default function CheckoutPage() {
 
   if (items.length === 0) return null;
 
-  const shippingValid =
-    !needsShipping || (shippingAddressFilled && (!hasPhysicalOriginals || selectedRateId));
+  const shippingValid = !needsShipping || (shippingAddressFilled && !!selectedRateId);
 
   const displayTotal = total() + shippingCost;
 
@@ -326,8 +327,8 @@ export default function CheckoutPage() {
         </div>
       )}
 
-      {/* Shipping rate selection for physical originals */}
-      {hasPhysicalOriginals && shippingAddressFilled && (
+      {/* Shipping rate selection */}
+      {needsShipping && shippingAddressFilled && (
         <div className="mb-6 space-y-3">
           <h2 className="font-serif text-xl">Shipping Method</h2>
 

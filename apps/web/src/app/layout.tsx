@@ -6,6 +6,7 @@ import { MainContent } from '@/components/layout/main-content';
 import { LenisProvider } from '@/components/providers/lenis-provider';
 import { ConfigProvider } from '@/components/providers/config-provider';
 import { ChatWidget } from '@/components/chat/chat-widget';
+import { Toaster } from 'sonner';
 import { ImageCacheProvider } from '@/hooks/useImageCache';
 import './globals.css';
 
@@ -67,6 +68,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <MainContent>{children}</MainContent>
               <Footer />
               <ChatWidget />
+              <Toaster
+                position="top-center"
+                toastOptions={{
+                  style: {
+                    fontFamily: 'var(--font-inter-tight)',
+                    background: 'var(--color-ot-paper)',
+                    color: 'var(--color-ot-ink)',
+                    border: '1px solid var(--color-ot-line)',
+                  },
+                }}
+              />
             </ConfigProvider>
           </ImageCacheProvider>
         </LenisProvider>

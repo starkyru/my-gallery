@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
+import { toast } from 'sonner';
 import { useCartStore } from '@/store/cart';
 import type { ImagePrintOption, OrderItemType } from '@gallery/shared';
 import { Modal } from '@/components/common/modal';
@@ -57,6 +59,19 @@ export function BuyModal({ open, onClose, image }: BuyModalProps) {
       ? selectedPrintOption.printLimit - selectedPrintOption.soldCount
       : null;
 
+  function addAndNotify(label: string, item: Parameters<typeof addItem>[0]) {
+    addItem(item);
+    onClose();
+    toast(
+      <span>
+        {label} added to cart.{' '}
+        <Link href="/cart" className="underline text-ot-ochre hover:text-ot-ochre-deep">
+          Checkout?
+        </Link>
+      </span>,
+    );
+  }
+
   return (
     <Modal open={open} onClose={onClose} title="Purchase Options">
       <div className="flex flex-col gap-4">
@@ -72,7 +87,7 @@ export function BuyModal({ open, onClose, image }: BuyModalProps) {
             </div>
             <button
               onClick={() =>
-                addItem({
+                addAndNotify('Digital original', {
                   imageId: image.id,
                   title: image.title,
                   price: image.price,
@@ -112,7 +127,7 @@ export function BuyModal({ open, onClose, image }: BuyModalProps) {
             </div>
             <button
               onClick={() =>
-                addItem({
+                addAndNotify('Original artwork', {
                   imageId: image.id,
                   title: image.title,
                   price: image.price,
@@ -188,7 +203,7 @@ export function BuyModal({ open, onClose, image }: BuyModalProps) {
                 <button
                   onClick={() => {
                     if (!selectedPrintOption) return;
-                    addItem({
+                    addAndNotify('Print', {
                       imageId: image.id,
                       title: image.title,
                       price: selectedPrintOption.price,

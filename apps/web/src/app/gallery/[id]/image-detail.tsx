@@ -217,8 +217,6 @@ export function ImageDetail({ image }: ImageDetailProps) {
                 <dd className="m-0">{image.place}</dd>
               </>
             )}
-            <dt className="ot-meta">SHIPS</dt>
-            <dd className="m-0">From Charlotte, NC &middot; 5&ndash;8 days</dd>
           </dl>
 
           {/* Price + actions */}

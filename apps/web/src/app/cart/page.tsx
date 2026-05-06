@@ -98,7 +98,9 @@ export default function CartPage() {
                       Remove
                     </button>
                   </div>
-                  <div className="ot-display text-[28px] hidden md:block">${item.price}</div>
+                  <div className="ot-display text-[28px] hidden md:block">
+                    ${Number(item.price)}
+                  </div>
                 </div>
               ))}
             </div>
