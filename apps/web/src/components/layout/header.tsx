@@ -24,7 +24,7 @@ export function Header() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-gallery-black/80 backdrop-blur-md border-b border-white/5">
         <nav className="mx-auto max-w-7xl flex items-center justify-between px-6 py-4">
           <Link href="/" className="font-serif text-xl tracking-wider text-gallery-accent">
-            Overtone.art
+            overtone.art
           </Link>
         </nav>
       </header>

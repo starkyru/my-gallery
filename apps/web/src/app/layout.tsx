@@ -30,12 +30,12 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Overtone.art — Art Studio',
+  title: 'overtone.art — Art Studio',
   description: 'A two-artist studio in Charlotte, North Carolina. Photographs and paintings.',
   openGraph: {
-    title: 'Overtone.art — Art Studio',
+    title: 'overtone.art — Art Studio',
     description: 'A two-artist studio in Charlotte, North Carolina. Photographs and paintings.',
-    siteName: 'Overtone.art',
+    siteName: 'overtone.art',
     type: 'website',
   },
 };
